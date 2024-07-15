@@ -1,0 +1,52 @@
+//To determine if there is sufficient free space to permit rebalancing after the loss of a single disk, as the Grid Infrastructure owner, run the following query in SQLPlus on any ASM 
+instance in the cluster :
+
+set serveroutput on
+set linesize 160
+declare
+  FGnum number;
+  gnum  number;
+  gname varchar2(20);
+  freespace number;
+  totmb number;
+  freemb number;
+  usedmb number;
+  reqfmb number;
+  pctfree number;
+  reqpctfree number;
+  version  varchar2(40);
+  cursor c1 is select x.group_number,count(x.numfg)
+  from ( select group_number,count(failgroup) numfg from v$asm_disk_stat where failgroup_type='REGULAR' and group_number > 0 group by group_number,failgroup
+  ) x
+  group by x.group_number;
+begin
+  dbms_output.enable(500000);
+  open c1;
+  loop
+    fetch c1 into gnum,FGnum;
+    exit when c1%notfound;
+    select name into gname from v$asm_diskgroup_stat where group_number=gnum;
+    select version into version from v$instance;
+    select to_number(substr(regexp_replace(version,'\.'),1,3)) into version from v$instance;
+    SELECT dg.name, dg.total_mb, dg.free_mb, dg.total_mb-dg.free_mb
+    INTO   gname,totmb,freemb,usedmb
+    FROM v$asm_diskgroup_stat dg WHERE dg.group_number= gnum;
+    if (version >= 122)  then
+           if (FGnum < 5) then
+              reqpctfree := 0.15;
+           else
+              reqpctfree := 0.09;
+           end if;
+     else
+              reqpctfree := 0.15;
+     end if;
+     pctfree := round(freemb/totmb,3);
+     if (pctfree < reqpctfree) then
+           dbms_output.put_line('FAILURE: Diskgroup '||gname||' has '|| pctfree*100||'% free space which is lower than the '||reqpctfree*100||'% free space threshold. A rebalance may fail with ORA-15041'); dbms_output.new_line;
+     else
+           dbms_output.put_line('SUCCESS: Diskgroup '||gname||' has '|| pctfree*100||'% free space which is enough to complete the rebalance'); dbms_output.new_line;
+     end if;
+  end loop;
+  close c1;
+end;
+/
