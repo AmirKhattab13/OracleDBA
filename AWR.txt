@@ -1,0 +1,8 @@
+From shell
+
+# sqlplus / as sysdba
+SQL> @$ORACLE_HOME/rdbms/admin/awrextr.sql
+
+SQL> @$ORACLE_HOME/rdbms/admin/ashrpt.sql
+
+SQL> @$ORACLE_HOME/rdbms/admin/awrrpt.sql
