@@ -1,0 +1,78 @@
+1. SQL> create restore point <name>;
+
+2. Check the flashback_mode of the database.
+
+SQL> select name,flashback_on from v$database;
+
+NAME FLASHBACK_ON
+--------- ------------------
+DBATEST YES ----- > FLASHBACK IS ENABLED...
+
+
+
+
+SQL> select name,open_mode from v$database;
+
+NAME OPEN_MODE
+--------- --------------------
+DB12CR2 MOUNTED
+
+SQL> alter database flashback off;
+
+Database altered.
+
+SQL> alter database open;
+
+Database altered.
+
+
+
+SQL> select NAME,SCN,GUARANTEE_FLASHBACK_DATABASE,DATABASE_INCARNATION# from v$restore_point;
+
+NAME
+--------------------------------------------------------------------------------
+SCN GUA DATABASE_INCARNATION#
+---------- --- ---------------------
+RESTORE_POINT_17052019
+5.9932E+12 YES 1
+
+SQL> drop restore point RESTORE_POINT_17052019;
+
+
+
+
+for restore point not exist
+
+As root run
+
+
+SQL> Connect /as sysdba
+
+Select * from v$restore_point ;
+
+      SCN     DATABASE_INCARNATION# GUARANTEED      STORAGE_SIZE                          RESTORE_POINT_TIME                       PRE   NAME                              PDB CLE PDB_INCARNATION# REP     CON_ID
+---------- --------------------- --- ------------ ---------------------------------------------------------------------------------------------------------------- --- -------------------- --- --- ---------------- --- ----------
+5035300000                   1                      YES            5368709120                                         12-07-21 20:27:13.000000000          NO  <restore point name>      YES NO                  0   YES         5
+
+As per the output con_id 5 has the restore point.
+
+ 
+
+SQL> Select con_id,DBID,name,open_mode from v$pdbs where con_id=5 ;
+
+CON_ID DBID NAME OPEN_MODE
+
+---------- ---------- ------------------------------ ----------
+
+ 
+
+  5 <dbid >  <pdbaname> READ WRITE
+
+ 
+
+The above will list the PDB name
+
+SQL> Alter session set container=<PDB name>; 
+
+
+SQL> Drop restore point <restore point name> ;

@@ -1,0 +1,77 @@
+ADD DATABASE
+Adds a new standby database profile to the existing broker configuration.
+
+CONNECT
+Connects to the specified database using the specified username.
+
+CREATE CONFIGURATION
+Creates a broker configuration and creates and adds a primary database profile to the configuration.
+
+DISABLE CONFIGURATION
+Disables broker management of a configuration so that the configuration and all of its databases are no longer managed by the broker.
+
+DISABLE DATABASE
+Disables broker management of the named standby database.
+
+EDIT CONFIGURATION (Protection Mode)
+Changes the current protection mode setting for the broker configuration.
+
+EDIT DATABASE (Property)
+Changes the value of a property for the named database.
+
+EDIT DATABASE (Rename)
+Changes the name used by the broker to refer to the specified database.
+
+EDIT DATABASE (State)
+Changes the state of the specified database.
+
+EDIT INSTANCE (AUTO PFILE)
+Sets the name of the initialization parameter file for the specified instance.
+
+EDIT INSTANCE (Property)
+Changes the value of a property for the specified instance.
+
+ENABLE CONFIGURATION
+Enables broker management of the broker configuration and all of its databases.
+
+ENABLE DATABASE
+Enables broker management of the specified database.
+
+EXIT
+Exits the Data Guard command-line interface.
+
+FAILOVER
+Performs a database failover operation in which the standby database, to which the CLI is currently connected, fails over to the role of primary database.
+
+HELP
+Displays online help for the Data Guard command-line interface.
+
+QUIT	
+Quits the Data Guard command-line interface.
+
+REMOVE CONFIGURATION
+Removes the broker configuration including all of its database profiles from the broker configuration file.
+
+REMOVE DATABASE
+Removes the specified standby database profile from the broker configuration.
+
+REMOVE INSTANCE
+Removes knowledge of an instance from an existing database profile in the broker configuration.
+
+SHOW CONFIGURATION
+Displays information about the broker configuration.
+
+SHOW DATABASE
+Displays information about the specified database.
+
+SHOW INSTANCE
+Displays information about the specified instance.
+
+SHUTDOWN
+Shuts down a currently running Oracle database.
+
+STARTUP
+Starts an Oracle instance with the same options as SQL*Plus, including mounting and opening a database.
+
+SWITCHOVER
+Performs a switchover operation in which the current primary database becomes a standby database, and the specified standby database becomes the primary database.

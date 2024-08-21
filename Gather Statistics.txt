@@ -1,0 +1,903 @@
+Rem ****************************************************************
+Rem *  This script is for gathering information about database     *
+Rem *  Please execute it from sqlplus as sysdba                    *
+Rem *  it will generate a spool file in current directory          *
+Rem *  named :- <DBName>_DB_REPORT_<DDMonYYYY_hh24_mi>.log         *
+Rem *  share the same for analysis.                                *
+Rem ****************************************************************
+
+
+SET TRIMSPOOL ON;
+SET HEADING OFF;
+SET FEEDBACK OFF;
+SET SERVEROUT ON;
+SET PAGESIZE 9999;
+SET LONG 999999999;
+SET VERIFY OFF;
+SET LINES 2500;
+SET numwidth 24
+
+COLUMN cpulogfile NEW_VALUE cpulogfile NOPRINT;
+
+SELECT Name
+  || '_DB_REPORT_'
+  || TO_CHAR(sysdate,'DDMonYYYY_hh24_mi')
+  || '.log' AS cpulogfile
+FROM V$DATABASE;
+
+COLUMN OWNER FORMAT A20
+COLUMN SEGMENT_NAME FORMAT A35
+COLUMN SEGMENT_TYPE FORMAT A20
+COLUMN COMP_NAME FORMAT A35
+
+
+spool &cpulogfile
+
+prompt ************************************************************************
+prompt                            Database information
+prompt ************************************************************************
+prompt
+
+
+SET heading ON 
+col dbid format 999999999999999 
+col created_date format a24
+
+SELECT name,
+  TO_CHAR(created,'DD.MM.YYYY HH24:MI:SS') Created_Date,
+  OPEN_MODE,
+  LOG_MODE,
+  DATABASE_ROLE,
+  DBID
+FROM v$database;
+
+prompt
+prompt
+col startup_time format a24
+col host_name format a24
+
+SELECT instance_name,
+  TO_CHAR(startup_time,'DD.MM.YYYY HH24:MI:SS') startup_time,
+  host_name, 
+  status,
+  logins,
+  instance_role
+FROM v$instance;
+
+col PORT_STRING format a55
+
+SELECT dbms_utility.port_string PORT_STRING FROM dual;
+
+prompt
+prompt
+SET HEADING OFF;
+
+SELECT 'Database Character Set :- '
+  ||a.VALUE
+  || '_'
+  || b.VALUE
+  || '.'
+  || c.VALUE
+FROM
+  (SELECT * FROM nls_database_parameters WHERE parameter = 'NLS_LANGUAGE'
+  ) a,
+  (SELECT * FROM nls_database_parameters WHERE parameter = 'NLS_TERRITORY'
+  ) b,
+  (SELECT * FROM nls_database_parameters WHERE parameter = 'NLS_CHARACTERSET'
+  ) c;
+
+SET HEADING ON;
+prompt
+prompt
+
+SELECT * FROM v$version;
+
+prompt
+prompt
+
+SELECT comp_name,
+  version,
+  status,
+  modified
+FROM dba_registry
+ORDER BY 1;
+
+prompt
+prompt
+
+SELECT ' Size in GB :- '
+  || ROUND(SUM(totalspace))
+FROM
+  ( SELECT SUM(TRUNC(bytes/1024/1024/1024)) AS TotalSpace FROM dba_data_files
+  UNION
+  SELECT ROUND(BYTES/1024/1024/1024) AS TotalSpace FROM v$TEMPFILE
+  UNION
+  SELECT ROUND(SUM(bytes/1024/1024/1024)) AS TotalSpace FROM v$log
+  );
+
+SELECT ' Session high water mark :- '||sessions_highwater FROM v$license;
+
+prompt
+prompt
+prompt
+prompt ************************************************************************
+prompt           Checking for DMT and LMT
+prompt ************************************************************************
+prompt
+
+SELECT extent_management,
+  COUNT(1)
+FROM dba_tablespaces
+GROUP BY extent_management;
+
+SELECT TABLESPACE_NAME
+FROM dba_tablespaces
+WHERE EXTENT_MANAGEMENT ='DICTIONARY';
+
+prompt
+prompt ************************************************************************
+prompt Checking for non system objects in system tablespace.
+prompt ************************************************************************
+prompt
+
+SELECT OWNER,
+  SEGMENT_NAME,
+  SEGMENT_TYPE,
+  TABLESPACE_NAME,
+  BYTES/1024/1024/1024 SizeGB
+FROM DBA_SEGMENTS
+WHERE TABLESPACE_NAME='SYSTEM'
+AND OWNER NOT       IN ('SYS','SYSTEM','OUTLN','DBSNMP');
+
+prompt
+prompt ******************************************************************************
+prompt   Checking for large objects in SYSTEM, SYSAUX tablespace
+prompt ******************************************************************************
+prompt
+
+SELECT owner,
+  segment_name,
+  TABLESPACE_NAME,
+  segment_type,
+  bytes/1024/1024/1024 SizeGB
+FROM dba_segments
+WHERE tablespace_name        IN ('SYSTEM','SYSAUX')
+AND bytes              > (1024*1024*1024*2)
+ORDER BY bytes DESC;
+
+prompt
+prompt ************************************************************************
+prompt             Tablespace Usage
+prompt ************************************************************************
+
+clear breaks
+clear computes
+
+Prompt
+Prompt Tablespace Usage
+Prompt
+
+SET lines 120 pages 500 
+col percent_used format 999.99
+
+SELECT a.TABLESPACE_NAME,
+  NVL(ROUND((a.BYTES  /1024)/1024/1024,2),2) GB_TOTAL,
+  NVL(ROUND((b.BYTES  /1024)/1024/1024,2),2) GB_FREE,
+  NVL(ROUND((b.largest/1024),2),0) KB_Chunk,
+  NVL(ROUND(((a.BYTES -NVL(b.BYTES,1))/a.BYTES)*100,4),0) percent_used
+FROM
+  (SELECT TABLESPACE_NAME,
+    NVL(SUM(BYTES),0) BYTES
+  FROM dba_data_files
+  GROUP BY TABLESPACE_NAME
+  ) a,
+  (SELECT TABLESPACE_NAME,
+    NVL(SUM(BYTES),1) BYTES ,
+    NVL(MAX(BYTES),1) largest
+  FROM dba_free_space
+  GROUP BY TABLESPACE_NAME
+  ) b
+WHERE a.TABLESPACE_NAME=b.TABLESPACE_NAME(+)
+ORDER BY ((a.BYTES-b.BYTES)/a.BYTES) DESC;
+
+prompt
+prompt ************************************************************************
+prompt   Check for data block corruption if any
+prompt ************************************************************************
+
+select * from v$database_block_corruption;
+
+prompt
+prompt ************************************************************************
+prompt   Check for transaction recovery in progress if any
+prompt ************************************************************************
+
+SELECT state,
+  undoblocksdone,
+  undoblockstotal,
+  undoblocksdone / undoblockstotal * 100
+FROM gv$fast_start_transactions
+WHERE state != 'RECOVERED';
+
+prompt
+prompt
+prompt
+prompt ************************************************************************
+prompt           Checking users with non default TEMP tablespace
+prompt ************************************************************************
+prompt
+
+SELECT username,
+  TEMPORARY_TABLESPACE
+FROM dba_users
+WHERE TEMPORARY_TABLESPACE NOT IN
+  (SELECT name
+  FROM v$tablespace
+  WHERE TS# IN
+    (SELECT DISTINCT TS# FROM v$tempfile
+    )
+  );
+  
+prompt
+prompt
+prompt ************************************************************************
+prompt           Checking users details
+prompt ************************************************************************
+prompt
+
+col name format a20
+col ctime format a24
+col ptime format a24
+  
+SELECT name, 
+   to_char(ctime,'dd/mm/yyyy hh24:mi:ss') ctime,
+   to_char(ptime,'dd/mm/yyyy hh24:mi:ss') ptime 
+FROM sys.user$ WHERE name in (select username from dba_users where account_status='OPEN');
+
+
+prompt
+prompt ************************************************************************
+prompt           Checking for invalid objects
+prompt ************************************************************************
+prompt
+
+SELECT DISTINCT owner,
+  object_type,
+  status,
+  COUNT(1) cnt
+FROM dba_objects
+WHERE status='INVALID'
+GROUP BY owner,
+  object_type,
+  status
+ORDER BY owner,
+  object_type;
+
+prompt
+prompt ************************************************************************
+prompt           Checking archive log generation for last 48 hours
+prompt ************************************************************************
+prompt
+
+SET linesize 300
+SET pagesize 5000
+SET trimspool ON
+column 00 format 9999 heading "00"
+column 01 format 9999 heading "01"
+column 02 format 9999 heading "02"
+column 03 format 9999 heading "03"
+column 04 format 9999 heading "04"
+column 05 format 9999 heading "05"
+column 06 format 9999 heading "06"
+column 07 format 9999 heading "07"
+column 08 format 9999 heading "08"
+column 09 format 9999 heading "09"
+column 10 format 9999 heading "10"
+column 11 format 9999 heading "11"
+column 12 format 9999 heading "12"
+column 13 format 9999 heading "13"
+column 14 format 9999 heading "14"
+column 15 format 9999 heading "15"
+column 16 format 9999 heading "16"
+column 17 format 9999 heading "17"
+column 18 format 9999 heading "18"
+column 19 format 9999 heading "19"
+column 20 format 9999 heading "20"
+column 21 format 9999 heading "21"
+column 22 format 9999 heading "22"
+column 23 format 9999 heading "23"
+column "Day" format a3
+
+prompt
+prompt Redo Log Switches
+prompt
+
+SELECT TRUNC (first_time) "Date",
+  TO_CHAR (TRUNC (first_time),'Dy') "Day",
+  SUM (DECODE (to_number (TO_CHAR (FIRST_TIME, 'HH24')), 0, 1)) "00",
+  SUM (DECODE (to_number (TO_CHAR (FIRST_TIME, 'HH24')), 1, 1)) "01",
+  SUM (DECODE (to_number (TO_CHAR (FIRST_TIME, 'HH24')), 2, 1)) "02",
+  SUM (DECODE (to_number (TO_CHAR (FIRST_TIME, 'HH24')), 3, 1)) "03",
+  SUM (DECODE (to_number (TO_CHAR (FIRST_TIME, 'HH24')), 4, 1)) "04",
+  SUM (DECODE (to_number (TO_CHAR (FIRST_TIME, 'HH24')), 5, 1)) "05",
+  SUM (DECODE (to_number (TO_CHAR (FIRST_TIME, 'HH24')), 6, 1)) "06",
+  SUM (DECODE (to_number (TO_CHAR (FIRST_TIME, 'HH24')), 7, 1)) "07",
+  SUM (DECODE (to_number (TO_CHAR (FIRST_TIME, 'HH24')), 8, 1)) "08",
+  SUM (DECODE (to_number (TO_CHAR (FIRST_TIME, 'HH24')), 9, 1)) "09",
+  SUM (DECODE (to_number (TO_CHAR (FIRST_TIME, 'HH24')), 10, 1)) "10",
+  SUM (DECODE (to_number (TO_CHAR (FIRST_TIME, 'HH24')), 11, 1)) "11",
+  SUM (DECODE (to_number (TO_CHAR (FIRST_TIME, 'HH24')), 12, 1)) "12",
+  SUM (DECODE (to_number (TO_CHAR (FIRST_TIME, 'HH24')), 13, 1)) "13",
+  SUM (DECODE (to_number (TO_CHAR (FIRST_TIME, 'HH24')), 14, 1)) "14",
+  SUM (DECODE (to_number (TO_CHAR (FIRST_TIME, 'HH24')), 15, 1)) "15",
+  SUM (DECODE (to_number (TO_CHAR (FIRST_TIME, 'HH24')), 16, 1)) "16",
+  SUM (DECODE (to_number (TO_CHAR (FIRST_TIME, 'HH24')), 17, 1)) "17",
+  SUM (DECODE (to_number (TO_CHAR (FIRST_TIME, 'HH24')), 18, 1)) "18",
+  SUM (DECODE (to_number (TO_CHAR (FIRST_TIME, 'HH24')), 19, 1)) "19",
+  SUM (DECODE (to_number (TO_CHAR (FIRST_TIME, 'HH24')), 20, 1)) "20",
+  SUM (DECODE (to_number (TO_CHAR (FIRST_TIME, 'HH24')), 21, 1)) "21",
+  SUM (DECODE (to_number (TO_CHAR (FIRST_TIME, 'HH24')), 22, 1)) "22",
+  SUM (DECODE (to_number (TO_CHAR (FIRST_TIME, 'HH24')), 23, 1)) "23"
+FROM v$log_history
+WHERE TRUNC (first_time) >= (TRUNC(sysdate) - 14)
+GROUP BY TRUNC (first_time)
+ORDER BY TRUNC (first_time) DESC;
+
+SELECT MAX(GB) MAX_GB,
+  MIN(GB) MIN_GB,
+  ROUND(AVG(GB),0) AVG_GB,
+  SUM(GB) TOTAL_GB
+FROM
+  (SELECT TRUNC(COMPLETION_TIME,'HH') Hour ,
+    ROUND((SUM(BLOCKS*BLOCK_SIZE))/1024/1024/1024) GB,
+    COUNT(           *) Archives
+  FROM gv$archived_log
+  WHERE TRUNC(COMPLETION_TIME) > TRUNC(sysdate-14)
+  AND inst_id                  = thread#
+  AND STANDBY_DEST             = 'NO'
+  GROUP BY TRUNC(COMPLETION_TIME,'HH')
+  );
+
+prompt
+prompt
+prompt
+prompt ************************************************************************
+prompt                        Redo log information                        
+prompt ************************************************************************
+prompt
+
+col member format a55
+select a.GROUP#, a.thread#,b.status,b.member,a.bytes/1024/1024 SizeMB, a.blocksize from v$log a, v$logfile b where a.group#=b.group#;
+
+prompt
+prompt
+prompt
+prompt ************************************************************************
+prompt                       Objects in Recyclebin                        
+prompt ************************************************************************
+prompt
+  
+select count(1) from dba_recyclebin;
+
+prompt
+prompt
+prompt ************************************************************************
+prompt                       Check degree for tables                         
+prompt ************************************************************************
+
+col owner format a15
+col DEGREE format a15
+select owner,degree,count(1) from dba_tables where owner in (select username from dba_users where account_status='OPEN') group by owner,degree;
+
+prompt
+prompt
+prompt ************************************************************************
+prompt                       Check degree for indexes                         
+prompt ************************************************************************
+
+select owner,degree,count(1) from dba_indexes where owner in (select username from dba_users where account_status='OPEN') group by owner,degree;
+
+
+prompt
+prompt
+prompt
+prompt ************************************************************************
+prompt                       Check objects with ITL waits                        
+prompt ************************************************************************
+prompt
+
+col owner format a15
+col object_name format a30
+col object_type format a15
+col TOTAL_ITL format 999999999
+
+select b.owner, b.object_name,b.object_type, sum(ITL_WAITS_TOTAL) TOTAL_ITL
+        from DBA_HIST_SEG_STAT a ,DBA_HIST_SEG_STAT_OBJ b
+    where a.OBJ#=b.OBJ#
+    and a. itl_waits_total>0
+    and b.owner in (select username from dba_users where account_status='OPEN' and username not in ('SYS','SYSTEM'))
+    and a.TS#=b.TS#
+    and  b.DATAOBJ#= a.DATAOBJ#
+  and b.object_name not like 'SYS%'  
+  group by b.owner,b.object_name,b.object_type order by sum(ITL_WAITS_DELTA);
+
+prompt
+prompt
+prompt
+prompt ************************************************************************
+prompt                       Cursor parameters usage                        
+prompt ************************************************************************
+prompt
+
+col prm format a30 
+col val format a10 
+col usg format a10
+
+SELECT 'session_cached_cursors' prm,
+  lpad(value, 5) AS "val",
+  DECODE(value, 0, '  n/a', TO_CHAR(100 * used / value, '999')
+  || '%') usg
+FROM
+  (SELECT MAX(s.value) used
+  FROM v$statname n,
+    v$sesstat s
+  WHERE n.name     = 'session cursor cache count'
+  AND s.statistic# = n.statistic#
+  ),
+  ( SELECT value FROM v$parameter WHERE name = 'session_cached_cursors'
+  )
+UNION ALL
+SELECT 'open_cursors' prm,
+  lpad(value, 5) AS "val",
+  TO_CHAR(100 * used / value, '999')
+  || '%' usg
+FROM
+  (SELECT MAX(SUM(s.value)) used
+  FROM v$statname n,
+    v$sesstat s
+  WHERE n.name    IN ('opened cursors current')
+  AND s.statistic# = n.statistic#
+  GROUP BY s.sid
+  ),
+  ( SELECT value FROM v$parameter WHERE name = 'open_cursors'
+  );
+
+
+prompt
+prompt ************************************************************************
+prompt    Shows Maintenance windows
+prompt ************************************************************************
+prompt
+
+col client_name for a65
+SELECT client_name, status FROM dba_autotask_operation;
+
+col WINDOW_NEXT_TIME for a45
+select window_name,window_next_time,AUTOTASK_STATUS from DBA_AUTOTASK_WINDOW_CLIENTS;
+
+prompt
+prompt ************************************************************************
+prompt    Shows Tables with statistics older than 30 days and no statistics at all.
+prompt ************************************************************************
+prompt
+
+col owner format a20
+
+SELECT owner,
+  COUNT(1) CNT
+FROM dba_tables
+WHERE owner IN
+  (SELECT username FROM dba_users WHERE account_status='OPEN'
+  )
+AND (last_analyzed IS NULL
+OR last_analyzed    < (sysdate-30))
+AND TEMPORARY       = 'N'
+GROUP BY owner;
+
+prompt *********************************************************************************
+prompt    Shows Indexes with statistics older than 30 days and no statistics at all.
+prompt *********************************************************************************
+prompt
+
+SELECT owner,
+  COUNT(1) CNT
+FROM dba_indexes
+WHERE owner IN
+  (SELECT username FROM dba_users WHERE account_status='OPEN'
+  )
+AND (last_analyzed IS NULL
+OR last_analyzed    < (sysdate-30))
+GROUP BY owner;
+
+
+prompt ************************************************************************
+prompt                      Shows Unusable Indexes.
+prompt ************************************************************************
+prompt
+
+SELECT owner, index_name, tablespace_name FROM   dba_indexes WHERE  status = 'UNUSABLE';
+
+SELECT index_owner, index_name, partition_name, tablespace_name FROM   dba_ind_PARTITIONS WHERE  status = 'UNUSABLE';
+
+SELECT index_owner, index_name, partition_name, subpartition_name, tablespace_name FROM   dba_ind_SUBPARTITIONS WHERE  status = 'UNUSABLE';
+
+
+prompt
+prompt
+prompt ************************************************************************
+prompt    Foregin key constraitns without indexes
+prompt ************************************************************************
+prompt
+
+SET lines 282 pages 2000
+column owner format a12
+column CONSTRAINT_NAME format a30
+column MASTER_TABLE_NAME format a30
+column FOREGIN_TABLE_NAME format a30
+column MASTER_KEY_COLUMN format a30
+column DETAIL_COLUMN format a30
+column num_rows head NRows format 9999999999999 JUSTIFY RIGHT
+
+SELECT constraint_info.CONSTRAINT_NAME ,
+  master_table.owner,
+  master_table.TABLE_NAME MASTER_TABLE_NAME,
+  master_table.column_name MASTER_KEY_COLUMN,
+  detail_table.owner,
+  detail_table.TABLE_NAME FOREGIN_TABLE_NAME,
+  detail_table.column_name DETAIL_COLUMN
+FROM dba_constraints constraint_info,
+  dba_cons_columns detail_table,
+  dba_cons_columns master_table
+WHERE master_table.owner              = detail_table.owner
+AND detail_table.owner                = constraint_info.owner
+AND master_table.owner                = constraint_info.owner
+AND constraint_info.constraint_name   = detail_table.constraint_name
+AND constraint_info.r_constraint_name = master_table.constraint_name
+AND detail_table.POSITION             = master_table.POSITION
+AND constraint_info.CONSTRAINT_NAME  IN
+  (SELECT b.constraint_name
+  FROM
+    (SELECT owner,
+      table_name ,
+      column_name
+    FROM dba_cons_columns
+    WHERE constraint_name IN
+      (SELECT constraint_name
+      FROM dba_constraints
+      WHERE owner IN
+        (SELECT username FROM dba_users WHERE account_status='OPEN'
+        )
+      AND constraint_type = 'R'
+      )
+    MINUS
+    SELECT table_owner,
+      table_name ,
+      column_name
+    FROM dba_ind_columns
+    WHERE table_owner IN
+      (SELECT username FROM dba_users WHERE account_status='OPEN'
+      )
+    ) a ,
+    dba_constraints b,
+    dba_cons_columns c,
+    dba_tables d
+  WHERE a.owner        = b.owner
+  AND b.owner          = c.owner
+  AND a.owner          = c.owner
+  AND a.owner          = d.owner
+  AND a.table_name     = b.table_name
+  AND b.table_name     =c.table_name
+  AND c.table_name     =d.table_name
+  AND a.column_name    =c.column_name
+  AND d.num_rows       > 10000
+  AND b.constraint_name=c.constraint_name
+  AND b.constraint_type='R'
+  AND b.status         ='ENABLED'
+  )
+ORDER BY 1,2;
+
+prompt
+prompt ************************************************************************
+prompt    Cache size for most used sequences
+prompt ************************************************************************
+prompt
+
+col SEQUENCE_OWNER format a20
+col SEQUENCE_NAME format a30
+
+SELECT *
+FROM
+  (SELECT SEQUENCE_OWNER,
+    SEQUENCE_NAME,
+    cache_size,
+    LAST_NUMBER
+  FROM dba_sequences where SEQUENCE_OWNER NOT IN ('SYS','SYSTEM','OUTLN','DBSNMP','LBACSYS')
+  ORDER BY last_number DESC
+  )
+WHERE rownum < 11;
+
+prompt
+prompt ************************************************************************
+prompt    Sequences with no cycle and high usage. 
+prompt ************************************************************************
+prompt
+
+SELECT *
+FROM
+  (SELECT SEQUENCE_OWNER,
+    SEQUENCE_NAME,
+    cache_size,
+    LAST_NUMBER,
+  max_value,
+  cycle_flag,
+  ROUND(((last_number*100)/max_value),2) used_prcnt
+  FROM dba_sequences where CYCLE_FLAG = 'N' and SEQUENCE_OWNER NOT IN ('SYS','SYSTEM','OUTLN','DBSNMP','LBACSYS','GSMADMIN_INTERNAL','DVSYS','WMSYS','XDB') 
+  and SEQUENCE_OWNER in (select username from dba_users where account_status='OPEN')
+  ORDER BY used_prcnt DESC
+  )
+WHERE rownum < 21;
+
+prompt
+prompt ************************************************************************
+prompt    Top 20 segments
+prompt ************************************************************************
+prompt
+
+SET lines 180 pages 5000 
+col owner format a15 
+col segment_name format a30 
+col partition_name format a30 
+col tablespace_name format a30 
+col SizeGB format 99,99,999 
+col segment_type format a15
+
+SELECT *
+FROM
+  (SELECT owner,
+    SEGMENT_NAME,
+    partition_name,
+    segment_type,
+    tablespace_name,
+    bytes/1024/1024/1024 SizeGB
+  FROM dba_segments
+    --    WHERE tablespace_name=trim(upper('TableSpace_Name'))
+  ORDER BY bytes DESC
+  )
+WHERE rownum < 21;
+
+prompt
+prompt ************************************************************************
+prompt     List of Fragmented tables.
+prompt ************************************************************************
+prompt
+
+SET lines 180 pages 5000 
+col owner format a20 
+col table_name format a30 
+col LAST_ANALYZED format a24 
+col size_gb format 99999.99 
+col actual_gb format 99999.99 
+col frg_gb format 99999.99 
+col pct_frg format 999.99
+
+SELECT tb.owner,
+  tb.table_name,
+  ROUND(sg.size_gb,2) size_gb,
+  ROUND(tb.actual_gb,2) actual_gb,
+  ROUND((sg.size_gb-tb.actual_gb),2) Frg_GB ,
+  tb.Last_analyzed,
+  ROUND(((sg.size_gb-tb.actual_gb)/sg.size_gb)*100,2) Pct_Frg
+FROM
+  (SELECT owner,
+    segment_name,
+    SUM(bytes)/1024/1024/1024 Size_GB
+  FROM dba_segments
+  WHERE bytes > 102400000
+  GROUP BY owner,
+    segment_name
+  ) SG,
+  (SELECT OWNER,
+    TABLE_NAME,
+    ROUND((NUM_ROWS*AVG_ROW_LEN/1024/1024/1024),2) ACTUAL_GB,
+    TO_CHAR(Last_analyzed,'DD.MM.YYYY HH24:MI:SS') Last_analyzed
+  FROM DBA_TABLES
+  WHERE BLOCKS > 1000
+  ) Tb
+WHERE sg.owner                                 =tb.owner
+AND sg.segment_name                            =tb.table_name
+AND ((sg.size_gb-tb.actual_Gb)*100)/sg.size_gb > 25
+ORDER BY 3;
+
+prompt
+prompt ************************************************************************
+prompt           Checking for indexes bigger than table
+prompt ************************************************************************
+prompt
+
+SET lines 180 
+col index_name format a30 
+col table_name format a30 
+col owner format a15 
+col table_owner format a15
+
+SELECT ui.owner,
+  ui.index_name,
+  ROUND(SUM(us2.bytes)/1024/1024/1024,3) "I_SizeGB",
+  ui.table_owner,
+  ui.table_name,
+  ROUND(SUM(us1.bytes)/1024/1024/1024,3) "T_SizeGB"
+FROM dba_segments us1,
+  dba_segments us2,
+  dba_indexes ui,
+  dba_tables ut
+WHERE ut.owner      = ui.table_owner
+AND ut.table_name   = ui.table_name
+AND ut.owner        = us1.owner
+AND ut.table_name   = us1.segment_name
+AND ui.owner        = us2.owner
+AND ui.index_name   = us2.segment_name
+AND us1.segment_type='TABLE'
+AND us2.segment_type='INDEX'
+AND us1.bytes       > (1024*1024*10)
+AND us2.bytes       > (1024*1024*10)
+GROUP BY ui.owner,
+  ui.index_name,
+  ui.table_owner,
+  ui.table_name
+HAVING SUM(us2.bytes)/1024/1024 > SUM(us1.bytes)/1024/1024
+ORDER BY 6;
+
+prompt
+prompt ************************************************************************ 
+prompt Checking MLOG$ size
+prompt ************************************************************************ 
+prompt
+
+
+col onwer format a15
+col LOG_OWNER format a15
+col segment_name format a30
+col table_name format a30
+col MVIEW_NAME format a30
+col LOG_TABLE format a30
+col MASTER format a30
+col Rfrsh_Date format a20
+col Size_MB format 99,999.99
+
+select owner,segment_name,round(bytes/1024/1024,2) Size_MB from dba_SEGMENTS where segment_name like 'MLOG$%';
+
+
+prompt
+prompt ************************************************************************ 
+prompt Checking for MVIEW
+prompt ************************************************************************ 
+prompt
+
+select owner,mview_name,to_char(last_refresh_date,'DD.MM.YYYY HH24:MI:SS') Rfrsh_Date from dba_mviews order by 3;
+
+prompt
+prompt ************************************************************************ 
+prompt Checking for MLOG$ without MVIEWS
+prompt ************************************************************************ 
+prompt
+
+select log_owner,master, log_table,snapshot_id from dba_snapshot_logs where current_snapshots is null;
+
+prompt
+prompt ************************************************************************
+prompt    Checking for probable next_extent failures
+prompt ************************************************************************
+prompt
+
+column SEGMENT_NAME format a35
+column TABLESPACE_NAME format a30
+column owner format a15
+
+SELECT a.owner,
+  a.segment_name,
+  a.tablespace_name,
+  ROUND(a.next_extent  /1024/1024) MB_NEXT_EXT,
+  ROUND(b.largest_chunk/1024/1024) MB_LARGEST_CHUNK
+FROM dba_segments a,
+  (SELECT tablespace_name,
+    MAX(bytes) Largest_Chunk
+  FROM dba_free_space
+  GROUP BY tablespace_name
+  ) b
+WHERE a.tablespace_name=b.tablespace_name
+AND a.next_extent      > b.largest_chunk;
+
+prompt
+prompt ************************************************************************
+prompt       SQL statements that may cause errors like OutOfMemoryError
+prompt ************************************************************************
+prompt
+
+SET head ON 
+col s_text format a85 word_wrapped head "SQL Text" 
+col s_id head "SQL ID" 
+col VERSIONS_VARIANCE format 999,999,999 head "Variance"
+
+SELECT ADDRESS s_id,
+  sql_text s_text,
+  (SQLAREA_CNT-SHARED_CNT) VERSIONS_VARIANCE
+FROM
+  (SELECT a.ADDRESS,
+    a.version_count SQLAREA_CNT,
+    COUNT(*) SHARED_CNT,
+    sql_text
+  FROM v$sqlarea a,
+    v$sql_shared_cursor c
+  WHERE a.ADDRESS     =c.ADDRESS
+  AND a.version_count > 10
+  GROUP BY a.ADDRESS,
+    a.version_count,
+    sql_text
+  ) vers
+WHERE (SQLAREA_CNT-SHARED_CNT) > 500
+ORDER BY 3 DESC;
+
+prompt
+prompt ************************************************************************
+prompt     Memory Resize History
+prompt ************************************************************************
+
+column component format a25
+column parameter format a30 
+column ISizeMB format 99,999,999,999 
+column TSizeMB  format 99,999,999,999 
+column FSizeMB   format 99,999,999,999 
+column started_at format a18
+column ended_at   format a18
+
+select 
+        component, 
+        oper_type, 
+        oper_mode, 
+        parameter, 
+        initial_size/1024/1024 ISizeMB, 
+        target_size/1024/1024 TSizeMB, 
+        final_size/1024/1024 FSizeMB, 
+        status, 
+        to_char(start_time,'dd-mon-yy hh24:mi:ss') started_at, 
+        to_char(end_time,'dd-mon-yy hh24:mi:ss')   ended_at 
+from 
+        v$memory_resize_ops 
+where
+    initial_size != 0
+or  target_size  != 0
+or  final_size   != 0
+order by 
+        start_time; 
+
+prompt
+prompt ************************************************************************
+prompt     Log file group and block size 
+prompt ************************************************************************
+
+col member format a55
+select a.GROUP#, a.thread#,b.status,b.member,a.bytes/1024/1024 SizeMB, a.blocksize from v$log a, v$logfile b where a.group#=b.group#;
+
+
+prompt
+prompt ************************************************************************
+prompt     System Parameters information
+prompt ************************************************************************
+
+BREAK ON PAGE SKIP 1
+
+SET NEWPAGE 1
+SET HEADING ON
+SET EMBEDDED ON
+SET VERIFY ON
+COLUMN name format a36 heading 'Parameter Name' wrap
+COLUMN val format a36 heading 'Value' wrap
+SELECT name ,
+  DECODE(type,1,'Boolean',2,'Character',3,'Integer',4,'File',NULL) "Type",
+  Value val
+FROM v$parameter
+ORDER BY 1;
+
+spool OFF
+
+SET feedback ON

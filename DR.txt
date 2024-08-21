@@ -1,0 +1,322 @@
+﻿1. Primary database "single or rac"
+
+2. Standby databases 
+	- Physical ==> A physical standby database is kept synchronized with the primary database, which recovers the redo data received
+	  from the primary database and applies the redo to the physical standby database.
+	- Logical ==> The logical standby database is kept synchronized with the primary database through SQL Apply, which transforms the
+	  data in the redo received from the primary database into SQL statements and then executes the SQL statements on the standby 
+	  database.
+	- Snapshot ==> is best used in scenarios that require a temporary, updatable snapshot of a physical standby database.
+
+A switchover is a role reversal between the primary database and one of its standby databases.
+the primary database ==> standby role		standby database ==> the primary role.
+
+A failover is when the primary database is unavailable. Failover is performed only in the event of a failure of the primary database, and 
+the failover results in a transition of a standby database to the primary role. The database administrator can configure Oracle Data Guard
+to ensure no data loss.
+
+You can also use the Oracle Data Guard broker to simplify role transitions and automate failovers using Oracle Enterprise Manager Cloud 
+Control or the DGMGRL command-line interface
+
+-------------------------------------------------------------------------------------------------------------------------------------------
+Oracle Data Guard Broker (DGMGRL)
+
+automates the creation, maintenance, and monitoring of Oracle Data Guard configurations.
+
+-------------------------------------------------------------------------------------------------------------------------------------------
+Configure Redo Transport Authentication
+
+These redo transport sessions are authenticated using either the Secure Sockets Layer (SSL) protocol or a remote login password file.
+
+The LOG_ARCHIVE_DEST_n, and FAL_SERVER database initialization parameters that correspond to the databases use Oracle Net connect 
+descriptors configured for SSL
+
+-------------------------------------------------------------------------------------------------------------------------------------------
+This is an alphabetical listing of the initialization parameters you set for a Data Guard:
+
+1# COMPATIBLE = release_number
+				Primary
+				Logical Standby
+				Physical Standby
+				Snapshot Standby
+
+2# CONTROL_FILE_RECORD_KEEP_TIME = number_of_days					"optional"
+				Primary
+				Logical Standby
+				Physical Standby
+				Snapshot Standby
+
+3# CONTROL_FILES = 'control_file_name', 'control_file_name', '...'			"Required"
+				Primary
+				Logical Standby
+				Physical Standby
+				Snapshot Standby
+
+4# DB_FILE_NAME_CONVERT = 'location_of_primary_database_datafile','location_of_standby_database_datafile'
+				Physical Standby
+				Snapshot Standby
+
+5# DB_UNIQUE_NAME = Unique name for the database					"Recommended"
+				Primary
+				Logical Standby
+				Physical Standby
+				Snapshot Standby
+
+6# FAL_CLIENT = Oracle_Net_service_name						     "no longer required"
+				Physical Standby
+				Snapshot Standby
+
+7# FAL_SERVER = Oracle_Net_service_name
+				Physical Standby
+				Snapshot Standby
+
+8# INSTANCE_NAME									"optional"
+				Primary
+				Logical Standby
+				Physical Standby
+				Snapshot Standby
+
+9# LOG_ARCHIVE_CONFIG ='DG_CONFIG=(db_unique_name, db_unique_name, ... )'	   "Highly recommended"
+				Primary
+				Logical Standby
+				Physical Standby
+				Snapshot Standby
+
+10# LOG_ARCHIVE_DEST_n = {LOCATION=path_name | SERVICE=service_name, attribute, attribute, ...} "Required"
+				Primary
+				Logical Standby
+				Physical Standby
+				Snapshot Standby
+
+LOG_ARCHIVE_DEST_4='SERVICE=ACSX9DR NOAFFIRM ASYNC VALID_FOR=(ONLINE_LOGFILES,PRIMARY_ROLE) DB_UNIQUE_NAME=ACSX9DR'
+
+n: 1-10 ==> LOCATION		11-31 ==> SERVICE, Not support SYNC
+
+LOCATION or SERVICE: local disk directory or a remote database destination
+AFFIRM: Acknowledge received redo data after writing it to standby.
+NOAFFIRM: Acknowledge received redo data before writing it to standby.
+DB_UNIQUE_NAME: specifies a unique name for the database at this destination.
+SYNC: The redo data generated must have been received by every enabled destination before commit.
+ASYNC: The redo data generated can be commited before being received.
+VALID FOR: Whether online redo log files, standby redo log files, or both are currently being archived on the database at this destination
+VALID_FOR=(redo_log_type,database_role)
+ONLINE_LOGFILE: This destination is valid only when archiving online redo log files.
+STANDBY_LOGFILE: This destination is valid only when archiving standby redo log files.
+ALL_LOGFILES: This destination is valid when archiving either online redo log files or standby redo log files.
+PRIMARY_ROLE: This destination is valid only when the database is running in the primary role.
+STANDBY_ROLE: This destination is valid only when the database is running in the standby role.
+ALL_ROLES—This destination is valid when the database is running in either the primary or the standby role.
+
+
+11# LOG_ARCHIVE_DEST_STATE_n = {ENABLE|DEFER|ALTERNATE}					"Required"
+				Primary
+				Logical Standby
+				Physical Standby
+				Snapshot Standby
+
+12# LOG_ARCHIVE_FORMAT=log%d_%t_%s_%r.arc						 "spfile"
+				Primary
+				Logical Standby
+				Physical Standby
+				Snapshot Standby
+
+13# LOG_FILE_NAME_CONVERT = 'location_of_primary_database_redo_logs','location_of_standby_database_redo_logs'
+				Logical Standby
+				Physical Standby
+				Snapshot Standby
+
+14# REMOTE_LOGIN_PASSWORDFILE = {EXCLUSIVE|SHARED}					 "spfile"
+				Primary
+				Logical Standby
+				Physical Standby
+				Snapshot Standby
+
+15# STANDBY_FILE_MANAGEMENT = {AUTO | MANUAL}
+				Primary
+				Physical Standby
+				Snapshot Standby
+-------------------------------------------------------------------------------------------------------------------------------------------
+Data Guard broker command-line interface (DGMGRL)
+The Oracle Data Guard broker is a distributed management framework that automates and centralizes the creation, maintenance, and monitoring 
+of Oracle Data Guard configurations.
+
+1. Set parameter dg_broker_config_file1 and dg_broker_config_file1 on all instances.
+On primary & Standby:
+SQL> show parameter dg_broker_config
+SQL> alter system set dg_broker_config_file1='/path/to/file1' sid='*'; 
+SQL> alter system set dg_broker_config_file2='/path/to/file2' sid='*'; 
+
+2. Enable broker on both primary and standby
+On primary & Standby:
+SQL> alter system set dg_broker_start=TRUE sid='*';
+
+3. TNS entry for primary adn for all standby databases on all servers.
+check the tnsnames.ora and try tnsping.
+
+4. Login to primary through DGMGRL.
+#dgmgrl
+DGMGRL> connect sys/pass				//can connect to DR: DGMGRL> connect sys/pass@DR
+
+5. Configure dg broker for primary. 
+DGMGRL> show configuration
+SQL> show parameter db_unique_name
+DGMGRL> CREATE CONFIGURATION 'prod_name' AS PRIMARY DATABASE IS 'db_unique_name' CONNECT IDENTIFIER IS <Primary TNS entry>;
+
+6. Configure dg broker for standby.
+On Standby:
+SQL> show parameter db_unique_name
+
+On Primary:
+SQL> show parameter log_archive_dest			//reset any destination exists
+DGMGRL> ADD DATABASE 'dr_name' AS CONNECT IDENTIFIER IS <DR TNS entry>;
+
+7. Check all configurations.
+DGMGRL> show configuration;
+#ps -ef|grep dmon
+
+8. Enable configuration.
+On Primary: 
+DGMGRL> enable configuration; 
+
+------------------------------------------------------------------------------------------------------------------------------------------
+Switchover
+
+DGMGRL> switchover to dr_name;
+
+
+------------------------------------------------------------------------------------------------------------------------------------------
+# Primary Database Queries
+
+1. Check if any remote standby archive destination is getting errors,
+Check if all remote standby archive destinations is enabled or VALID:
+
+SQL> select sysdate,status,error
+ 	from gv$archive_dest_status
+ 	where type='PHYSICAL'
+ 	and status!='VALID'
+ 	or error is not null;
+
+Good health = no rows returned
+If the query returns rows, then raise an alert with the returned data.
+
+2. Check if any NOLOGGING activity occurred on the primary database in the last day:
+
+SQL> select file#, name, unrecoverable_change#, unrecoverable_time
+ 	from v$datafile
+ 	where unrecoverable_time > (sysdate - 1);
+
+Good health = no rows returned
+If the query returns rows, then the standby database is vulnerable, and the files listed in the output must be refreshed on the standby.
+
+3. Detect gaps on the standby database:
+
+SQL> select sysdate,database_mode,recovery_mode, gap_status
+ 	from v$archive_dest_status
+ 	where type='PHYSICAL'
+ 	and gap_status !='NO GAP'; 
+
+Good health = no rows returned
+If the query returns rows, then there's an existing gap between the primary and the standby database, and you must run the same query on 
+the standby database.
+If the output from the primary and standby is identical, then no action is required.
+If the output on the standby does not match the output from the primary, then the datafile on the standby should be refreshed.
+
+4. Assess whether any severe Data Guard event occurred in the last day:
+
+SQL> select *
+ 	from v$dataguard_status
+ 	where severity in ('Error','Fatal')
+ 	and timestamp > (sysdate -1);
+
+Good health = no rows returned
+If the query returns rows, then raise an alert with the returned output.
+
+FOR SYNC ENVIRONMENTS ONLY:
+
+5. Assess if running in Maximum Availability mode and configuration is in sync:
+
+SQL> select sysdate,protection_mode, synchronized, synchronization_status
+ 	from v$archive_dest_status
+ 	where type='PHYSICAL'
+ 	and synchronization_status !='OK';
+
+Good health = no rows returned
+If the query returns rows, then raise an alert with the returned output.
+
+------------------------------------------------------------------------------------------------------------------------------------------
+# Physical Standby Database Queries
+
+1. Determine if there is a transport lag:
+
+SQL> select name,value,time_computed,datum_time
+ 	from v$dataguard_stats
+ 	where name='transport lag'
+ 	and value > '+00 00:01:00';
+
+Good health = no rows returned
+If no rows are returned, then this implies that there is no transport lag
+
+2. Determine if there is an apply lag:
+
+SQL> select name,value,time_computed,datum_time
+ 	from v$dataguard_stats
+ 	where name='apply lag'
+ 	and value > '+00 00:01:00';
+
+Good health = no rows returned
+If no rows are returned, then this implies that there is no apply lag
+
+3. Standby data file check (offline files or files that are not accessible)
+
+SQL> select *
+ 	from v$datafile_header
+ 	where status ='OFFLINE'
+ 	or ERROR is not null;
+
+Good health = no rows returned
+Any rows returned list the files that have I/O or recovery issues
+
+4. Verify that the Media Recovery Process is currently running
+
+SQL> select *
+ 	from v$managed_standby
+ 	where process like 'MRP%';
+
+Good health = rows returned
+If no rows are returned, then the MRP process is not running
+
+5. Assess whether any severe Data Guard event occurred in the last day:
+
+SQL> select *
+ 	from v$dataguard_status
+ 	where severity in ('Error','Fatal')
+ 	and timestamp > (sysdate -1);
+
+Good health = no rows returned
+If the query returns rows, then raise an alert with the returned output
+
+------------------------------------------------------------------------------------------------------------------------------------------
+# Check Sync
+
+SELECT   ARCH.THREAD# "Thread", ARCH.SEQUENCE# "Last Sequence Received", APPL.SEQUENCE# "Last Sequence Applied", (ARCH.SEQUENCE# - APPL.SEQUENCE#) "Difference"
+  FROM   (SELECT   THREAD#, SEQUENCE# FROM   V$ARCHIVED_LOG WHERE   (THREAD#, FIRST_TIME) IN (  SELECT   THREAD#, MAX (FIRST_TIME) FROM   V$ARCHIVED_LOG GROUP BY   THREAD#)) ARCH,
+         (SELECT   THREAD#, SEQUENCE# FROM   V$LOG_HISTORY WHERE   (THREAD#, FIRST_TIME) IN (  SELECT   THREAD#, MAX (FIRST_TIME) FROM   V$LOG_HISTORY  GROUP BY   THREAD#)) APPL
+ WHERE   ARCH.THREAD# = APPL.THREAD#;
+
+------------------------------------------------------------------------------------------------------------------------------------------
+# DR Protection Modes:
+
+1. Maximum Availability	
+AFFIRM or NOAFFIRM
+SYNC
+DB_UNIQUE_NAME
+
+2. Maximum Performance	
+NOAFFIRM
+ASYNC
+DB_UNIQUE_NAME
+
+3. Maximum Protection
+AFFIRM
+SYNC
+DB_UNIQUE_NAME

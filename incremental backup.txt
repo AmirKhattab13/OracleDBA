@@ -1,0 +1,69 @@
+Incremental types: (level 1)
+1. Cumulative	//faster restore, slower in backup
+   - backup blocks from the last recent level 0 backup
+	//level 0 ==> Friday
+	//level 1 ==> Saturday to last Friday
+	//level 1 ==> Sunday to last Friday
+	.
+	.
+	.
+	//level 1 ==> Thursday to last Friday
+
+2. Diffirential	//faster backup, slower in restore, default
+    - backup blocks from the last recent level backup
+	//level 0 ==> Friday
+	//level 1 ==> Saturday to last Friday
+	//level 1 ==> Sunday to last Saturday
+	.
+	.
+	.
+	//level 1 ==> Thursday to last Wednsday
+
+Ex on level 0 backup		//diffirential
+	run
+	{
+	  allocate channel <name> device type disk format '/path/%U';
+	  backup incremental level 0 tag 'name' database;
+	  backup tag 'name' archivelog all;
+	}	
+
+Ex on level 1 backup		//diffirential
+	run
+	{
+	  allocate channel <name> device type disk format '/path/%U';
+	  backup incremental level 1 tag 'name' database;
+	  backup archivelog all not backed up;	//not backup archive logs
+	}
+
+RMAN> backup incremental level 0 cumulative database;
+RMAN> backup incremental level 1 cumulative database;
+
+--------------------------------------------------------------------------------------------------------------------
+
+Report command:
+RMAN> report schema;
+RMAN> report unrecoverable;
+RMAN> report obsolete;
+RMAN> report need backup;
+
+Delete command:
+RMAN> delete archivelog all;
+RMAN> delete obsolete;
+RMAN> delete backupset all;
+
+List command:
+RMAN> list backup summary;
+RMAN> list backup by file;
+RMAN> list copy;
+RMAN> list backup;
+RMAN> list backupset;
+
+--------------------------------------------------------------------------------------------------------------------
+
+Block change tracking
+
+SQL> alter database enable block change tracking using file '/path/file.f' reuse;
+		//file save changes happened on blocks, intialize with 10M, it's 		important to be exist to start DB
+SQL> select status from v$block_change_tracking;
+
+--------------------------------------------------------------------------------------------------------------------

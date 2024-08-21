@@ -1,0 +1,17 @@
+What is expected from Oracle DBA:
+1. Install Oracle SW
+2. Create new db
+3. Upgrade db or SW
+4. Start and shutdown db
+5. Manage db storage structure <files>
+6. Handle users
+7. Handle objects
+8. Backup & Restore
+9. Monitor and tuning performance
+10. Implement new technologies
+11. Approve db changes
+
+DBA serves application or server. it is a must to know your customer
+
+--------------------------------------------------------------------------------------------------------------------
+ 

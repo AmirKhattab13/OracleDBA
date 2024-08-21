@@ -1,0 +1,70 @@
+0) Create a backup of the ORACLE_HOME (database binaries)
+
+1) Confirm the current RAC database ORACLE_HOME path
+# srvctl config database -d orcl
+Database unique name: orcl
+Database name: orcl
+Oracle home: /u01/app/oracle/product/11.2.0/dbhome_1 <======
+
+2) Stop database
+# su - oracle
+# srvctl stop database -d orcl
+# su - grid
+# crsctl stat res ora.orcl.db -t
+ora.orcl.db
+1 OFFLINE OFFLINE Instance Shutdown
+2 OFFLINE OFFLINE Instance Shutdown
+
+3) Update the inventory to detach the RAC database ORACLE_HOME
+3-1) Confirm RAC database ORACLE_HOME in inventory
+# less /u01/app/oraInventory/ContentsXML/inventory.xml
+
+<HOME NAME="OraDb11g_home1" LOC="/u01/app/oracle/product/11.2.0/dbhome_1" TYPE="O" IDX="2">
+<NODE_LIST>
+<NODE NAME="yan1"/>
+<NODE NAME="yan2"/>
+</NODE_LIST>
+</HOME>
+
+3-2) Run the appropriate detachHome command to remove the current ORACLE_HOME from the inventory
+# cd $ORACLE_HOME/oui/bin
+# ./runInstaller -silent -detachHome -local -waitforcompletion ORACLE_HOME="/u01/app/oracle/product/11.2.0/dbhome_1" ORACLE_HOME_NAME="OraDb11g_home1"
+3-3) Confirm that the RAC database ORACLE_HOME was removed from the inventory
+# less /u01/app/oraInventory/ContentsXML/inventory.xml
+
+<HOME NAME="OraDb11g_home1" LOC="/u01/app/oracle/product/11.2.0/dbhome_1" TYPE="O" IDX="2" REMOVED="T"/>
+
+4) Move (clone) RAC database ORACLE_HOME to new location
+4-1) Use the mv command to move RAC database ORACLE_HOME to new location
+# cd /u01/app/oracle/product/11.2.0
+# mv dbhome_1/ dbhome_2/
+4-2) Run clone in new RAC database ORACLE_HOME
+# cd dbhome_2/
+# cd clone/bin
+# pwd
+/u01/app/oracle/product/11.2.0/dbhome_2/clone/bin
+# perl clone.pl ORACLE_HOME=/u01/app/oracle/product/11.2.0/dbhome_2 ORACLE_HOME_NAME=OraDb11g_home2 CLUSTER_NODES="{yan1,yan2}" LOCAL_NODE=yan1 ORACLE_BASE=/u01/app/oracle
+4-3) run root.sh according to the output of above clone.pl
+[oracle@yan1 bin]$ su -
+[root@yan1 ~]# /u01/app/oracle/product/11.2.0/dbhome_2/root.sh
+[root@yan1 ~]# exit
+4-4) Confirm that the new RAC database ORACLE_HOME was registered in inventory
+[oracle@yan1 ~]$ less /u01/app/oraInventory/ContentsXML/inventory.xml
+<HOME NAME="OraDb11g_home2" LOC="/u01/app/oracle/product/11.2.0/dbhome_2" TYPE="O" IDX="10">
+<NODE_LIST>
+<NODE NAME="yan1"/>
+<NODE NAME="yan2"/>
+</NODE_LIST>
+</HOME>
+
+5) Update environment variables, such as $ORACLE_HOME etc. to reflect the new RAC database ORACLE_HOME path
+NOTE:  Repeat steps 3 - 5 in remaining nodes
+
+6) Start database
+[oracle@yan1 ~]$ srvctl modify database -d orcl -o /u01/app/oracle/product/11.2.0/dbhome_2
+[oracle@yan1 ~]$ srvctl start database -d orcl
+[oracle@yan1 ~]$ su - grid
+[grid@yan1 ~]$ crsctl stat res ora.orcl.db -t
+ora.orcl.db
+1 ONLINE ONLINE yan1 Open
+2 ONLINE ONLINE yan2 Open

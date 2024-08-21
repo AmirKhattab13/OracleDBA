@@ -1,0 +1,21 @@
+# mkdir /u01/app/oracle/GoldImage
+
+oracle# @ORACLE_HOME/runInstaller -createGoldImage -destinationLocation /u01/app/oracle/GoldImage
+
+# cp .zip /u01/app/oracle/new_home
+
+# unzip -q .zip
+
+# du - hs .
+
+# env | grep ORA
+
+# unset ORACLE_HOME
+
+# ./runInstaller
+
+setup sw only ==> rac ==> 2 nodes ==> enterprise ==> next .. finish
+
+# $ORACLE_HOME/Opatch/opatch lsinventory | grep ppli
+
+# srvctl modify database -d <name> -oraclehome </path>

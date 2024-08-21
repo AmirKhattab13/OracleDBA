@@ -1,0 +1,24 @@
+Incremently updated backup ==> make sure copy backup is up to date
+
+feature ==> switch db to copy, the copy will be the original db
+
+run 
+{
+  allocate channel <name> device type format '/path/%U';
+  recover copy of database with tag 'name' until time 'sysdate-1';
+  backup incremetal level 1 for recover of copy with tag 'name' database;
+}
+
+--------------------------------------------------------------------------------------------------------------------
+
+Backup control file
+RMAN> backup current controlfile;
+RMAN> backup as copy current controlfile format '/path/.ctl';
+
+Backup duration		//determine backup time
+RMAN> backup duration hours:min tablespace users;
+RMAN> backup duration hours:min database plus archivelog users;
+RMAN> backup duration hours:min minimize load database;	//increase time and minimize
+						resources of backup
+
+--------------------------------------------------------------------------------------------------------------------

@@ -1,0 +1,105 @@
+root# sqlplus / as sysdba
+SQL> show parameter name
+root# env | grep ORA
+root# grep Huge /proc/meminfo
+root# grep mem /proc/meminfo
+root# grep Mem /proc/meminfo
+root# free -g
+root# grep X11 /etc/ssh/sshd_config
+root# sqlplus / as sysdba
+SQL> select * from v$log;
+SQL> select name, usable_file_mb from v$asm_diskgroup;
+SQL> show parameter reco
+
+oracle# xdpyinfo
+oracle# ps -ef | grep pmon
+oracle# sqlplus / as sysdba
+SQL> show parameter sga
+SQL> select * from v$nls_parameters;
+SQL> set lines 230 pages 30
+SQL> col VALUE for a59
+SQL> col PARAMETER for a50
+SQL> /
+oracle# cp -p APIX9PRD ACX9PRD
+oracle# vi ACX9PRD
+oracle# cp -p .bash_profile_api .bash_profile_acx
+SQL> select * from v$services;
+SQL> l
+  1* select * from v$services
+SQL> c/*/name
+  1* select name from v$services
+SQL> select name, total_mb/1024 tot_gb, usable_file_mb/1024 use_gb , type from v$asm_diskgroup;
+SQL> def
+SQL> show parameter pga
+oracle# dbca
+SQL> set lines 230 pages 30
+SQL> select comp_name, status, version from dba_registry;
+SQL> desc dba_registry_sqlpatch
+SQL> select PATCH_ID, ACTION,STATUS,  ACTION_TIME from  dba_registry_sqlpatch;
+oracle# $ORACLE_HOME/OPatch/opatch lsinventory|grep ppli
+oracle# $ORACLE_HOME/OPatch/opatch lsinventory|grep escr
+
+SQL> show parameter db_c
+SQL> show parameter reco
+SQL> alter system set   db_recovery_file_dest_size=150g;
+SQL> alter system set   db_recovery_file_dest='+FRA';
+
+
+SQL> select * from v$log;
+
+    GROUP#    THREAD#  SEQUENCE#      BYTES  BLOCKSIZE    MEMBERS ARC STATUS           FIRST_CHANGE# FIRST_TIM NEXT_CHANGE# NEXT_TIM
+---------- ---------- ---------- ---------- ---------- ---------- --- ---------------- ------------- --------- ------------ --------
+         1          1         13  209715200        512          1 NO  INACTIVE               2343379 31-JUL-23      2352379 31-JUL-2
+         2          1         14  209715200        512          1 NO  CURRENT                2352379 31-JUL-23   9.2954E+18
+         3          2          1  209715200        512          1 NO  CURRENT                2390126 31-JUL-23   9.2954E+18 31-JUL-2
+         4          2          0  209715200        512          1 YES UNUSED                       0                      0
+
+SQL> alter database add logfile thread 2 group 5 ('+DATA','+FRA') size 500m;
+SQL> c/5/6
+  1* alter database add logfile thread 2 group 6 ('+DATA','+FRA') size 500m
+SQL> /
+SQL> select * from v$log;
+
+    GROUP#    THREAD#  SEQUENCE#      BYTES  BLOCKSIZE    MEMBERS ARC STATUS           FIRST_CHANGE# FIRST_TIM NEXT_CHANGE# NEXT_TIM
+---------- ---------- ---------- ---------- ---------- ---------- --- ---------------- ------------- --------- ------------ --------
+         1          1         13  209715200        512          1 NO  INACTIVE               2343379 31-JUL-23      2352379 31-JUL-2
+         2          1         14  209715200        512          1 NO  CURRENT                2352379 31-JUL-23   9.2954E+18
+         3          2          1  209715200        512          1 NO  CURRENT                2390126 31-JUL-23   9.2954E+18 31-JUL-2
+         4          2          0  209715200        512          1 YES UNUSED                       0                      0
+         5          2          0  524288000        512          2 YES UNUSED                       0                      0
+         6          2          0  524288000        512          2 YES UNUSED                       0                      0
+
+SQL> alter database drop logfile group 4;
+SQL> alter database add logfile thread 2 group 6 ('+DATA','+FRA') size 500m
+  2
+SQL> c/6/4
+  1* alter database add logfile thread 2 group 4 ('+DATA','+FRA') size 500m
+SQL> /
+
+SQL> select * from v$log;
+
+    GROUP#    THREAD#  SEQUENCE#      BYTES  BLOCKSIZE    MEMBERS ARC STATUS           FIRST_CHANGE# FIRST_TIM NEXT_CHANGE# NEXT_TIM
+---------- ---------- ---------- ---------- ---------- ---------- --- ---------------- ------------- --------- ------------ --------
+         1          1         13  209715200        512          1 NO  INACTIVE               2343379 31-JUL-23      2352379 31-JUL-2
+         2          1         14  209715200        512          1 NO  CURRENT                2352379 31-JUL-23   9.2954E+18
+         3          2          1  209715200        512          1 NO  CURRENT                2390126 31-JUL-23   9.2954E+18 31-JUL-2
+         4          2          0  524288000        512          2 YES UNUSED                       0                      0
+         5          2          0  524288000        512          2 YES UNUSED                       0                      0
+         6          2          0  524288000        512          2 YES UNUSED                       0                      0
+
+SQL> alter system switch logfile;
+SQL> alter system checkpoint;
+SQL> shutdown;
+oracle# srvctl stop database -d ACX9PRD
+oracle# sqlplus / as sysdba
+SQL> startup mount
+SQL> alter database archivelog;
+SQL> alter database open;
+SQL> archive log list
+SQL> alter system archive log current;
+SQL> select name from v$archived_log;
+SQL> shut immediate
+oracle# srvctl start database -d ACX9PRD
+oracle# tail -100f /u01/app/oracle/diag/rdbms/acx9prd/ACX9PRD2/trace/alert_ACX9PRD2.log
+
+

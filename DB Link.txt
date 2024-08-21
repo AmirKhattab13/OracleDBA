@@ -1,0 +1,43 @@
+To create a private database link, you must have the CREATE DATABASE LINK system privilege. 
+To create a public database link, you must have the CREATE PUBLIC DATABASE LINK system privilege. 
+You must have the CREATE SESSION system privilege on the remote Oracle Database.
+
+CREATE [ SHARED ] [ PUBLIC ] DATABASE LINK dblink
+  [ CONNECT TO
+    { CURRENT_USER
+    | user IDENTIFIED BY password [ dblink_authentication ]
+    }
+  | dblink_authentication
+  ]...
+  [ USING connect_string ] ;
+
+SHARED: to create a database link that can be shared by multiple sessions using a single network connection from the source database to the 
+target database. In a shared server configuration, shared database links can keep the number of connections into the remote database from 
+becoming too large. Shared links are typically also public database links. However, a shared private database link can be useful when many 
+clients access the same local schema, and therefore use the same private database link.
+
+In a shared database link, multiple sessions in the source database share the same connection to the target database. Once a session is 
+established on the target database, that session is disassociated from the connection, to make the connection available to another session 
+on the source database. To prevent an unauthorized session from attempting to connect through the database link, when you specify SHARED 
+you must also specify the dblink_authentication clause for the users authorized to use the database link.
+
+
+PUBLIC: to create a public database link visible to all users. If you omit this clause, then the database link is private and is available 
+only to you.
+
+The data accessible on the remote database depends on the identity the database link uses when connecting to the remote database:
+
+If you specify CONNECT TO user IDENTIFIED BY password, then the database link connects with the specified user and password.
+
+If you specify CONNECT TO CURRENT_USER, then the database link connects with the user in effect based on the scope in which the link is used.
+
+If you omit both of those clauses, then the database link connects to the remote database as the locally connected user.
+
+
+SQL> select * from SCHEMA_B.dual@DB_LINK
+
+SQL> create database link "name"
+connect to "schema on remote"
+identified by "schema pass on remote"
+using 'host:port/sid or entry on tnsnames.ora';
+

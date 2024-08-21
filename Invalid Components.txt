@@ -1,0 +1,115 @@
+/home/oracle/XDB_moreinfo.log
+
+SQL> SET serveroutput on
+SQL> EXECUTE dbms_registry_sys.validate_components;
+ORDIM INVALID OBJECTS: ORDPLSGWYUTIL - INVALID - PACKAGE BODY
+
+COMP_ID STATUS VERSION COMP_NAME MODIFIED
+------------ ---------- --------------- ---------------------------------------- -----------------------------
+APS VALID 19.0.0.0.0 OLAP Analytic Workspace 04-SEP-2023 16:59:42
+CATALOG VALID 19.0.0.0.0 Oracle Database Catalog Views 04-SEP-2023 16:59:38
+CATJAVA VALID 19.0.0.0.0 Oracle Database Java Packages 04-SEP-2023 16:59:42
+CATPROC VALID 19.0.0.0.0 Oracle Database Packages and Types 04-SEP-2023 16:59:38
+CONTEXT VALID 19.0.0.0.0 Oracle Text 04-SEP-2023 16:59:42
+DV VALID 19.0.0.0.0 Oracle Database Vault 04-SEP-2023 16:59:43
+JAVAVM VALID 19.0.0.0.0 JServer JAVA Virtual Machine 04-SEP-2023 16:59:41
+OLS VALID 19.0.0.0.0 Oracle Label Security 04-SEP-2023 16:59:43
+ORDIM INVALID 19.0.0.0.0 Oracle Multimedia 04-SEP-2023 16:59:42
+OWM VALID 19.0.0.0.0 Oracle Workspace Manager 04-SEP-2023 16:59:41
+RAC VALID 19.0.0.0.0 Oracle Real Application Clusters 04-SEP-2023 16:59:40
+SDO VALID 19.0.0.0.0 Spatial 04-SEP-2023 16:59:42
+XDB VALID 19.0.0.0.0 Oracle XML Database 04-SEP-2023 16:59:39
+XML VALID 19.0.0.0.0 Oracle XDK 04-SEP-2023 16:59:42
+XOQ VALID 19.0.0.0.0 Oracle OLAP API 04-SEP-2023 16:59:42
+
+15 rows selected.
+
+SQL> -- Invalid Objects
+ col object_name format a40
+ col OBJECT_TYPE format a12
+ col owner format a10
+ SELECT OWNER, OBJECT_NAME, OBJECT_TYPE
+	FROM DBA_INVALID_OBJECTS
+	WHERE OWNER IN ('PUBLIC','SYS','SYSTEM','XDB','ORDSYS','ORDPLUGINS','ORDDATA','MDSYS','CTXSYS','WMSYS','XML')
+	ORDER BY OWNER, OBJECT_NAME, OBJECT_TYPE;
+
+OWNER OBJECT_NAME OBJECT_TYPE
+---------- ---------------------------------------- ------------
+ORDSYS ORDPLSGWYUTIL PACKAGE BODY
+
+SQL> select owner, object_name, object_type, status
+ from dba_objects
+ where status = 'INVALID'
+ order by owner, object_name;
+
+OWNER OBJECT_NAME OBJECT_TYPE STATUS
+---------- ---------------------------------------- ------------ ----------
+ORDSYS ORDPLSGWYUTIL PACKAGE BODY INVALID
+
+SQL> col name format A50
+ select OWNER, NAME, TYPE, LINE, TEXT from dba_errors
+ where OWNER in ('PUBLIC','SYS','SYSTEM','XDB','ORDSYS','ORDPLUGINS','ORDDATA','MDSYS','CTXSYS','WMSYS','XML')
+ ORDER BY OWNER;
+
+OWNER NAME TYPE LINE
+---------- -------------------------------------------------- ------------------- ----------
+TEXT
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ORDSYS ORDPLSGWYUTIL PACKAGE BODY 45
+PLS-00201: identifier 'OWA_UTIL' must be declared
+
+ORDSYS ORDPLSGWYUTIL PACKAGE BODY 45
+PL/SQL: Statement ignored
+
+ORDSYS ORDPLSGWYUTIL PACKAGE BODY 90
+PLS-00201: identifier 'OWA_UTIL' must be declared
+
+ORDSYS ORDPLSGWYUTIL PACKAGE BODY 98
+PL/SQL: Statement ignored
+
+ORDSYS ORDPLSGWYUTIL PACKAGE BODY 91
+PLS-00201: identifier 'OWA_UTIL' must be declared
+
+ORDSYS ORDPLSGWYUTIL PACKAGE BODY 91
+PL/SQL: Statement ignored
+
+ORDSYS ORDPLSGWYUTIL PACKAGE BODY 99
+PLS-00201: identifier 'OWA_UTIL' must be declared
+
+ORDSYS ORDPLSGWYUTIL PACKAGE BODY 90
+PL/SQL: Statement ignored
+
+SELECT comp_name, version, status FROM dba_registry;
+
+select count(*) from dba_objects where status='INVALID';
+
+select owner,object_type,count(*) from dba_objects where status='INVALID' group by owner,object_type;
+
+-------------------------------------------------------------------------------------------------------------------------------------------
+SQL> grant execute on owa_util to Public;
+
+Grant succeeded.
+
+SQL> alter package ORDSYS.ORDPLSGWYUTIL compile body;
+
+Package body altered.
+
+SQL> SET serveroutput on
+SQL> EXECUTE dbms_registry_sys.validate_components;
+
+PL/SQL procedure successfully completed.
+
+
+-------------------------------------------------------------------------------------------------------------------------------------------
+B) Try Manual method of validation:
+Alter procedure <owner>.<procedure_name> compile;
+
+Alter function <owner>.<function_name> compile;
+
+Alter view <owner>.<view_name> compile;
+
+Alter package <owner>.<package_name> compile;
+
+Alter package <owner>.<package_name> compile body;
+
+Alter materialized view <owner>.<Package_name> Compile;

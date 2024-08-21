@@ -1,0 +1,4 @@
+SQL> select * from v$recovery_area_usage;
+
+SQL> alter system set recovery_file_dest_size=value scope=both;
+

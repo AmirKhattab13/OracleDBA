@@ -1,0 +1,3 @@
+select spare4 from sys.user$ where name = 'NTF_GW';
+
+alter user <name> identified by values '....';

@@ -1,0 +1,70 @@
+Users and Accounts
+
+Every user has:
+1. unique name				4. lock status
+2. authentication method		5. default tablespace
+3. profile <password, resources>	6. temporary tablespace
+
+--------------------------------------------------------------------------------------------------------------------
+
+SYS and SYSTEM Accounts have dba role and can not be dropped, they have admin option
+SYSTEM has less privileges than SYS
+ex. SYSTEM can not startup or shutdown database
+
+SYS schema objects can not be exported, can provide privilege to users 
+# sqlplus / as sysdba	//SYS user
+
+Sysdba privilege <==> SYS user, startup and shutdown db
+
+Sysoper ==> another role as <sysdba> except creating new db
+
+SQL> create user <name> identified by <passwd>; 	//use "" when using uppercase or special character					           	special char
+SQL> alter user default tablespace <name>;
+SQL> alter user default temporary <name>;
+
+==> user is created without any privileges
+SQL> grant create session, create table, unlimited tablespace to <user>;
+
+--------------------------------------------------------------------------------------------------------------------
+
+v$dba_users ==> show db accounts details
+
+user authentication:
+1. db user ==> username & pass stored in db, query "dba_users"
+2. password file ==> allow remote administrative tasks
+
+in OS, create password file
+# orapwd file=$ORACLE_HOME/dbs/orapw$ORACLE_SID password=<SYS pass>
+entries=30 force=y 
+
+entries=30 ==> 30 passwords in the file
+force=y ==> force creation if the file exist  
+
+to show the users who can use the passwd file
+SQL> select * v$pwfile_users
+
+==> the user must have sysdba privilege to use the file
+
+//in parameter file
+remote_login_passwordfile = exclusive	//password file for one database
+		          shared	//password file for one or more databases
+		          none	//cannot connect remotely as sys user
+
+3. OS authentication ==> OS groups, if the user is a member in it can connect to db as sysdba
+    - oinstall	//osdba	==>	connect as sysdba
+    - dba	//osoper	==>	connect as sysoper
+//the name of the groups in	==>	$ORACLE_HOME/rdbms/lib/config.c
+
+//steps
+- edit parameter in pfile
+	os_authent_prefix = 'ops$'
+- restart db
+
+SQL> create user ops$<os user> identified externally;
+SQL> grant create session to ops$<os user>
+
+- as the modified os user, connect to the db
+# sqlplus /
+
+--------------------------------------------------------------------------------------------------------------------
+
