@@ -1,0 +1,48 @@
+Create the DB on 1st node using dbca.
+
+-------------------------------------------------------------------------------------------------------------------------------------------
+On the 2nd node: Create Instance with 'srvctl'
+# srvctl add instance –d db_unique_name –i inst_name -n node_name
+
+-------------------------------------------------------------------------------------------------------------------------------------------
+Create pfile and configure it
+SQL> create pfile='/tmp/pfile_db' from spfile='+DATA/DBNAME/PARAMETERFILE/spfile.0000'
+# vi /tmp/pfile_d 
+
+Add the following:
+PMX9PRD1.instance_number=1
+PMX9PRD2.instance_number=2
+
+PMX9PRD1.thread=1
+PMX9PRD2.thread=2
+PMX9PRD1.undo_tablespace='UNDOTBS1'
+PMX9PRD2.undo_tablespace='UNDOTBS2'
+
+-------------------------------------------------------------------------------------------------------------------------------------------
+Delete the old spfile from asm using user grid 
+# su - grid
+# asmcmd
+ASMCMD> cd DATA/DBNAME/PARAMATERFILE
+ASMCMD> rm spfile.0000
+
+-------------------------------------------------------------------------------------------------------------------------------------------
+Start the database and create new spfile
+
+SQL> startup pfile='/tmp/pfile_db'
+SQL> create spfile
+
+-------------------------------------------------------------------------------------------------------------------------------------------
+Create initfile on the two nodes
+# vi $ORACLE_HOME/dbs/init<dbname1>.ora
+spfile='+DATA/DBNAME/PARAMETERFILE/spfile.0000'
+
+# vi $ORACLE_HOME/dbs/init<dbname2>.ora
+spfile='+DATA/DBNAME/PARAMETERFILE/spfile.0000'
+
+-------------------------------------------------------------------------------------------------------------------------------------------
+Test the database 
+# srvctl status database -d DBNAME
+# srvctl stop database -d DBNAME
+# srvctl start database -d DBNAME
+
+-------------------------------------------------------------------------------------------------------------------------------------------
