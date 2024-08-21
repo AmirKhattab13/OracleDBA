@@ -1,0 +1,46 @@
+Increasing:
+
+1. On all Cells
+cellcli -e "list griddisk where name like 'DMZDATA.*' attributes name, size" 
+
+2. On VM
+grid# sqlplus / as sysdba
+SQL> select name, total_mb/1024 "GB" from v$asm_disk_stat where name like 'DMZDATA%';
+
+3. On all Cells
+cellcli -e "ALTER GRIDDISK size=240G WHERE name like 'DATAHUB.*'"
+
+4. On VM
+grid# sqlplus / as sysasm
+SQL> alter diskgroup DATAHUB resize all rebalance power 32;
+
+5. Monitor rhe rebalance
+SQL> set lines 200
+     set pages 200 
+     select * from gv$asm_operation;
+SQL> select name, total_mb/1024 "GB" from v$asm_disk_stat where name like 'DMZDATA%'; 
+
+-------------------------------------------------------------------------------------------------------------------------------------------
+Decreasing:
+
+1. Free up space on celldisks
+#cellcli -e "list griddisk where name like 'RECO.*' attributes name, size"         
+
+2. Reduce size of RECO disks in ASM
+#sqlplus / as sysasm
+SAL> select name, total_mb/1024 "GB" from v$asm_disk_stat where name like 'DATAHUB%';
+SQL> alter diskgroup FRAHUB resize all size 122880M rebalance power 32;
+
+3. Monitor the rebalance with the following command:
+SQL> set lines 200
+     set pages 200
+     select * from gv$asm_operation;
+
+SQL> select name, total_mb from v$asm_disk_stat where name like 'FRAHUB%';
+
+4. Reduce size of RECO disks in storage cells
+#cellcli -e "alter griddisk size=120G WHERE name like 'FRAHUB.*'"
+
+-------------------------------------------------------------------------------------------------------------------------------------------
+List Cell disks free space:
+cellcli -e "list celldisk attributes name , freespace"

@@ -1,0 +1,2 @@
+DR	ct-masriacard-01	2306XC801C
+PROD	ct-masriacard-02	2306XC801B

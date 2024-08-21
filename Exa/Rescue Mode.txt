@@ -1,0 +1,21 @@
+vm_maker --console-log { enable | disable | status } --domain guest_name [ --restart-domain ]
+
+vm_maker --boot-from-iso exadata_ol8_base_repo_23.1.7.0.0.231012.iso --domain mcdrdbadm02vm01.mcf.local
+
+root - sos1Exadata
+
+rd.break
+
+ctrl + x
+
+# mount -o remount,rw /sysroot
+
+# chroot /sysroot
+
+..................
+
+# touch /.autorelabel
+
+# exit
+
+# logout

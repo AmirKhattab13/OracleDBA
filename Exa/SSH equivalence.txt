@@ -1,0 +1,47 @@
+1. Create a parameter file that including all the server's names which you'd like to reach by dcli tool, typically we have a cell_group 
+for storage cells, a dbs_group for database servers and an all_group for both of them.
+
+all_group.lst
+mcdrdbadm01
+mcdrdbadm02
+mcdrceladm01
+mcdrceladm02
+mcdrceladm03
+
+cell_group.lst
+mcdrceladm01
+mcdrceladm02
+mcdrceladm03
+
+db_group.lst
+mcdrdbadm01
+mcdrdbadm02
+
+# ssh-keygen -t dsa
+# ssh-keygen -t rsa
+# ssh-copy-id -i .ssh/id_rsa.pub <host>
+# ssh-copy-id -i .ssh/id_dsa.pub <host>
+
+3.Distribute the key to all servers
+
+# dcli -g /root/all_group.lst -l root -k -s '-o StrictHostKeyChecking=no'
+
+4.Check the results:
+
+# dcli -g all_group -l root hostname
+
+--------------------------------------------------------------------------------------------------------------------------------------
+For Switches:
+
+1) Locate file "setup_switch_ssh_equiv.sh" at below path on DB node
+/opt/oracle.SupportTools/ibdiagtools/setup_switch_ssh_equiv.sh
+
+If found, then follow next step
+
+2) sudo to dbmadmin
+su dbmadmin
+
+3) run below script
+
+/opt/oracle.SupportTools/ibdiagtools/setup_switch_ssh_equiv.sh <ip.address.of.switch1>,<ip.address.of.switch2>
+-- provide IP address accordingly

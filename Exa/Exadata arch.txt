@@ -1,0 +1,50 @@
+OECA - Oracle Exadata Configuration Assistance
+
+RDMA over Converged Ethernet (RoCE) or InfiniBand over Ethernet (IBoE) is a network protocol 
+that allows remote direct memory access (RDMA) over an Ethernet network
+
+PCIe (peripheral component interconnect express)
+
+HC Storage Servers have four NVMe PCI Flash cards each with 6.4 TB
+(raw) Exadata Smart Flash Cache and twelve 18 TB 7,200 RPM disks.
+
+Smart Scan
+greatly accelerates query execution, eliminates bottlenecks, and significantly
+reduces the CPU usage of the database servers.
+offloads data intensive SQL operations from the database servers directly into the storage 
+servers.
+Only the rows and columns that are directly relevant to a query are sent to the database
+servers. 
+
+Storage Indexes 
+helps avoid unnecessary I/O operations and improves overall performance.
+Maintained automatically in-memory on the storage server, track minimum and maximum column 
+values for table data contained in a storage region on that storage server, If
+the column value doesn’t exist in the Storage Index, then scan I/O in that region
+for that query is skipped. 
+
+X9M-2, Eighth Rack
+
+1. Database Server	2 nodes, 64 cores
+2. Storage Server	3 cells, 48 cores
+3. Raw Capacity HC	324 TB disk, 38.4 TB Flash, 2.3 TB Persistent Memory 
+
+High Capacity Storage Server (HC): 
+1. Twelve 18 TB SAS disk drives with 216 TB total raw disk capacity.
+	note: SAS is faster in r/w.
+2. Four 6.4 TB flash accelerator cards for a total raw capacity of 25.6 TB of flash memory.
+	note: flash cache frequently accessed data while keeping infrequently accessed data 
+	on disk.
+3. Shared persistent memory, twelve 128 GB with 1.6 TB
+
++Database Servers
+Up to 19x servers, 1216 cores max per rack
+
++Storage Servers
+Up to 18x servers, 576 cores max per rack
+
+Eighth Rack Database Servers can be expanded by installing an additional 32 core CPU and 128GB
+Memory per server
+
+Storage can be expanded by adding additional Eighth Rack High Capacity, High Capacity (HC), 
+Extreme Flash (EF) and/or Extended (XT) Storage Servers.

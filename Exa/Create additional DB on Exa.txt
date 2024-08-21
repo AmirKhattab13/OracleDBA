@@ -1,0 +1,70 @@
+How to create additional database ORACLE_HOME on the virtualized exadata environment
+
+Management domain: exadb01	User domain: exadb01vm01.test.com
+1. On Management domain, create the image file using qemu-img create command
+# qemu-img create /EXAVMIMAGES/GuestImages/DomainName/new_disk_image_name [size]
+# qemu-img create /EXAVMIMAGES/GuestImages/exadb01vm01.test.com/dbhome_addon.img 20G
+Formatting '/EXAVMIMAGES/GuestImages/exadb01vm01.test.com/dbhome_addon.img', fmt=raw, size=20971520 kB
+
+2. In the user domain, determine an available disk name.
+# lsblik -id
+
+3. In the management domain, attach the new disk image to the user domain in read/write 
+mode.
+# xm block-attach exadb01vm01.test.com \
+> file:/EXAVMIMAGES/GuestImages/exadb01vm01.test.com/dbhome_addon.img /dev/xvde w
+
+4. In the user domain, verify the disk device is available.
+# lsblk -id
+
+5. In the user domain, partition the new disk device.
+# parted /dev/xvde mklabel gpt
+Information: You may need to update /etc/fstab.
+# parted -s /dev/xvde mkpart primary 0 100%
+Warning: The resulting partition is not properly aligned for best performance.
+# parted -s /dev/xvde set 1 lvm on.
+
+6. In the user domain, create an LVM physical volume on the new disk partition.
+# pvcreate /dev/xvde1
+# vgextend VGExaDb /dev/xvde1
+# vgdisplay -s
+
+7. In the management domain, make a backup of the user domain configuration file vm.cfg.
+
+8. In the management domain, obtain the UUID of the user domain
+# cp vm.cfg vm.cfg.orig_beforeaddondisk
+# grep ^uuid vm.cfg
+
+9. In the management domain, generate a UUID for the new disk image 
+# uuidgen | tr -d '-'
+
+10. In the management domain, create a symbolic link from /OVS/Repositories to the new 
+disk image.
+# ln -s /EXAVMIMAGES/GuestImages/DomainName/newDiskImage.img \
+/OVS/Repositories/user_domain_uuid/VirtualDisks/new_disk_uuid.img
+
+11. In the management domain, append an entry for the new disk to the disk parameter in 
+the user domain configuration file vm.cfg. This makes the new disk image attach 
+automatically to the user domain during the next startup.
+'file:/OVS/Repositories/user_domain_uuid/VirtualDisks/new_disk_uuid.img,disk_device,w'
+
+12. Create new lvm and mount the additional ORACLE_HOME
+# lvm lvcreate -n LVDbOra2 -L20G VGExaDb
+# mkfs.ext4 /dev/VGExaDb/LVDbOra2
+# e2label /dev/VGExaDb/LVDOra2 DBORA2
+# mkidr /u01/app/oracle/product/12.1.0.2/dbhome_2
+# mount -t ext4 /dev/mapper/VGExaDb-LVDbOra2
+
+13. Repeat this step on all the user domains participating the Oracle RAC cluster and 
+proceed with installing RAC ORACLE_HOME as per Database Installation Guide.
+
+//vm_maker --create --disk-image /EXAVMIMAGES/GuestImages/mcdrdbadm01vm01.mcf.local/dbhome.img --size 300G --attach --domain mcdrdbadm01vm01.mcf.local
+[INFO] 1. Check a disk with name /dev/VGExaDbDisk.dbhome_ac.img/LVDBDisk exists.
+[INFO] -  Check for the existence of a disk named: /dev/VGExaDbDisk.dbhome_ac.img/LVDBDisk. Use the 'lvdisplay' command and check the output.
+[INFO] 2. Create a mount directory for the new disk
+[INFO] 3. Add the following line to /etc/fstab: /dev/VGExaDbDisk.dbhome_ac.img/LVDBDisk <mount_point_from_step_2> <fstype> defaults 0 0
+[INFO] 4. Mount the new disk. Use the 'mount -a' command.
+[INFO] Note: when detaching and re-attaching the same disk multiple times, run the following command after detaching and before attaching in the guest domain:
+[INFO] 'lvm vgchange VGExaDbDisk.dbhome_ac.img -a -n' when re-attaching the same disk.
+
+# vm_maker --list --disk-image --domain mcdrdbadm01vm01.mcf.local

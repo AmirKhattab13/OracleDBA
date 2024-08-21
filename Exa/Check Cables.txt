@@ -1,0 +1,3 @@
+for cable in `ls /sys/class/net | grep ^eth`; do printf "$cable: "; cat /sys/class/net/$cable/carrier; done
+
+ethtool eth[n]

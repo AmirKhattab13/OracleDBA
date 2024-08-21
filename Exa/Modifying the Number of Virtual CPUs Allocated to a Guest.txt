@@ -1,0 +1,4 @@
+# vm_maker --list --vcpu --domain db01_guest01.example.com
+
+# vm_maker --set --vcpu 4 --domain db01_guest01.example.com
+

@@ -1,0 +1,12 @@
+1. Verify Available DiskGroups
+ASMCMD> lsdg
+
+2. Verify Current OCR location
+grid# ocrcheck
+
+3. Add OCR to DiskGroup 
+root# /u01/app/11.2.0/grid/bin/ocrconfig -add <new_diskgroup>
+
+4. Delete the old OCR location
+root# /u01/app/11.2.0/grid/bin/ocrconfig -delete <old_diskgroup>
+

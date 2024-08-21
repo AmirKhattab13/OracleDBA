@@ -1,0 +1,15 @@
+ahfctl version -all
+
+exachk -v
+
+cat /etc/oracle.ahf.loc
+
+exachk -get all -id autostart_client_exatier1
+
+exachk -a -clusternodes <Computenode1,Computenode2,..> -cells <cellnode1,cellnode2,..> -switches <switch1,switch2..>
+
+exachk -a -clusternodes mcdrdbadm01 -cells mcdrceladm01,mcdrceladm02,mcdrceladm03 -switches mcdrsw-adm0,mcdrdsw-rocea0,mcdrdsw-roceb0
+
+exachk -a -clusternodes mcprddbadm01 -cells mcprdceladm01,mcprdceladm02,mcprdceladm03 -switches mcprdsw-adm0,mcprdsw-rocea0,mcprdsw-roceb0
+
+exachk -localonly

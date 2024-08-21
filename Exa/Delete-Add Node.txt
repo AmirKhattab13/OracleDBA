@@ -1,0 +1,71 @@
+mcdrdbadm01vm01
+
+1) Deconfigure GI Home on Node mcdrdbadm01vm01. As ROOT -
+
+# <GI_HOME>/crs/install/rootcrs.sh -deconfig -force -verbose
+
+2) Detach GI Home from Node mcdrdbadm01vm01 inventory. As GRID -
+
+$ export ORACLE_HOME=<GI_HOME>
+$ <GRID_HOME>/oui/bin/runInstaller -detachHome -silent ORACLE_HOME=/u01/app/21.0.0.0/grid
+
+3) If you have sufficient free space on Node mcdrdbadm01vm01 then rename the existing GI Home. Otherwise, delete the same.
+
+On mcdrdbadm01vm01, as ROOT -
+
+# cd /u01/app/21.0.0.0
+# mv grid grid_old (to rename)
+or
+# rm -rf grid (to delete)
+
++ Create empty directory for node addition.
+
+# cd /u01/app/21.0.0.0
+# mkdir grid
+# chown grid:dba grid
+
+4) From mcdrdbadm02vm01, check and remove Node mcdrdbadm01vm01 VIP.
+
+As ROOT,
+
+# srvctl config nodeapps
+# srvctl status nodeapps
+# crsctl stat res -t
+
+If you see node mcdrdbadm01vm01 VIP in this list then,
+
+# srvctl stop vip -vip <node mcdrdbadm01vm01 vip name> -f
+# srvctl remove vip -vip <node mcdrdbadm01vm01 vip name> -f
+
+(NO ACTION is required for mcdrdbadm02vm01 VIP)
+
+5) From mcdrdbadm02vm01, delete Node mcdrdbadm01vm01
+
+# olsnodes -s -t
+# crsctl delete node -n mcdrdbadm01vm01
+# olsnodes -s -t
+
+6) Check and confirm that Node mcdrdbadm01vm01 does not have more than 1000 files under "<GI_HOME>/rdbms/audit"
+
+If you see more than 1000 files then, please delete older files before proceeding with addnode.
+
+7) From Node mcdrdbadm02vm01, initiate addnode
+
+As GRID,
+
+$ cd <GI_HOME>/addnode
+$ export IGNORE_PREADDNODE_CHECKS=Y
+$ export SRVM_USE_RACTRANS=true
+$ ./addNode.sh -silent "CLUSTER_NEW_NODES={mcdrdbadm01vm01}" "CLUSTER_NEW_VIRTUAL_HOSTNAMES={mcdrdbadm01vm01_VIP_NAME}" -ignorePrereq
+
+---> After binary copy to Node mcdrdbadm01vm01, it will prompt for root.sh execution on mcdrdbadm01vm01
+
+8) Run root.sh on mcdrdbadm01vm01. As ROOT
+
+# umask 0022
+# cd <GI_HOME>
+# ./root.sh
+
+Ensure successful completion of root.sh on Node mcdrdbadm01vm01.
+
+9) Check CRS status.

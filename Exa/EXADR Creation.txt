@@ -1,0 +1,3167 @@
+[oracle@mdpx9prdvm01 ~]$ cat /u01/app/oracle/product/19.0.0.0/dbhome_svip/network/admin/tnsnames.ora
+SVIP =
+  (DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = mcprdsvipdb)(PORT = 1521))
+    (CONNECT_DATA =
+      (SERVER = DEDICATED)
+      (SERVICE_NAME = svip) (UR=A)
+    )
+  )
+
+
+SVIPX9PRD =
+  (DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = exa-scan)(PORT = 1521))
+    (CONNECT_DATA =
+      (SERVER = DEDICATED)
+      (SERVICE_NAME = svipx9prd) (UR=A)
+    )
+  )
+  
+SVIPX9DR =
+  (DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = 10.19.160.116)(PORT = 1521))
+    (CONNECT_DATA =
+      (SERVER = DEDICATED)
+      (SERVICE_NAME = svipx9dr) (UR=A)
+    )
+  )
+  
+SID_LIST_LISTENER =
+  (SID_LIST =
+    (SID_DESC =
+      (GLOBAL_DBNAME = svipx9dr)
+      (SID_NAME = svipx9dr1)
+      (ORACLE_HOME = /u01/app/oracle/product/19.0.0.0/dbhome_svip)
+    )
+  )  
+
+
+SID_LIST_LISTENER =
+  (SID_LIST =
+    (SID_DESC =
+      (GLOBAL_DBNAME = fmx9dr)
+      (SID_NAME = fmx9dr1)
+      (ORACLE_HOME = /u01/app/oracle/product/19.0.0.0/dbhome_fm)
+    )
+  )  
+  
+  # .bash_profile
+
+# Get the aliases and functions
+if [ -f ~/.bashrc ]; then
+        . ~/.bashrc
+fi
+
+# User specific environment and startup programs
+export TZ=Africa/Cairo
+
+ORACLE_BASE=/u01/app/oracle; export ORACLE_BASE
+ORACLE_HOME=$ORACLE_BASE/product/19.0.0.0/dbhome_fm; export ORACLE_HOME
+ORACLE_SID=FMX9DR1;     export ORACLE_SID
+PATH=/usr/sbin:$PATH; export PATH
+PATH=$ORACLE_HOME/bin:$PATH; export PATH
+LD_LIBRARY_PATH=$ORACLE_HOME/lib:/lib:/usr/lib; export LD_LIBRARY_PATH
+CLASSPATH=$ORACLE_HOME/JRE:$ORACLE_HOME/jlib:$ORACLE_HOME/rdbms/jlib; export CLASSPATH
+
+
+
+SQL> set linesize 500 pages 0
+SQL> col value for a90
+SQL> col name for a50
+SQL>
+SQL> select name, value from v$parameter
+  2  where name in ('db_name','db_unique_name','log_archive_config', 'log_archive_dest_1','log_archive_dest_2','log_archive_dest_3',
+  3                 'log_archive_dest_state_1','log_archive_dest_state_2','log_archive_dest_state_3', 'remote_login_passwordfile',
+  4                 'log_archive_format','log_archive_max_processes','fal_server','fal_client','db_file_name_convert',
+  5                       'log_file_name_convert', 'standby_file_management');
+db_file_name_convert                               /oradata/svfm/, +DATA/fmx9prd/
+log_file_name_convert                              /oradata/svfm/, +DATA/fmx9prd/
+log_archive_dest_1
+log_archive_dest_2                                 SERVICE=svfmdg LGWR ASYNC VALID_FOR=(ONLINE_LOGFILES,PRIMARY_ROLE) DB_UNIQUE_NAME=svfmdg
+log_archive_dest_3                                 SERVICE=svfm NOAFFIRM ASYNC VALID_FOR=(ONLINE_LOGFILES,PRIMARY_ROLE) DB_UNIQUE_NAME=SVFM
+log_archive_dest_state_1                           enable
+log_archive_dest_state_2                           ENABLE
+log_archive_dest_state_3                           ENABLE
+fal_client                                         FMX9PRD
+fal_server                                         SVFM
+log_archive_config                                 DG_CONFIG=(svfm,svfmdg,fmx9prd)
+log_archive_format                                 %t_%s_%r.dbf
+log_archive_max_processes                          4
+standby_file_management                            AUTO
+remote_login_passwordfile                          EXCLUSIVE
+db_name                                            SVFM
+db_unique_name                                     fmx9prd
+
+17 rows selected.
+
+SQL> show parameter log_archive_dest_3
+log_archive_dest_3                   string      SERVICE=svfm NOAFFIRM ASYNC VA
+                                                 LID_FOR=(ONLINE_LOGFILES,PRIMA
+                                                 RY_ROLE) DB_UNIQUE_NAME=SVFM
+log_archive_dest_30                  string
+log_archive_dest_31                  string
+SQL>
+
+vi /home/oracle/initfmx9dr.ora
+*.db_unique_name='fmx9prd'
+*.db_name='SVFM'
+
+standby
+[oracle@mcdrdbadm01vm01 ~]$ cat /u01/app/oracle/product/19.0.0.0/dbhome_fm/network/admin/tnsnames.ora
+fmx9prd =
+  (DESCRIPTION =
+    (ADDRESS_LIST =
+      (ADDRESS = (PROTOCOL = TCP)(HOST = 10.10.110.100)(PORT = 1521))
+    )
+    (CONNECT_DATA =
+      #(SID = FMX9PRD1)
+      (SERVICE_NAME = fmx9prd) (UR=A)
+    )
+  )
+
+svfm =
+   (DESCRIPTION =
+     (ADDRESS = (PROTOCOL = TCP)(HOST = 10.10.110.4)(PORT = 1521))
+     (CONNECT_DATA =
+       (SERVER = DEDICATED)
+       (SID = svfm)
+     )
+   )
+
+fmx9dr =
+  (DESCRIPTION =
+    (ADDRESS_LIST =
+      (ADDRESS = (PROTOCOL = TCP)(HOST = 10.19.110.102)(PORT = 1521))
+    )
+    (CONNECT_DATA =
+      #(SID = FMX9DR1)
+      (SERVICE_NAME = fmx9dr) (UR=A)
+    )
+  )
+
+prod 
+fmx9prd =
+  (DESCRIPTION =
+    (ADDRESS_LIST =
+      (ADDRESS = (PROTOCOL = TCP)(HOST = exa-scan)(PORT = 1521))
+    )
+    (CONNECT_DATA =
+      #(SID = FMX9PRD1)
+      (SERVICE_NAME = fmx9prd) (UR=A)
+    )
+  )
+
+svfm =
+   (DESCRIPTION =
+     (ADDRESS = (PROTOCOL = TCP)(HOST = 10.10.110.4)(PORT = 1521))
+     (CONNECT_DATA =
+       (SERVER = DEDICATED)
+       (SID = svfm)
+     )
+   )
+
+fmx9dr =
+  (DESCRIPTION =
+    (ADDRESS_LIST =
+      (ADDRESS = (PROTOCOL = TCP)(HOST = 10.19.110.102)(PORT = 1521))
+    )
+    (CONNECT_DATA =
+      #(SID = FMX9DR1)
+      (SERVICE_NAME = fmx9dr) (UR=A)
+    )
+  )
+
+
+alter system set LOG_ARCHIVE_CONFIG='DG_CONFIG=(fmx9prd,fmx9dr)' scope=both sid='*';
+alter system set LOG_ARCHIVE_DEST_4='SERVICE=fmx9dr NOAFFIRM ASYNC VALID_FOR=(ONLINE_LOGFILES,PRIMARY_ROLE) DB_UNIQUE_NAME=fmx9dr' scope=both sid='*';
+alter system set fal_server=FMX9DR scope=both sid='*';
+alter system set fal_client=FMX9PRD scope=both sid='*';
+alter system set standby_file_management=AUTO scope=both sid='*';
+alter system set DB_FILE_NAME_CONVERT='fmx9dr','fmx9prd' SID='*' scope=spfile;
+alter system set LOG_FILE_NAME_CONVERT='fmx9dr','fmx9prd' SID='*' scope=spfile;
+ALTER SYSTEM SET LOG_ARCHIVE_DEST_STATE_4=DEFER scope=both sid='*';
+
+[oracle@mdpx9prdvm01 dbs]$ cd /zfssa/
+[oracle@mdpx9prdvm01 zfssa]$ cat pfile_fmx9dr
+
+svfm.__data_transfer_cache_size=0
+FMX9PRD2.__data_transfer_cache_size=0
+FMX9PRD1.__data_transfer_cache_size=0
+svfm.__db_cache_size=2516582400
+FMX9PRD1.__db_cache_size=2432696320
+FMX9PRD2.__db_cache_size=2667577344
+svfm.__inmemory_ext_roarea=0
+FMX9PRD2.__inmemory_ext_roarea=0
+FMX9PRD1.__inmemory_ext_roarea=0
+svfm.__inmemory_ext_rwarea=0
+FMX9PRD2.__inmemory_ext_rwarea=0
+FMX9PRD1.__inmemory_ext_rwarea=0
+svfm.__java_pool_size=0
+FMX9PRD2.__java_pool_size=0
+FMX9PRD1.__java_pool_size=0
+svfm.__large_pool_size=33554432
+FMX9PRD2.__large_pool_size=50331648
+FMX9PRD1.__large_pool_size=67108864
+svfm.__oracle_base='/oracle'#ORACLE_BASE set from environment
+FMX9PRD1.__oracle_base='/u01/app/oracle'#ORACLE_BASE set from environment
+FMX9PRD2.__oracle_base='/u01/app/oracle'#ORACLE_BASE set from environment
+svfm.__pga_aggregate_target=1577058304
+FMX9PRD2.__pga_aggregate_target=1577058304
+FMX9PRD1.__pga_aggregate_target=1577058304
+svfm.__sga_target=4194304000
+FMX9PRD2.__sga_target=4194304000
+FMX9PRD1.__sga_target=4194304000
+svfm.__shared_io_pool_size=134217728
+FMX9PRD2.__shared_io_pool_size=134217728
+FMX9PRD1.__shared_io_pool_size=134217728
+svfm.__shared_pool_size=1493172224
+FMX9PRD1.__shared_pool_size=1509949440
+FMX9PRD2.__shared_pool_size=1308622848
+svfm.__streams_pool_size=0
+FMX9PRD2.__streams_pool_size=0
+FMX9PRD1.__streams_pool_size=0
+svfm.__unified_pga_pool_size=0
+FMX9PRD2.__unified_pga_pool_size=0
+FMX9PRD1.__unified_pga_pool_size=0
+*.audit_file_dest='/u01/app/oracle/admin/fmx9prd/adump'
+*.audit_trail='db'
+*.cluster_database=TRUE
+*.compatible='19.0.0'
+*.control_files='+DATA/FMX9PRD/control01.ctl','+FRA/FMX9PRD/control02.ctl'#Restore Controlfile
+*.db_block_size=8192
+*.db_create_file_dest='+DATA'
+*.db_create_online_log_dest_1='+DATA/'
+*.db_create_online_log_dest_2='+FRA/'
+*.db_domain=''
+*.db_file_name_convert='/oradata/svfm/','+DATA/fmx9prd/'
+*.db_name='SVFM'
+*.db_recovery_file_dest='+FRA'
+*.db_recovery_file_dest_size=150G
+*.db_unique_name='fmx9prd'
+*.diagnostic_dest='/u01/app/oracle'
+*.fal_client='FMX9PRD'
+*.fal_server='SVFM'
+FMX9PRD1.instance_number=1
+FMX9PRD2.instance_number=2
+*.job_queue_processes=10
+*.log_archive_config='DG_CONFIG=(svfm,svfmdg,fmx9prd)'
+*.log_archive_dest_2='SERVICE=svfmdg LGWR ASYNC VALID_FOR=(ONLINE_LOGFILES,PRIMARY_ROLE) DB_UNIQUE_NAME=svfmdg'
+*.log_archive_dest_3='SERVICE=svfm NOAFFIRM ASYNC VALID_FOR=(ONLINE_LOGFILES,PRIMARY_ROLE) DB_UNIQUE_NAME=SVFM'
+*.log_archive_dest_state_2='ENABLE'
+*.log_archive_dest_state_3='ENABLE'
+*.log_archive_trace=0
+*.log_file_name_convert='/oradata/svfm/','+DATA/fmx9prd/'
+*.nls_length_semantics='CHAR'
+*.open_cursors=300
+*.pga_aggregate_limit=3221225472
+*.pga_aggregate_target=1572864000
+*.processes=350
+*.remote_login_passwordfile='EXCLUSIVE'
+*.sec_protocol_error_trace_action='LOG'
+*.sessions=547
+*.sga_max_size=4194304000
+*.sga_target=4194304000
+*.standby_file_management='AUTO'
+*.tde_configuration='KEYSTORE_CONFIGURATION=FILE'
+FMX9PRD1.thread=1
+FMX9PRD2.thread=2
+*.undo_management='AUTO'
+FMX9PRD1.undo_tablespace='UNDOTBS1'
+FMX9PRD2.undo_tablespace='UNDOTBS2'
+*.wallet_root='/u01/app/oracle/wallet/FMX9PRD1'
+
+
+
+*.audit_file_dest='/u01/app/oracle/admin/fmx9dr/adump'
+*.audit_trail='db'
+*.cluster_database=TRUE
+*.compatible='19.0.0'
+*.control_files='+DATA/FMX9DR/control01.ctl','+FRA/FMX9DR/control02.ctl'#Restore Controlfile
+*.db_block_size=8192
+*.db_create_file_dest='+DATA'
+*.db_create_online_log_dest_1='+DATA/'
+*.db_create_online_log_dest_2='+FRA/'
+*.db_domain=''
+*.db_file_name_convert='fmx9prd','fmx9dr'
+*.db_name='SVFM'
+*.db_recovery_file_dest='+FRA'
+*.db_recovery_file_dest_size=150G
+*.db_unique_name='fmx9dr'
+*.diagnostic_dest='/u01/app/oracle'
+*.fal_client='FMX9DR'
+*.fal_server='FMX9PRD'
+FMX9DR1.instance_number=1
+FMX9DR2.instance_number=2
+*.job_queue_processes=10
+*.log_archive_config='DG_CONFIG=(fmx9prd,fmx9dr)'
+*.log_archive_trace=0
+*.log_file_name_convert='fmx9prd','fmx9dr'
+*.nls_length_semantics='CHAR'
+*.open_cursors=300
+*.pga_aggregate_target=1572864000
+*.processes=350
+*.remote_login_passwordfile='EXCLUSIVE'
+*.sec_protocol_error_trace_action='LOG'
+*.sessions=547
+*.sga_target=4194304000
+*.standby_file_management='AUTO'
+*.tde_configuration='KEYSTORE_CONFIGURATION=FILE'
+FMX9DR1.thread=1
+FMX9DR2.thread=2
+*.undo_management='AUTO'
+FMX9DR1.undo_tablespace='UNDOTBS1'
+FMX9DR2.undo_tablespace='UNDOTBS2'
+*.wallet_root='/u01/app/oracle/wallet/FMX9DR1'
+
+
+SQL> select force_logging from v$database ;
+
+FORCE_LOGGING
+---------------------------------------
+YES
+
+SQL> select sum(bytes)/1024/1024/1024 size_in_gb from dba_data_files;
+
+SIZE_IN_GB
+----------
+216.018539
+
+SQL> select GROUP#,THREAD#,BYTES/1024/1024 as "SIZE IN M" from v$log;
+
+    GROUP#    THREAD#  SIZE IN M
+---------- ---------- ----------
+         1          1        512
+         2          1        512
+         3          1        512
+         6          2       1000
+         7          2       1000
+         8          2       1000
+
+6 rows selected.
+
+SQL> set lines 200 pages 5000
+
+SELECT group#, dbid, thread#, sequence#, status FROM v$standby_log;
+SQL> SQL>
+    GROUP# DBID                                        THREAD#  SEQUENCE# STATUS
+---------- ---------------------------------------- ---------- ---------- ----------
+        10 UNASSIGNED                                        1          0 UNASSIGNED
+        11 UNASSIGNED                                        1          0 UNASSIGNED
+        12 UNASSIGNED                                        1          0 UNASSIGNED
+        13 UNASSIGNED                                        1          0 UNASSIGNED
+        16 UNASSIGNED                                        2          0 UNASSIGNED
+        17 UNASSIGNED                                        2          0 UNASSIGNED
+        18 UNASSIGNED                                        2          0 UNASSIGNED
+
+7 rows selected.
+
+
+SQL> set pages 200
+set lines 180
+col MEMBER for a60
+select group#, type, member from v$logfile order by 1;SQL> SQL> SQL>
+
+    GROUP# TYPE    MEMBER
+---------- ------- ------------------------------------------------------------
+         1 ONLINE  +DATA/fmx9prd/redo01.log
+         2 ONLINE  +DATA/fmx9prd/redo02.log
+         3 ONLINE  +DATA/fmx9prd/redo03.log
+         6 ONLINE  +DATA/FMX9PRD/ONLINELOG/group_6.508.1138751271
+         7 ONLINE  +DATA/FMX9PRD/ONLINELOG/group_7.512.1138751271
+         8 ONLINE  +DATA/FMX9PRD/ONLINELOG/group_8.513.1138751273
+        10 STANDBY +DATA/fmx9prd/standby_redo01.log
+        11 STANDBY +DATA/fmx9prd/standby_redo02.log
+        12 STANDBY +DATA/fmx9prd/standby_redo03.log
+        13 STANDBY +DATA/fmx9prd/standby_redo04.log
+        16 STANDBY +DATA/FMX9PRD/ONLINELOG/group_16.514.1138751291
+        17 STANDBY +DATA/FMX9PRD/ONLINELOG/group_17.515.1138751291
+        18 STANDBY +DATA/FMX9PRD/ONLINELOG/group_18.516.1138751293
+
+13 rows selected.
+
+
+mkdir FMX9DR
+cd 
+mkdir PARAMETERFILE DATAFILE CONTROLFILE TEMPFILE ONLINELOG BROKER PASSWORD
+
+startup nomount pfile='/zfssa/pfile_fmx9dr';
+
+vi  dup_fmx9dr.sql
+
+connect target sys/"qwe123#qwe123"@fmx9prd
+connect auxiliary sys/"qwe123#qwe123"@fmx9dr
+run {
+allocate channel prmy1 type disk;
+allocate channel prmy2 type disk;
+allocate channel prmy3 type disk;
+allocate channel prmy4 type disk;
+allocate channel prmy5 type disk;
+allocate channel prmy6 type disk;
+allocate auxiliary channel stby1 type disk;
+allocate auxiliary channel stby2 type disk;
+allocate auxiliary channel stby3 type disk;
+allocate auxiliary channel stby4 type disk;
+allocate auxiliary channel stby5 type disk;
+allocate auxiliary channel stby6 type disk;
+
+duplicate target database
+for standby
+from active database
+dorecover
+  spfile
+    set db_unique_name='fmx9dr'
+    set control_files='+DATA/FMX9DR/CONTROLFILE/current01.ctl','+FRA/FMX9DR/CONTROLFILE/current02.ctl'
+    set log_archive_config='dg_config=(fmx9prd,fmx9dr)'
+    set audit_file_dest='/u01/app/oracle/admin/fmx9dr/adump'
+    set cluster_database='false'
+    set db_create_file_dest='+DATA'
+    set db_recovery_file_dest='+FRA'
+    set db_file_name_convert='+DATA/FMX9PRD/','+DATA/FMX9DR/'
+    set log_file_name_convert ='+DATA/FMX9PRD/','+DATA/FMX9DR/'
+   nofilenamecheck;
+  }
+
+
+nohup rman @dup_fmx9dr log=dup_fmx9dr_from_DR.log &
+
+sql statement: alter database mount standby database
+RMAN-05158: WARNING: auxiliary (datafile) file name +DATA/fmx9prd/system01.dbf conflicts with a file used by the target database
+RMAN-05158: WARNING: auxiliary (datafile) file name +DATA/fmx9prd/sysaux01.dbf conflicts with a file used by the target database
+RMAN-05158: WARNING: auxiliary (datafile) file name +DATA/fmx9prd/undotbs01.dbf conflicts with a file used by the target database
+RMAN-05158: WARNING: auxiliary (datafile) file name +DATA/fmx9prd/fraudtables_01.dbf conflicts with a file used by the target database
+RMAN-05158: WARNING: auxiliary (datafile) file name +DATA/fmx9prd/fraudidx_01.dbf conflicts with a file used by the target database
+RMAN-05158: WARNING: auxiliary (datafile) file name +DATA/fmx9prd/fraudtransactions_01.dbf conflicts with a file used by the target database
+RMAN-05158: WARNING: auxiliary (datafile) file name +DATA/fmx9prd/others_01.dbf conflicts with a file used by the target database
+RMAN-05158: WARNING: auxiliary (datafile) file name +DATA/fmx9prd/fraudmlimit_01.dbf conflicts with a file used by the target database
+RMAN-05158: WARNING: auxiliary (datafile) file name +DATA/fmx9prd/sysaux02.dbf conflicts with a file used by the target database
+RMAN-05158: WARNING: auxiliary (datafile) file name +DATA/fmx9prd/sysaux03.dbf conflicts with a file used by the target database
+RMAN-05158: WARNING: auxiliary (datafile) file name +DATA/fmx9prd/sysaux04.dbf conflicts with a file used by the target database
+RMAN-05158: WARNING: auxiliary (datafile) file name +DATA/fmx9prd/sysaux05.dbf conflicts with a file used by the target database
+RMAN-05158: WARNING: auxiliary (datafile) file name +DATA/fmx9prd/fraudtables_02.dbf conflicts with a file used by the target database
+RMAN-05158: WARNING: auxiliary (datafile) file name +DATA/FMX9PRD/DATAFILE/undotbs2.546.1139625957 conflicts with a file used by the target database
+RMAN-05529: warning: DB_FILE_NAME_CONVERT resulted in invalid ASM names; names changed to disk group only.
+RMAN-05158: WARNING: auxiliary (tempfile) file name +DATA/fmx9prd/temp01.dbf conflicts with a file used by the target database
+RMAN-05158: WARNING: auxiliary (tempfile) file name +DATA/fmx9prd/mdp_zfssa_tbs01.dbf conflicts with a file used by the target database
+RMAN-05158: WARNING: auxiliary (tempfile) file name +DATA/FMX9PRD/TEMPFILE/temp.567.1139631787 conflicts with a file used by the target database
+RMAN-05158: WARNING: auxiliary (tempfile) file name +DATA/FMX9PRD/TEMPFILE/temp.568.1139631789 conflicts with a file used by the target database
+RMAN-05158: WARNING: auxiliary (tempfile) file name +DATA/FMX9PRD/TEMPFILE/temp.569.1139631789 conflicts with a file used by the target database
+
+RUN {
+sql 'alter system set "_backup_disk_bufcnt"=64';
+sql 'alter system set "_backup_file_bufcnt"=64';
+sql 'alter system set "_backup_disk_bufsz"=1048576';
+sql 'alter system set "_backup_file_bufsz"=1048576';
+#sql 'alter system switch logfile';
+allocate channel ch1 device type disk format '/zfssa/fmx9dr/fmx9dr_%d_%T_%U.bak';
+allocate channel ch3 device type disk format '/zfssa/fmx9dr/fmx9dr_%d_%T_%U.bak';
+allocate channel ch4 device type disk format '/zfssa/fmx9dr/fmx9dr_%d_%T_%U.bak';
+allocate channel ch5 device type disk format '/zfssa/fmx9dr/fmx9dr_%d_%T_%U.bak';
+allocate channel ch6 device type disk format '/zfssa/fmx9dr/fmx9dr_%d_%T_%U.bak';
+allocate channel ch7 device type disk format '/zfssa/fmx9dr/fmx9dr_%d_%T_%U.bak';
+allocate channel ch8 device type disk format '/zfssa/fmx9dr/fmx9dr_%d_%T_%U.bak';
+BACKUP  AS COMPRESSED BACKUPSET
+        TAG 'fmx9dr_FULLBK'
+        INCREMENTAL LEVEL 0
+        DATABASE;
+ CROSSCHECK ARCHIVELOG ALL;
+ BACKUP  AS COMPRESSED BACKUPSET
+         TAG 'fmx9dr_FULLBK'
+ARCHIVELOG ALL;
+}
+
+
+
++DATA/FMX9DR/system01.dbf
++DATA/FMX9DR/sysaux01.dbf
++DATA/FMX9DR/undotbs01.dbf
++DATA/FMX9DR/fraudtables_01.dbf
++DATA/FMX9DR/fraudidx_01.dbf
++DATA/FMX9DR/fraudtransactions_01.dbf
++DATA/FMX9DR/others_01.dbf
++DATA/FMX9DR/fraudmlimit_01.dbf
++DATA/FMX9DR/sysaux02.dbf
++DATA/FMX9DR/sysaux03.dbf
++DATA/FMX9DR/sysaux04.dbf
+
+NAME
+--------------------------------------------------------------------------------
++DATA/FMX9DR/sysaux05.dbf
++DATA/FMX9DR/fraudtables_02.dbf
++DATA/MUST_RENAME_THIS_DATAFILE_14.4294967295.4294967295
+
+
++DATA/fmx9prd/system01.dbf
++DATA/fmx9prd/sysaux01.dbf
++DATA/fmx9prd/undotbs01.dbf
++DATA/fmx9prd/fraudtables_01.dbf
++DATA/fmx9prd/fraudidx_01.dbf
++DATA/fmx9prd/fraudtransactions_01.dbf
++DATA/fmx9prd/others_01.dbf
++DATA/fmx9prd/fraudmlimit_01.dbf
++DATA/fmx9prd/sysaux02.dbf
++DATA/fmx9prd/sysaux03.dbf
++DATA/fmx9prd/sysaux04.dbf
+
+NAME
+--------------------------------------------------------------------------------
++DATA/fmx9prd/sysaux05.dbf
++DATA/fmx9prd/fraudtables_02.dbf
++DATA/FMX9PRD/DATAFILE/undotbs2.546.1139625957
+
+SQL> alter system set standby_file_management=manual scope=both sid='*';
+
+System altered.
+
+SQL> alter database rename file '+DATA/MUST_RENAME_THIS_DATAFILE_14.4294967295.4294967295' to '+DATA/FMX9DR/DATAFILE/UNDOTBS2.439.1142474439';
+
+output file name=+DATA/FMX9DR/control01.ctl
+output file name=+FRA/FMX9DR/control02.ctl
+
+ALTER DATABASE CREATE STANDBY CONTROLFILE AS '/home/oracle/fmx9dr_sty.ctl';
+scp fmx9dr_sty.ctl 10.19.110.100:/home/oracle/
+startup nomount pfile ='/tmp/pfile_fmx9dr';
+rman target /
+restore controlfile from '/home/oracle/fmx9dr_sty.ctl';
+startup mount pfile ='/tmp/pfile_fmx9dr';
+
+alter system set standby_file_management=manual scope=both sid='*';
+alter database rename file '+DATA/MUST_RENAME_THIS_DATAFILE_14.4294967295.4294967295' TO '+DATA/FMX9DR/DATAFILE/UNDOTBS2.439.1142474439';
+QL> set pages 200
+set lines 180
+col MEMBER for a60
+select group#, type, member from v$logfile order by 1;SQL> SQL> SQL>
+
+    GROUP# TYPE    MEMBER
+---------- ------- ------------------------------------------------------------
+         1 ONLINE  +DATA/FMX9DR/redo01.log
+         2 ONLINE  +DATA/FMX9DR/redo02.log
+         3 ONLINE  +DATA/FMX9DR/redo03.log
+         6 ONLINE  +DATA/MUST_RENAME_THIS_LOGFILE_6.4294967295.4294967295
+         7 ONLINE  +DATA/MUST_RENAME_THIS_LOGFILE_7.4294967295.4294967295
+         8 ONLINE  +DATA/MUST_RENAME_THIS_LOGFILE_8.4294967295.4294967295
+        10 STANDBY +DATA/FMX9DR/standby_redo01.log
+        11 STANDBY +DATA/FMX9DR/standby_redo02.log
+        12 STANDBY +DATA/FMX9DR/standby_redo03.log
+        13 STANDBY +DATA/FMX9DR/standby_redo04.log
+        16 STANDBY +DATA/MUST_RENAME_THIS_LOGFILE_16.4294967295.4294967295
+        17 STANDBY +DATA/MUST_RENAME_THIS_LOGFILE_17.4294967295.4294967295
+        18 STANDBY +DATA/MUST_RENAME_THIS_LOGFILE_18.4294967295.4294967295
+
+13 rows selected.
+
+SQL> alter database clear unarchived logfile group 16;
+
+SQL> alter database clear unarchived logfile group  17;
+
+Database altered.
+
+SQL> alter database clear unarchived logfile group 18;
+
+Database altered.
+
+SQL> alter database clear unarchived logfile group 6;
+
+Database altered.
+
+SQL> alter database clear unarchived logfile group 7;
+
+Database altered.
+
+SQL> alter database clear unarchived logfile group 8;
+
+Database altered.
+
+SQL> set pages 200
+set lines 180
+col MEMBER for a60
+select group#, type, member from v$logfile order by 1;SQL> SQL> SQL>
+
+    GROUP# TYPE    MEMBER
+---------- ------- ------------------------------------------------------------
+         1 ONLINE  +DATA/FMX9DR/redo01.log
+         2 ONLINE  +DATA/FMX9DR/redo02.log
+         3 ONLINE  +DATA/FMX9DR/redo03.log
+         6 ONLINE  +DATA/FMX9DR/ONLINELOG/group_6.560.1142734573
+         6 ONLINE  +FRA/FMX9DR/ONLINELOG/group_6.927.1142734573
+         7 ONLINE  +DATA/FMX9DR/ONLINELOG/group_7.561.1142734579
+         7 ONLINE  +FRA/FMX9DR/ONLINELOG/group_7.928.1142734581
+         8 ONLINE  +DATA/FMX9DR/ONLINELOG/group_8.562.1142734585
+         8 ONLINE  +FRA/FMX9DR/ONLINELOG/group_8.929.1142734585
+        10 STANDBY +DATA/FMX9DR/standby_redo01.log
+        11 STANDBY +DATA/FMX9DR/standby_redo02.log
+        12 STANDBY +DATA/FMX9DR/standby_redo03.log
+        13 STANDBY +DATA/FMX9DR/standby_redo04.log
+        16 STANDBY +FRA/FMX9DR/ONLINELOG/group_16.924.1142734523
+        16 STANDBY +DATA/FMX9DR/ONLINELOG/group_16.557.1142734523
+        17 STANDBY +FRA/FMX9DR/ONLINELOG/group_17.925.1142734553
+        17 STANDBY +DATA/FMX9DR/ONLINELOG/group_17.558.1142734553
+        18 STANDBY +DATA/FMX9DR/ONLINELOG/group_18.559.1142734563
+        18 STANDBY +FRA/FMX9DR/ONLINELOG/group_18.926.1142734565
+
+19 rows selected.
+
+
+SQL> alter database rename file '+DATA/MUST_RENAME_THIS_TEMPFILE_3.4294967295.4294967295' to '+DATA/FMX9DR/tempfile/temp.567.1139631787';
+
+Database altered.
+
+SQL> alter database rename file '+DATA/MUST_RENAME_THIS_TEMPFILE_4.4294967295.4294967295' to '+DATA/FMX9DR/tempfile/temp.568.1139631789';
+
+Database altered.
+
+SQL> alter database rename file '+DATA/MUST_RENAME_THIS_TEMPFILE_5.4294967295.4294967295' to '+DATA/FMX9DR/tempfile/temp.569.1139631789';
+
+Database altered.
+
+SQL> alter system set standby_file_management=auto scope=both sid='*';
+
+System altered.
+
+
+srvctl add database -d fmx9dr -o /u01/app/oracle/product/19.0.0.0/dbhome_fm -p +DATA/FMX9DR/PARAMETERFILE/spfile.556.1142734095 -r physical_standby -s mount 
+
+srvctl modify database -d fmx9dr -a "DATA,FRA" 
+srvctl add instance -d fmx9dr  -i fmx9dr1 -n mcdrdbadm01vm01
+srvctl add instance -d fmx9dr  -i fmx9dr2 -n mcdrdbadm02vm01
+srvctl config database -d fmx9dr
+srvctl modify database –db fmx9dr -pwfile +DATA/FMX9DR/PASSWORD/orapwfmx9dr1
+
+srvctl status database -d fmx9dr
+
+srvctl start database -d fmx9dr -o mount
+srvctl status database -d fmx9dr
+
+pwcopy /u01/app/oracle/product/19.0.0.0/dbhome_fm/dbs/orapwfmx9dr1 +DATA/FMX9DR/PASSWORD/orapwfmx9dr1
+----------------
+BO
+
+
+
+
+svx9prd =
+  (DESCRIPTION =
+    (ADDRESS_LIST =
+      (ADDRESS = (PROTOCOL = TCP)(HOST = 10.10.110.100)(PORT = 1521))
+    )
+    (CONNECT_DATA =
+      (SERVICE_NAME = svx9prd) (UR=A)
+     #(SID = SVX9PRD1)
+    )
+  )
+
+svx9dr =
+  (DESCRIPTION =
+    (ADDRESS_LIST =
+      (ADDRESS = (PROTOCOL = TCP)(HOST = 10.19.160.116)(PORT = 1521))
+    )
+    (CONNECT_DATA =
+      (SERVICE_NAME = svx9dr) (UR=A)
+     #(SID = SVX9DR1)
+    )
+  )
+
+# .bash_profile
+
+# Get the aliases and functions
+if [ -f ~/.bashrc ]; then
+        . ~/.bashrc
+fi
+
+# User specific environment and startup programs
+export TZ=Africa/Cairo
+
+ORACLE_BASE=/u01/app/oracle; export ORACLE_BASE
+ORACLE_HOME=$ORACLE_BASE/product/19.0.0.0/dbhome_bo; export ORACLE_HOME
+ORACLE_SID=SVX9DR1;     export ORACLE_SID
+PATH=/usr/sbin:$PATH; export PATH
+PATH=$ORACLE_HOME/bin:$PATH; export PATH
+LD_LIBRARY_PATH=$ORACLE_HOME/lib:/lib:/usr/lib; export LD_LIBRARY_PATH
+CLASSPATH=$ORACLE_HOME/JRE:$ORACLE_HOME/jlib:$ORACLE_HOME/rdbms/jlib; export CLASSPATH
+
+Spfile='+DATA/SVX9DR/PARAMETERFILE/spfile.270.1141511951'
+
+
+SID_LIST_LISTENER =
+  (SID_LIST =
+    (SID_DESC =
+      (GLOBAL_DBNAME = svx9dr)
+      (SID_NAME = svx9dr1)
+      (ORACLE_HOME = /u01/app/oracle/product/19.0.0.0/dbhome_bo)
+    )
+  )
+
+SQL> create pfile ='/tmp/pfile_svx9dr' from spfile;
+
+File created.
+
+SQL> exit
+Disconnected from Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.16.0.0.0
+[oracle@mdpx9prdvm01 ~]$ cat /tmp/pfile_svx9dr
+*.__data_transfer_cache_size=0
+SVX9PRD2.__data_transfer_cache_size=0
+SVX9PRD1.__data_transfer_cache_size=0
+*.__db_cache_size=10080M
+SVX9PRD2.__db_cache_size=8757706752
+SVX9PRD1.__db_cache_size=8489271296
+*.__inmemory_ext_roarea=0
+SVX9PRD2.__inmemory_ext_roarea=0
+SVX9PRD1.__inmemory_ext_roarea=0
+*.__inmemory_ext_rwarea=0
+SVX9PRD2.__inmemory_ext_rwarea=0
+SVX9PRD1.__inmemory_ext_rwarea=0
+*.__java_pool_size=256M
+SVX9PRD2.__java_pool_size=268435456
+SVX9PRD1.__java_pool_size=268435456
+*.__large_pool_size=160M
+SVX9PRD2.__large_pool_size=134217728
+SVX9PRD1.__large_pool_size=134217728
+*.__oracle_base='/u01/app/oracle'# ORACLE_BASE set from environment
+*.__pga_aggregate_target=5G
+SVX9PRD2.__pga_aggregate_target=5368709120
+SVX9PRD1.__pga_aggregate_target=5368709120
+*.__sga_target=12G
+SVX9PRD2.__sga_target=12884901888
+SVX9PRD1.__sga_target=12884901888
+*.__shared_io_pool_size=0
+SVX9PRD2.__shared_io_pool_size=134217728
+SVX9PRD1.__shared_io_pool_size=134217728
+*.__shared_pool_size=1632M
+SVX9PRD2.__shared_pool_size=3422552064
+SVX9PRD1.__shared_pool_size=3657433088
+*.__streams_pool_size=0
+SVX9PRD2.__streams_pool_size=0
+SVX9PRD1.__streams_pool_size=33554432
+*.__unified_pga_pool_size=0
+SVX9PRD2.__unified_pga_pool_size=0
+SVX9PRD1.__unified_pga_pool_size=0
+*._always_anti_join='CHOOSE'
+*._always_semi_join='CHOOSE'
+*._b_tree_bitmap_plans=TRUE
+*._bloom_serial_filter='ON'
+*._complex_view_merging=TRUE
+*._compression_compatibility='19.0.0.0'
+*._diag_adr_trace_dest='/u01/app/oracle/diag/diag/rdbms/svx9prd/SVX9PRD1/trace'
+*._ds_xt_split_count=1
+*._eliminate_common_subexpr=TRUE
+*._fast_full_scan_enabled=TRUE
+*._generalized_pruning_enabled=TRUE
+*._gs_anti_semi_join_allowed=TRUE
+*._hang_resolution_scope='INSTANCE'# _hang_resolution_scope updated by kjznpahps
+*._improved_outerjoin_card=TRUE
+*._improved_row_length_enabled=TRUE
+*._index_join_enabled=TRUE
+*._key_vector_create_pushdown_threshold=20000
+*._ksb_restart_policy_times='0','60','120','240'# internal update to set default
+*._left_nested_loops_random=TRUE
+*._mv_access_compute_fresh_data='ON'
+*._new_initial_join_orders=TRUE
+*._new_sort_cost_estimate=TRUE
+*._nlj_batching_enabled=1
+*._optim_enhance_nnull_detection=TRUE
+*._optim_peek_user_binds=TRUE
+*._optimizer_ads_use_partial_results=TRUE
+*._optimizer_better_inlist_costing='ALL'
+*._optimizer_cbqt_or_expansion='ON'
+*._optimizer_cluster_by_rowid_control=129
+*._optimizer_control_shard_qry_processing=65528
+*._optimizer_cost_based_transformation='LINEAR'
+*._optimizer_cost_model='CHOOSE'
+*._optimizer_extended_cursor_sharing='UDO'
+*._optimizer_extended_cursor_sharing_rel='SIMPLE'
+*._optimizer_extended_stats_usage_control=192
+*._optimizer_join_order_control=3
+*._optimizer_max_permutations=2000
+*._optimizer_mode_force=TRUE
+*._optimizer_native_full_outer_join='FORCE'
+*._optimizer_or_expansion='DEPTH'
+*._optimizer_proc_rate_level='BASIC'
+*._optimizer_system_stats_usage=TRUE
+*._optimizer_try_st_before_jppd=TRUE
+*._optimizer_use_cbqt_star_transformation=TRUE
+*._or_expand_nvl_predicate=TRUE
+*._ordered_nested_loop=TRUE
+*._parallel_broadcast_enabled=TRUE
+*._pivot_implementation_method='CHOOSE'
+*._pred_move_around=TRUE
+*._push_join_predicate=TRUE
+*._push_join_union_view=TRUE
+*._push_join_union_view2=TRUE
+*._px_dist_agg_partial_rollup_pushdown='ADAPTIVE'
+*._px_groupby_pushdown='FORCE'
+*._px_partial_rollup_pushdown='ADAPTIVE'
+*._px_shared_hash_join=FALSE
+*._px_wif_dfo_declumping='CHOOSE'
+*._sql_model_unfold_forloops='RUN_TIME'
+*._subquery_pruning_mv_enabled=FALSE
+*._table_scan_cost_plus_one=TRUE
+*._trace_files_public=FALSE
+*._union_rewrite_for_gs='YES_GSET_MVS'
+*._unnest_subquery=TRUE
+*._use_column_stats_for_function=TRUE
+*._xt_sampling_scan_granules='ON'
+*.audit_file_dest='/u01/app/oracle/audit/svx9prd'
+*.audit_syslog_level='LOCAL0.INFO'
+*.audit_trail='OS'
+*.cluster_database=TRUE
+*.compatible='19.0.0.0'
+*.connection_brokers='((TYPE=DEDICATED)(BROKERS=1))','((TYPE=EMON)(BROKERS=1))'# connection_brokers default value
+*.control_files='+DATA/SVX9PRD/CONTROLFILE/current.259.1138535797','+FRA/SVX9PRD/CONTROLFILE/current.346.1138546967'# Restore Controlfile
+*.core_dump_dest='/u01/app/oracle/diag/diag/rdbms/svx9prd/SVX9PRD1/cdump'
+*.db_block_size=8192
+*.db_create_file_dest='+DATA'
+*.db_file_name_convert='/oradata/sv','+DATA/SVX9PRD/DATAFILE/'
+*.db_flashback_retention_target=2880
+*.db_name='sv'
+*.db_recovery_file_dest='+FRA'
+*.db_recovery_file_dest_size=6597069766656
+*.db_unique_name='svx9prd'
+*.diagnostic_dest='/u01/app/oracle'
+*.dispatchers='(PROTOCOL=TCP) (SERVICE=svboXDB)'
+*.fal_client='SVX9PRD'
+*.fal_server='sv'
+*.global_names=FALSE
+SVX9PRD1.instance_number=1
+SVX9PRD2.instance_number=2
+*.java_pool_size=256M
+*.job_queue_processes=1000
+*.log_archive_config='DG_CONFIG=(sv,svdg,svx9prd)'
+*.log_archive_dest_2='SERVICE=svdg NOAFFIRM ASYNC VALID_FOR=(ONLINE_LOGFILES,PRIMARY_ROLE) DB_UNIQUE_NAME=svdg'
+*.log_archive_dest_3='SERVICE=sv NOAFFIRM ASYNC VALID_FOR=(ONLINE_LOGFILES,PRIMARY_ROLE) DB_UNIQUE_NAME=sv'
+*.log_archive_dest_state_2='ENABLE'
+*.log_archive_format='%t_%s_%r.arc'
+*.log_archive_max_processes=4
+*.log_buffer=128M# log buffer update
+*.log_file_name_convert='/oradata/sv','+FRA/SVX9PRD/ONLINELOG/'
+*.memory_max_target=0
+*.memory_target=0
+*.nls_language='AMERICAN'
+*.nls_territory='AMERICA'
+*.open_cursors=600
+*.optimizer_adaptive_plans=FALSE
+*.optimizer_mode='ALL_ROWS'
+*.pga_aggregate_target=5368709120
+*.plsql_warnings='DISABLE:ALL'# PL/SQL warnings at init.ora
+*.processes=3000
+*.query_rewrite_enabled='TRUE'
+*.remote_login_passwordfile='EXCLUSIVE'
+*.result_cache_max_size=62944K
+*.sec_protocol_error_trace_action='LOG'
+*.service_names='svx9prd'
+*.session_cached_cursors=300
+*.sessions=4536
+*.sga_max_size=12G# internally adjusted
+*.sga_target=12G
+*.standby_file_management='auto'
+*.statistics_level='ALL'
+*.tde_configuration='KEYSTORE_CONFIGURATION=FILE'
+SVX9PRD1.thread=1
+SVX9PRD2.thread=2
+svx9prd2.thread=2
+*.undo_management='AUTO'
+*.undo_retention=3600
+SVX9PRD1.undo_tablespace='UNDOTBS1'
+SVX9PRD2.undo_tablespace='UNDOTBS2'
+svx9prd2.undo_tablespace='UNDOTBS2'
+*.wallet_root='/u01/app/oracle/wallet/SVX9PRD1'
+
+
+
+*.audit_file_dest='/u01/app/oracle/audit/svx9dr'
+*.audit_syslog_level='LOCAL0.INFO'
+*.audit_trail='OS'
+*.cluster_database=TRUE
+*.compatible='19.0.0.0'
+*.connection_brokers='((TYPE=DEDICATED)(BROKERS=1))','((TYPE=EMON)(BROKERS=1))'# connection_brokers default value
+*.control_files='+DATA/SVX9DR/CONTROLFILE/current.259.1138535797','+FRA/SVX9DR/CONTROLFILE/current.346.1138546967'# Restore Controlfile
+*.core_dump_dest='/u01/app/oracle/diag/rdbms/svx9dr/SVX9DR1/cdump'
+*.db_block_size=8192
+*.db_create_file_dest='+DATA'
+*.db_file_name_convert='+DATA/SVX9PRD/DATAFILE/','+DATA/SVX9DR/DATAFILE/'
+*.db_flashback_retention_target=2880
+*.db_name='sv'
+*.db_recovery_file_dest='+FRA'
+*.db_recovery_file_dest_size=6597069766656
+*.db_unique_name='svx9dr'
+*.diagnostic_dest='/u01/app/oracle'
+*.dispatchers='(PROTOCOL=TCP) (SERVICE=svboXDB)'
+*.fal_client='SVX9DR'
+*.fal_server='SVX9PRD'
+*.global_names=FALSE
+svx9dr1.instance_number=1
+svx9dr2.instance_number=2
+*.java_pool_size=256M
+*.job_queue_processes=1000
+*.log_archive_config='DG_CONFIG=(svx9prd,svx9dr)'
+*.log_archive_dest_state_2='ENABLE'
+*.log_archive_format='%t_%s_%r.arc'
+*.log_archive_max_processes=4
+*.log_buffer=128M# log buffer update
+*.log_file_name_convert='+FRA/SVX9PRD/ONLINELOG/','+FRA/SVX9DR/ONLINELOG/'
+*.memory_max_target=0
+*.memory_target=0
+*.nls_language='AMERICAN'
+*.nls_territory='AMERICA'
+*.open_cursors=600
+*.optimizer_adaptive_plans=FALSE
+*.optimizer_mode='ALL_ROWS'
+*.pga_aggregate_target=5368709120
+*.plsql_warnings='DISABLE:ALL'# PL/SQL warnings at init.ora
+*.processes=3000
+*.query_rewrite_enabled='TRUE'
+*.remote_login_passwordfile='EXCLUSIVE'
+*.result_cache_max_size=62944K
+*.sec_protocol_error_trace_action='LOG'
+*.service_names='svx9dr'
+*.session_cached_cursors=300
+*.sessions=4536
+*.sga_target=12G
+*.standby_file_management='auto'
+*.statistics_level='ALL'
+*.tde_configuration='KEYSTORE_CONFIGURATION=FILE'
+svx9dr1.thread=1
+svx9dr2.thread=2
+*.undo_management='AUTO'
+*.undo_retention=3600
+svx9dr1.undo_tablespace='UNDOTBS1'
+svx9dr2.undo_tablespace='UNDOTBS2'
+*.wallet_root='/u01/app/oracle/wallet/SVX9DR1'
+
+*.log_archive_dest_2='SERVICE=svx9prd NOAFFIRM ASYNC VALID_FOR=(ONLINE_LOGFILES,PRIMARY_ROLE) DB_UNIQUE_NAME=svx9prd'
+
+
+SQL> set linesize 500 pages 0
+col value for a90
+SQL> SQL> col name for a50
+SQL>
+SQL> select name, value from v$parameter
+  2  where name in ('db_name','db_unique_name','log_archive_config', 'log_archive_dest_1','log_archive_dest_2','log_archive_dest_3',
+  3                 'log_archive_dest_state_1','log_archive_dest_state_2','log_archive_dest_state_3','log_archive_dest_state_4','log_archive_dest_state_3','log_archive_dest_state_4', 'remote_login_passwordfile',
+  4                 'log_archive_format','log_archive_max_processes','fal_server','fal_client','db_file_name_convert',
+  5                       'log_file_name_convert', 'standby_file_management');
+db_file_name_convert                               /oradata/sv, +DATA/SVX9PRD/DATAFILE/
+log_file_name_convert                              /oradata/sv, +FRA/SVX9PRD/ONLINELOG/
+log_archive_dest_1
+log_archive_dest_2                                 SERVICE=svdg NOAFFIRM ASYNC VALID_FOR=(ONLINE_LOGFILES,PRIMARY_ROLE) DB_UNIQUE_NAME=svdg
+log_archive_dest_3                                 SERVICE=sv NOAFFIRM ASYNC VALID_FOR=(ONLINE_LOGFILES,PRIMARY_ROLE) DB_UNIQUE_NAME=sv
+log_archive_dest_state_1                           enable
+log_archive_dest_state_2                           ENABLE
+log_archive_dest_state_3                           enable
+log_archive_dest_state_4                           enable
+fal_client                                         SVX9PRD
+fal_server                                         sv
+log_archive_config                                 DG_CONFIG=(sv,svdg,svx9prd)
+log_archive_format                                 %t_%s_%r.arc
+log_archive_max_processes                          4
+standby_file_management                            auto
+remote_login_passwordfile                          EXCLUSIVE
+db_name                                            sv
+db_unique_name                                     svx9prd
+
+18 rows selected.
+
+alter system set LOG_ARCHIVE_CONFIG='DG_CONFIG=(svx9prd,svx9dr)' scope=both sid='*';
+alter system set LOG_ARCHIVE_DEST_4='SERVICE=svx9dr ARCH VALID_FOR=(ONLINE_LOGFILES,PRIMARY_ROLE) DB_UNIQUE_NAME=svx9dr' scope=both sid='*';
+alter system set fal_server=SVX9DR scope=both sid='*';
+alter system set fal_client=SVX9PRD scope=both sid='*';
+alter system set DB_FILE_NAME_CONVERT='+DATA/SVX9DR/DATAFILE/','+DATA/SVX9PRD/DATAFILE/' SID='*' scope=spfile;
+alter system set LOG_FILE_NAME_CONVERT='+FRA/SVX9DR/ONLINELOG/','+FRA/SVX9PRD/ONLINELOG/' SID='*' scope=spfile;
+ALTER SYSTEM SET LOG_ARCHIVE_DEST_STATE_4=DEFER scope=both sid='*';
+
+mkdir -p /u01/app/oracle/wallet/SVX9DR1/tde
+mkdir -p /u01/app/oracle/admin/svx9dr/adump
+
+vi initsvx9dr.ora
+*.db_unique_name='svx9dr'
+*.db_name='sv'
+
+ startup nomount pfile='/home/oracle/initsvx9dr.ora';
+ 
+ vi dup_svx9dr
+ 
+connect target sys/"qwe123#qwe123"@svx9prd
+connect  auxiliary sys/"qwe123#qwe123"@svx9dr
+run {
+allocate channel prmy1 type disk;
+allocate channel prmy2 type disk;
+allocate channel prmy3 type disk;
+allocate channel prmy4 type disk;
+allocate channel prmy5 type disk;
+allocate channel prmy6 type disk;
+allocate channel prmy7 type disk;
+allocate channel prmy8 type disk;
+allocate channel prmy9 type disk;
+allocate channel prmy10 type disk;
+allocate channel prmy11 type disk;
+allocate channel prmy12 type disk;
+allocate auxiliary channel stby1 type disk;
+allocate auxiliary channel stby2 type disk;
+allocate auxiliary channel stby3 type disk;
+allocate auxiliary channel stby4 type disk;
+allocate auxiliary channel stby5 type disk;
+allocate auxiliary channel stby6 type disk;
+allocate auxiliary channel stby7 type disk;
+allocate auxiliary channel stby8 type disk;
+allocate auxiliary channel stby9 type disk;
+allocate auxiliary channel stby10 type disk;
+allocate auxiliary channel stby11 type disk;
+allocate auxiliary channel stby12 type disk;
+
+duplicate target database
+for standby
+from active database
+dorecover
+  spfile
+    set db_unique_name='svx9dr'
+    set control_files='+DATA/SVX9DR/CONTROLFILE/current01.ctl','+FRA/SVX9DR/CONTROLFILE/current02.ctl'
+    set log_archive_config='dg_config=(svx9prd,svx9dr)'
+    set audit_file_dest='/u01/app/oracle/admin/svx9dr/adump'
+    set cluster_database='false'
+   nofilenamecheck;
+  }
+  
+  nohup rman @dup_svx9dr log=dup_svx9dr_from_DR.log &
+  
+  RMAN-06900: warning: unable to generate V$RMAN_STATUS or V$RMAN_OUTPUT row
+RMAN-06901: warning: disabling update of the V$RMAN_STATUS and V$RMAN_OUTPUT rows
+Oracle error from target database:
+ORA-03113: end-of-file on communication channel
+Process ID: 396545
+Session ID: 3796 Serial number: 42617
+
+
+ALTER DATABASE CREATE STANDBY CONTROLFILE AS '/tmp/svx9dr.ctl';
+startup nomount pfile='/tmp/pfile_svx9dr';
+rman target /
+restore controlfile from '/tmp/svx9dr.ctl';
+ shutdown immediate;
+ edit in /tmp/pfile_svx9dr
+ output file name=+DATA/SVX9DR/CONTROLFILE/current.404.1142598115
+output file name=+FRA/SVX9DR/CONTROLFILE/current.595.1142598115
+
+startup mount pfile='/tmp/pfile_svx9dr';
+shutdown immediate
+startup nomount pfile='/tmp/pfile_svx9dr';
+create spfile='+DATA' from pfile='/tmp/pfile_svx9dr';
+vi /u01/app/oracle/product/19.0.0.0/dbhome_bo/dbs/initsvx9dr.ora
+spfile='+DATA/SVX9DR/PARAMETERFILE/spfile.456.1142598799'
+startup mount pfile='/u01/app/oracle/product/19.0.0.0/dbhome_bo/dbs/initsvx9dr.ora';
+alter system set standby_file_management=manual scope=both sid='*';
+
+1    0        SYSTEM               ***     +DATA/MUST_RENAME_THIS_DATAFILE_1.4294967295.4294967295
+2    0        SYSAUX               ***     +DATA/MUST_RENAME_THIS_DATAFILE_2.4294967295.4294967295
+3    0        UNDOTBS1             ***     +DATA/MUST_RENAME_THIS_DATAFILE_3.4294967295.4294967295
+4    0        XML_DATA_TBS         ***     +DATA/MUST_RENAME_THIS_DATAFILE_4.4294967295.4294967295
+5    0        TRANS_DATA_TBS       ***     +DATA/MUST_RENAME_THIS_DATAFILE_5.4294967295.4294967295
+6    0        LARGE_DATA_TBS       ***     +DATA/MUST_RENAME_THIS_DATAFILE_6.4294967295.4294967295
+7    0        SMALL_DATA_TBS       ***     +DATA/MUST_RENAME_THIS_DATAFILE_7.4294967295.4294967295
+8    0        ENCRYPT_DATA_TBS     ***     +DATA/MUST_RENAME_THIS_DATAFILE_8.4294967295.4294967295
+9    0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_9.4294967295.4294967295
+10   0        SVWOTHERS            ***     +DATA/MUST_RENAME_THIS_DATAFILE_10.4294967295.4294967295
+11   0        SVWAUDIT             ***     +DATA/MUST_RENAME_THIS_DATAFILE_11.4294967295.4294967295
+12   0        SVWNDX               ***     +DATA/MUST_RENAME_THIS_DATAFILE_12.4294967295.4294967295
+13   0        SMSGATE_TBS          ***     +DATA/MUST_RENAME_THIS_DATAFILE_13.4294967295.4294967295
+14   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_14.4294967295.4294967295
+15   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_15.4294967295.4294967295
+16   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_16.4294967295.4294967295
+17   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_17.4294967295.4294967295
+18   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_18.4294967295.4294967295
+19   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_19.4294967295.4294967295
+20   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_20.4294967295.4294967295
+21   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_21.4294967295.4294967295
+22   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_22.4294967295.4294967295
+23   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_23.4294967295.4294967295
+24   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_24.4294967295.4294967295
+25   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_25.4294967295.4294967295
+26   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_26.4294967295.4294967295
+27   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_27.4294967295.4294967295
+28   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_28.4294967295.4294967295
+29   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_29.4294967295.4294967295
+30   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_30.4294967295.4294967295
+31   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_31.4294967295.4294967295
+32   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_32.4294967295.4294967295
+33   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_33.4294967295.4294967295
+34   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_34.4294967295.4294967295
+35   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_35.4294967295.4294967295
+36   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_36.4294967295.4294967295
+37   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_37.4294967295.4294967295
+38   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_38.4294967295.4294967295
+39   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_39.4294967295.4294967295
+40   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_40.4294967295.4294967295
+41   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_41.4294967295.4294967295
+42   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_42.4294967295.4294967295
+43   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_43.4294967295.4294967295
+44   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_44.4294967295.4294967295
+45   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_45.4294967295.4294967295
+46   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_46.4294967295.4294967295
+47   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_47.4294967295.4294967295
+48   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_48.4294967295.4294967295
+49   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_49.4294967295.4294967295
+50   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_50.4294967295.4294967295
+51   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_51.4294967295.4294967295
+52   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_52.4294967295.4294967295
+53   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_53.4294967295.4294967295
+54   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_54.4294967295.4294967295
+55   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_55.4294967295.4294967295
+56   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_56.4294967295.4294967295
+57   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_57.4294967295.4294967295
+58   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_58.4294967295.4294967295
+59   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_59.4294967295.4294967295
+60   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_60.4294967295.4294967295
+61   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_61.4294967295.4294967295
+62   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_62.4294967295.4294967295
+63   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_63.4294967295.4294967295
+64   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_64.4294967295.4294967295
+65   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_65.4294967295.4294967295
+66   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_66.4294967295.4294967295
+67   0        SYSAUX               ***     +DATA/MUST_RENAME_THIS_DATAFILE_67.4294967295.4294967295
+68   0        SYSAUX               ***     +DATA/MUST_RENAME_THIS_DATAFILE_68.4294967295.4294967295
+69   0        SYSAUX               ***     +DATA/MUST_RENAME_THIS_DATAFILE_69.4294967295.4294967295
+70   0        SYSAUX               ***     +DATA/MUST_RENAME_THIS_DATAFILE_70.4294967295.4294967295
+71   0        SYSAUX               ***     +DATA/MUST_RENAME_THIS_DATAFILE_71.4294967295.4294967295
+72   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_72.4294967295.4294967295
+73   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_73.4294967295.4294967295
+74   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_74.4294967295.4294967295
+75   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_75.4294967295.4294967295
+76   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_76.4294967295.4294967295
+77   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_77.4294967295.4294967295
+78   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_78.4294967295.4294967295
+79   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_79.4294967295.4294967295
+80   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_80.4294967295.4294967295
+81   0        UNDOTBS1             ***     +DATA/MUST_RENAME_THIS_DATAFILE_81.4294967295.4294967295
+82   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_82.4294967295.4294967295
+83   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_83.4294967295.4294967295
+84   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_84.4294967295.4294967295
+85   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_85.4294967295.4294967295
+86   0        SYSAUX               ***     +DATA/MUST_RENAME_THIS_DATAFILE_86.4294967295.4294967295
+87   0        UNDOTBS1             ***     +DATA/MUST_RENAME_THIS_DATAFILE_87.4294967295.4294967295
+88   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_88.4294967295.4294967295
+89   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_89.4294967295.4294967295
+90   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_90.4294967295.4294967295
+91   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_91.4294967295.4294967295
+92   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_92.4294967295.4294967295
+93   0        UNDOTBS1             ***     +DATA/MUST_RENAME_THIS_DATAFILE_93.4294967295.4294967295
+94   0        UNDOTBS1             ***     +DATA/MUST_RENAME_THIS_DATAFILE_94.4294967295.4294967295
+95   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_95.4294967295.4294967295
+96   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_96.4294967295.4294967295
+97   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_97.4294967295.4294967295
+98   0        USER_DATA_TBS        ***     +DATA/MUST_RENAME_THIS_DATAFILE_98.4294967295.4294967295
+99   0        UNDOTBS2             ***     +DATA/SVX9DR/DATAFILE/undo2.dbf
+100  0        UNDOTBS2             ***     +DATA/MUST_RENAME_THIS_DATAFILE_100.4294967295.4294967295
+
+List of Temporary Files
+=======================
+File Size(MB) Tablespace           Maxsize(MB) Tempfile Name
+---- -------- -------------------- ----------- --------------------
+1    100      MDP_TMP_TBS          32767       +DATA/SVX9PRD/TEMPFILE/mdp_tmp_tbs.547.1139228229
+2    2048     MDP_TMP_TBS          2048        +DATA/SVX9PRD/temp02
+3    100      MDP_TMP_TBS          32767       +DATA/SVX9PRD/TEMPFILE/mdp_tmp_tbs.509.1139228247
+4    100      MDP_TMP_TBS          32767       +DATA/SVX9PRD/TEMPFILE/mdp_tmp_tbs.517.1139228269
+5    30720    TEMP_TBS             32767       +DATA/SVX9PRD/TEMPFILE/temp02.dbf
+6    100      TEMP_TBS             32767       +DATA/SVX9PRD/TEMPFILE/temp_tbs.510.1139630633
+7    100      TEMP_TBS             32767       +DATA/SVX9PRD/TEMPFILE/temp_tbs.533.1139630641
+8    100      TEMP_TBS             32767       +DATA/SVX9PRD/TEMPFILE/temp_tbs.548.1139630647
+9    100      TEMP_TBS             32767       +DATA/SVX9PRD/TEMPFILE/temp_tbs.549.1139630651
+10   100      TEMP_TBS             32767       +DATA/SVX9PRD/TEMPFILE/temp_tbs.550.1139630657
+11   100      TEMP_TBS             32767       +DATA/SVX9PRD/TEMPFILE/temp_tbs.551.1139630659
+12   100      TEMP_TBS             32767       +DATA/SVX9PRD/TEMPFILE/temp_tbs.552.1139630665
+13   100      TEMP_TBS             32767       +DATA/SVX9PRD/TEMPFILE/temp_tbs.553.1139630665
+
++DATA/SVX9DR/DATAFILE/sysaux.371.1142365967
+
+ALTER DATABASE RENAME FILE '+DATA/SVX9PRD/TEMPFILE/mdp_tmp_tbs.547.1139228229' TO '+DATA/SVX9DR/TEMPFILE/mdp_tmp_tbs.547.1139228229';
+ALTER DATABASE RENAME FILE '+DATA/SVX9PRD/temp02' TO '+DATA/SVX9DR/temp02';
+ALTER DATABASE RENAME FILE '+DATA/SVX9PRD/TEMPFILE/mdp_tmp_tbs.509.1139228247' TO '+DATA/SVX9DR/TEMPFILE/mdp_tmp_tbs.509.1139228247';
+ALTER DATABASE RENAME FILE '+DATA/SVX9PRD/TEMPFILE/mdp_tmp_tbs.517.1139228269' TO '+DATA/SVX9DR/TEMPFILE/mdp_tmp_tbs.517.1139228269';
+ALTER DATABASE RENAME FILE '+DATA/SVX9PRD/TEMPFILE/temp02.dbf' TO '+DATA/SVX9DR/TEMPFILE/temp02.dbf';
+ALTER DATABASE RENAME FILE '+DATA/SVX9PRD/TEMPFILE/temp_tbs.510.1139630633' TO '+DATA/SVX9DR/TEMPFILE/temp_tbs.510.1139630633';
+ALTER DATABASE RENAME FILE '+DATA/SVX9PRD/TEMPFILE/temp_tbs.533.1139630641' TO '+DATA/SVX9DR/TEMPFILE/temp_tbs.533.1139630641';
+ALTER DATABASE RENAME FILE '+DATA/SVX9PRD/TEMPFILE/temp_tbs.548.1139630647' TO '+DATA/SVX9DR/TEMPFILE/temp_tbs.548.1139630647';
+ALTER DATABASE RENAME FILE '+DATA/SVX9PRD/TEMPFILE/temp_tbs.549.1139630651' TO '+DATA/SVX9DR/TEMPFILE/temp_tbs.549.1139630651';
+ALTER DATABASE RENAME FILE '+DATA/SVX9PRD/TEMPFILE/temp_tbs.550.1139630657' TO '+DATA/SVX9DR/TEMPFILE/temp_tbs.550.1139630657';
+ALTER DATABASE RENAME FILE '+DATA/SVX9PRD/TEMPFILE/temp_tbs.551.1139630659' TO '+DATA/SVX9DR/TEMPFILE/temp_tbs.551.1139630659';
+ALTER DATABASE RENAME FILE '+DATA/SVX9PRD/TEMPFILE/temp_tbs.552.1139630665' TO '+DATA/SVX9DR/TEMPFILE/temp_tbs.552.1139630665';
+  ALTER DATABASE RENAME FILE '+DATA/SVX9PRD/TEMPFILE/temp_tbs.553.1139630665' TO '+DATA/SVX9DR/TEMPFILE/temp_tbs.553.1139630665';
+
+
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_8.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/ENCRYPT_DATA_TBS.271.1142012811';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_6.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/LARGE_DATA_TBS.273.1142012809';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_7.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/SMALL_DATA_TBS.272.1142012809';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_13.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/SMSGATE_TBS.260.1142012821';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_11.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/SVWAUDIT.261.1142012817';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_12.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/SVWNDX.266.1142012823';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_10.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/SVWOTHERS.268.1142012815';
+
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_67.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/SYSAUX.259.1142012799';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_2.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/SYSAUX.371.1142365967';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_68.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/SYSAUX.372.1142378563';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_69.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/SYSAUX.373.1142382761';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_70.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/SYSAUX.374.1142384253';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_71.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/SYSAUX.375.1142389261';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_86.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/SYSAUX.441.1142477555';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_1.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/SYSTEM.270.1142012799';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_5.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/TRANS_DATA_TBS.274.1142012805';
+
+  
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_3.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/UNDOTBS1.275.1142012803';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_81.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/UNDOTBS1.413.1142462037';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_87.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/UNDOTBS1.443.1142479235';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_93.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/UNDOTBS1.452.1142514879';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_94.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/UNDOTBS1.453.1142515005';
+
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_9.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.262.1142012831';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_14.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.263.1142012827';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_15.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.264.1142012825';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_16.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.267.1142012823';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_17.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.269.1142012813';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_18.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.276.1142012841';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_19.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.277.1142012915';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_20.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.278.1142013283';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_21.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.279.1142013333';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_22.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.280.1142023069';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_23.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.281.1142025849';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_24.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.282.1142055797';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_25.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.283.1142063677';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_26.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.284.1142072327';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_27.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.285.1142075139';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_28.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.286.1142084671';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_29.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.296.1142087703';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_30.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.306.1142093711';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_31.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.307.1142102643';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_32.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.308.1142119369';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_33.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.309.1142123281';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_34.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.310.1142126913';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_35.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.311.1142127277';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_36.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.312.1142127985';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_37.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.313.1142154239';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_38.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.314.1142169413';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_39.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.315.1142173013';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_40.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.316.1142174671';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_41.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.317.1142187315';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_42.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.318.1142205867';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_43.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.319.1142208107';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_44.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.320.1142215023';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_45.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.321.1142216671';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_46.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.322.1142225223';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_47.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.323.1142225479';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_48.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.324.1142231611';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_49.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.325.1142233009';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_50.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.326.1142245507';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_51.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.327.1142256117';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_52.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.328.1142269285';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_53.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.329.1142275633';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_54.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.330.1142282727';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_55.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.331.1142285527';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_56.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.332.1142286001';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_57.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.333.1142288939';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_58.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.334.1142296065';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_59.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.335.1142314823';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_60.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.336.1142326333';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_61.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.337.1142326973';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_62.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.338.1142327957';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_63.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.339.1142336293';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_64.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.340.1142347939';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_65.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.341.1142348305';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_66.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.370.1142362799';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_72.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.376.1142393951';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_73.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.378.1142401589';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_74.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.379.1142407473';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_75.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.381.1142415691';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_76.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.382.1142420841';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_77.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.383.1142424751';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_78.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.410.1142452507';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_79.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.414.1142462103';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_80.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.416.1142463843';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_82.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.418.1142465817';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_83.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/USER_DATA_TBS.454.1142515079';
+
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_4.4294967295.4294967295' TO '+DATA/SVX9DR/DATAFILE/XML_DATA_TBS.265.1142012803';
+
+create spfile='+DATA' from pfile='/tmp/pfile_svx9dr.ora';
+startup mount pfile='/u01/app/oracle/product/19.0.0.0/dbhome_bo/dbs/initsvx9dr.ora';
+
+vi svx9dr_full.rman
+
+RUN {
+sql 'alter system set "_backup_disk_bufcnt"=64';
+sql 'alter system set "_backup_file_bufcnt"=64';
+sql 'alter system set "_backup_disk_bufsz"=1048576';
+sql 'alter system set "_backup_file_bufsz"=1048576';
+#sql 'alter system switch logfile';
+allocate channel ch1 device type disk format '/zfssa/exaprdx9-bkp/sv/svx9dr/svx9dr_%d_%T_%U.bak';
+allocate channel ch3 device type disk format '/zfssa/exaprdx9-bkp/sv/svx9dr/svx9dr_%d_%T_%U.bak';
+allocate channel ch4 device type disk format '/zfssa/exaprdx9-bkp/sv/svx9dr/svx9dr_%d_%T_%U.bak';
+allocate channel ch5 device type disk format '/zfssa/exaprdx9-bkp/sv/svx9dr/svx9dr_%d_%T_%U.bak';
+allocate channel ch6 device type disk format '/zfssa/exaprdx9-bkp/sv/svx9dr/svx9dr_%d_%T_%U.bak';
+allocate channel ch7 device type disk format '/zfssa/exaprdx9-bkp/sv/svx9dr/svx9dr_%d_%T_%U.bak';
+allocate channel ch8 device type disk format '/zfssa/exaprdx9-bkp/sv/svx9dr/svx9dr_%d_%T_%U.bak';
+BACKUP  AS COMPRESSED BACKUPSET
+        TAG 'svx9dr_FULLBK'
+        INCREMENTAL LEVEL 0
+        DATABASE;
+ CROSSCHECK ARCHIVELOG ALL;
+ BACKUP  AS COMPRESSED BACKUPSET
+         TAG 'svx9dr_FULLBK'
+ARCHIVELOG ALL;
+}
+
+
+rman target sys/qwe123#qwe123 cmdfile='/home/oracle/svx9dr_full.rman' log='/home/oracle/svx9dr_full.log'
+
+
+srvctl add database -d svx9dr -o /u01/app/oracle/product/19.0.0.0/dbhome_bo -p +DATA/SVX9DR/PARAMETERFILE/spfile.654.1142968357 -r physical_standby -s mount 
+
+srvctl modify database -d svx9dr -a "DATA,FRA" 
+srvctl add instance -d svx9dr  -i svx9dr1 -n mcdrdbadm01vm01
+srvctl add instance -d svx9dr  -i svx9dr2 -n mcdrdbadm02vm01
+srvctl config database -d svx9dr
+srvctl modify database –db svx9dr -pwfile +DATA/SVX9DR/PASSWORD/orapwsvx9dr1
+
+srvctl status database -d svx9dr
+
+srvctl start database -d svx9dr 
+srvctl status database -d svx9dr
+
+pwcopy /u01/app/oracle/product/19.0.0.0/dbhome_bo/dbs/orapwsvx9dr1 +DATA/SVX9DR/PASSWORD/orapwsvx9dr1
+
+alter database add standby logfile thread 1 group 21 size 1000M;
+alter database add standby logfile thread 2 group 22 size 1000M;
+alter database add standby logfile thread 2 group 23 size 1000M;
+-----------------
+svip
+
+SQL> set linesize 500 pages 0
+SQL> col value for a90
+SQL> col name for a50
+SQL>
+SQL> select name, value from v$parameter
+  2  where name in ('db_name','db_unique_name','log_archive_config', 'log_archive_dest_1','log_archive_dest_2','log_archive_dest_3',
+  3                 'log_archive_dest_state_1','log_archive_dest_state_2','log_archive_dest_state_3','log_archive_dest_state_4','log_archive_dest_state_3','log_archive_dest_state_4', 'remote_login_passwordfile',
+  4                 'log_archive_format','log_archive_max_processes','fal_server','fal_client','db_file_name_convert',
+  5                       'log_file_name_convert', 'standby_file_management');
+db_file_name_convert                               /oradata/svip/, +DATA/SVIPX9PRD/DATAFILE/
+log_file_name_convert                              /oradata/svip/, +FRA/SVIPX9PRD/ONLINELOG/
+log_archive_dest_1                                 LOCATION=USE_DB_RECOVERY_FILE_DEST VALID_FOR=(ALL_LOGFILES,ALL_ROLES) DB_UNIQUE_NAME=svipx
+                                                   9prd
+
+log_archive_dest_2                                 SERVICE=svipdg NOAFFIRM ASYNC VALID_FOR=(ONLINE_LOGFILES,PRIMARY_ROLE) DB_UNIQUE_NAME=svip
+                                                   dg
+
+log_archive_dest_3                                 SERVICE=svip ARCH VALID_FOR=(ONLINE_LOGFILES,PRIMARY_ROLE) DB_UNIQUE_NAME=svip
+log_archive_dest_state_1                           enable
+log_archive_dest_state_2                           ENABLE
+log_archive_dest_state_3                           ENABLE
+log_archive_dest_state_4                           enable
+fal_client                                         svipx9prd
+fal_server                                         SVIP
+log_archive_config                                 dg_config=(svip,svipx9prd)
+log_archive_format                                 %t_%s_%r.arc
+log_archive_max_processes                          4
+standby_file_management                            AUTO
+remote_login_passwordfile                          EXCLUSIVE
+db_name                                            svip
+db_unique_name                                     svipx9prd
+
+18 rows selected.
+
+alter system set LOG_ARCHIVE_CONFIG='DG_CONFIG=(svipx9prd,svipx9dr)' scope=both sid='*';
+alter system set LOG_ARCHIVE_DEST_4='SERVICE=svipx9dr ARCH VALID_FOR=(ONLINE_LOGFILES,PRIMARY_ROLE) DB_UNIQUE_NAME=svipx9dr' scope=both sid='*';
+alter system set fal_server=svipx9dr scope=both sid='*';
+alter system set fal_client=svipx9prd scope=both sid='*';
+alter system set DB_FILE_NAME_CONVERT='+DATA/SVIPX9DR/DATAFILE/','+DATA/SVIPX9PRD/DATAFILE/' SID='*' scope=spfile;
+alter system set LOG_FILE_NAME_CONVERT='+FRA/SVIPX9DR/ONLINELOG/','+FRA/SVIPX9PRD/ONLINELOG/' SID='*' scope=spfile;
+ALTER SYSTEM SET LOG_ARCHIVE_DEST_STATE_4=DEFER scope=both sid='*';
+
+cd DATA
+mkdir SVIPX9DR
+mkdir PARAMETERFILE DATAFILE CONTROLFILE TEMPFILE ONLINELOG BROKER PASSWORD
+
+cd FRA 
+mkdir SVIPX9DR
+mkdir ARCHIVELOG CONTROLFILE ONLINELOG
+
+
+[oracle@mdpx9prdvm01 ~]$ cat /tmp/pfile_svipx9prd
+svipx9prd2.__data_transfer_cache_size=0
+svipx9prd1.__data_transfer_cache_size=0
+svipx9prd2.__db_cache_size=2801795072
+svipx9prd1.__db_cache_size=2617245696
+svipx9prd2.__inmemory_ext_roarea=0
+svipx9prd1.__inmemory_ext_roarea=0
+svipx9prd2.__inmemory_ext_rwarea=0
+svipx9prd1.__inmemory_ext_rwarea=0
+svipx9prd2.__java_pool_size=0
+svipx9prd1.__java_pool_size=0
+svipx9prd2.__large_pool_size=50331648
+svipx9prd1.__large_pool_size=67108864
+svipx9prd1.__oracle_base='/u01/app/oracle'#ORACLE_BASE set from environment
+svipx9prd2.__oracle_base='/u01/app/oracle'#ORACLE_BASE set from environment
+svipx9prd2.__pga_aggregate_target=1258291200
+svipx9prd1.__pga_aggregate_target=1258291200
+svipx9prd2.__sga_target=4294967296
+svipx9prd1.__sga_target=4294967296
+svipx9prd2.__shared_io_pool_size=134217728
+svipx9prd1.__shared_io_pool_size=134217728
+svipx9prd2.__shared_pool_size=1275068416
+svipx9prd1.__shared_pool_size=1426063360
+svipx9prd2.__streams_pool_size=0
+svipx9prd1.__streams_pool_size=0
+svipx9prd2.__unified_pga_pool_size=0
+svipx9prd1.__unified_pga_pool_size=0
+*.audit_file_dest='/u01/app/oracle/admin/svipx9prd/adump'
+*.audit_trail='OS'
+*.cluster_database=TRUE
+*.compatible='19.0.0.0'
+*.control_files='+DATA/SVIPX9PRD/CONTROLFILE/current01.ctl','+FRA/SVIPX9PRD/CONTROLFILE/current02.ctl'#Restore Controlfile
+*.db_block_size=8192
+*.db_create_file_dest='+DATA'
+*.db_file_name_convert='+DATA/SVIPX9DR/DATAFILE/','+DATA/SVIPX9PRD/DATAFILE/'
+*.db_name='svip'
+*.db_recovery_file_dest_size=912680550400
+*.db_recovery_file_dest='+FRA'
+*.db_unique_name='svipx9prd'
+*.diagnostic_dest='/u01/app/oracle'
+*.dispatchers='(PROTOCOL=TCP) (SERVICE=svipXDB)'
+*.fal_client='SVIPX9PRD'
+*.fal_server='SVIPX9DR'
+svipx9prd1.instance_number=1
+svipx9prd2.instance_number=2
+*.local_listener=''
+svipx9prd1.local_listener='(ADDRESS=(PROTOCOL=TCP)(HOST=10.10.110.102)(PORT=1521))'
+svipx9prd2.local_listener='(ADDRESS=(PROTOCOL=TCP)(HOST=10.10.110.103)(PORT=1521))'
+*.log_archive_config='DG_CONFIG=(svipx9prd,svipx9dr)'
+*.log_archive_dest_1='LOCATION=USE_DB_RECOVERY_FILE_DEST VALID_FOR=(ALL_LOGFILES,ALL_ROLES) DB_UNIQUE_NAME=svipx9prd'
+*.log_archive_dest_2='SERVICE=svipdg NOAFFIRM ASYNC VALID_FOR=(ONLINE_LOGFILES,PRIMARY_ROLE) DB_UNIQUE_NAME=svipdg'
+*.log_archive_dest_3='SERVICE=svip ARCH VALID_FOR=(ONLINE_LOGFILES,PRIMARY_ROLE) DB_UNIQUE_NAME=svip'
+*.log_archive_dest_4='SERVICE=svipx9dr ARCH VALID_FOR=(ONLINE_LOGFILES,PRIMARY_ROLE) DB_UNIQUE_NAME=svipx9dr'
+*.log_archive_dest_state_2='ENABLE'
+*.log_archive_dest_state_3='ENABLE'
+*.log_archive_dest_state_4='DEFER'
+*.log_archive_format='%t_%s_%r.arc'
+*.log_archive_max_processes=4
+*.log_file_name_convert='+FRA/SVIPX9DR/ONLINELOG/','+FRA/SVIPX9PRD/ONLINELOG/'
+*.nls_language='AMERICAN'
+*.nls_territory='AMERICA'
+*.open_cursors=300
+*.pga_aggregate_limit=2621440000
+*.pga_aggregate_target=1258291200
+*.processes=300
+*.remote_login_passwordfile='EXCLUSIVE'
+*.sga_max_size=4294967296
+*.sga_target=4294967296
+*.standby_file_management='AUTO'
+svipx9prd1.thread=1
+svipx9prd2.thread=2
+svipx9prd1.undo_tablespace='UNDOTBS1'
+svipx9prd2.undo_tablespace='UNDOTBS2'
+
+
+*.audit_file_dest='/u01/app/oracle/admin/svipx9dr/adump'
+*.audit_trail='OS'
+*.cluster_database=TRUE
+*.compatible='19.0.0.0'
+*.control_files='+DATA/SVIPX9DR/CONTROLFILE/current.287.1142085485','+FRA/SVIPX9DR/CONTROLFILE/current.279.1142085557'#Restore Controlfile
+*.db_block_size=8192
+*.db_create_file_dest='+DATA'
+*.db_file_name_convert='+DATA/SVIPX9PRD/DATAFILE/','+DATA/SVIPX9DR/DATAFILE/'
+*.db_name='svip'
+*.db_recovery_file_dest_size=912680550400
+*.db_recovery_file_dest='+FRA'
+*.db_unique_name='svipx9dr'
+*.diagnostic_dest='/u01/app/oracle'
+*.dispatchers='(PROTOCOL=TCP) (SERVICE=svipXDB)'
+*.fal_client='SVIPX9DR'
+*.fal_server='SVIPX9PRD'
+svipx9dr1.instance_number=1
+svipx9dr2.instance_number=2
+*.local_listener=''
+svipx9dr1.local_listener='(ADDRESS=(PROTOCOL=TCP)(HOST=10.19.110.102)(PORT=1521))'
+*.log_archive_config='DG_CONFIG=(svipx9prd,svipx9dr)'
+*.log_archive_dest_4='SERVICE=svipx9prd ARCH VALID_FOR=(ONLINE_LOGFILES,PRIMARY_ROLE) DB_UNIQUE_NAME=svipx9prd'
+*.log_archive_dest_state_2='ENABLE'
+*.log_archive_dest_state_3='ENABLE'
+*.log_archive_dest_state_4='DEFER'
+*.log_archive_format='%t_%s_%r.arc'
+*.log_archive_max_processes=4
+*.log_file_name_convert='+FRA/SVIPX9PRD/ONLINELOG/','+FRA/SVIPX9DR/ONLINELOG/'
+*.nls_language='AMERICAN'
+*.nls_territory='AMERICA'
+*.open_cursors=300
+*.pga_aggregate_limit=2621440000
+*.pga_aggregate_target=1258291200
+*.processes=300
+*.remote_login_passwordfile='EXCLUSIVE'
+*.sga_max_size=4294967296
+*.sga_target=4294967296
+*.standby_file_management='AUTO'
+svipx9dr1.thread=1
+svipx9dr2.thread=2
+svipx9dr1.undo_tablespace='UNDOTBS1'
+svipx9dr2.undo_tablespace='UNDOTBS2'
+
+mkdir -p /u01/app/oracle/admin/svipx9dr/adump
+
+cd
+vi initsvipx9dr.ora
+*.db_unique_name='svipx9dr'
+*.db_name='svip'
+
+ startup nomount pfile='/home/oracle/initsvipx9dr.ora';
+ 
+ vi dup_svipx9dr
+ 
+connect target sys/"qwe123#qwe123"@svipx9prd
+connect  auxiliary sys/"qwe123#qwe123"@svipx9dr
+run {
+allocate channel prmy1 type disk;
+allocate channel prmy2 type disk;
+allocate channel prmy3 type disk;
+allocate channel prmy4 type disk;
+allocate channel prmy5 type disk;
+allocate channel prmy6 type disk;
+allocate channel prmy7 type disk;
+allocate channel prmy8 type disk;
+allocate channel prmy9 type disk;
+allocate channel prmy10 type disk;
+allocate channel prmy11 type disk;
+allocate channel prmy12 type disk;
+allocate auxiliary channel stby1 type disk;
+allocate auxiliary channel stby2 type disk;
+allocate auxiliary channel stby3 type disk;
+allocate auxiliary channel stby4 type disk;
+allocate auxiliary channel stby5 type disk;
+allocate auxiliary channel stby6 type disk;
+allocate auxiliary channel stby7 type disk;
+allocate auxiliary channel stby8 type disk;
+allocate auxiliary channel stby9 type disk;
+allocate auxiliary channel stby10 type disk;
+allocate auxiliary channel stby11 type disk;
+allocate auxiliary channel stby12 type disk;
+
+duplicate target database
+for standby
+from active database
+dorecover
+  spfile
+    set db_unique_name='svipx9dr'
+    set control_files='+DATA/SVIPX9DR/CONTROLFILE/current01.ctl','+FRA/SVIPX9DR/CONTROLFILE/current02.ctl'
+    set log_archive_config='dg_config=(svipx9prd,svipx9dr)'
+    set audit_file_dest='/u01/app/oracle/admin/svipx9dr/adump'
+    set cluster_database='false'
+	set db_file_name_convert='+DATA/SVIPX9PRD/DATAFILE','+DATA/SVIPX9DR/DATAFILE/'
+    set log_file_name_convert ='+DATA/SVIPX9PRD/ONLINELOG/','+DATA/SVIPX9DR/ONLINELOG/'
+   nofilenamecheck;
+  }
+  
+  nohup rman @dup_svipx9dr log=dup_svipx9dr_from_DR.log &
+  
+  
+  File Size(MB) Tablespace           Maxsize(MB) Tempfile Name
+---- -------- -------------------- ----------- --------------------
+1    172      TEMP                 32767       +DATA/SVIPX9PRD/DATAFILE/temp01.dbf
+2    200      TEMP                 32767       +DATA/SVIPX9PRD/TEMPFILE/temp.554.1139631547
+3    200      TEMP                 32767       +DATA/SVIPX9PRD/TEMPFILE/temp.555.1139631549
+4    200      TEMP                 32767       +DATA/SVIPX9PRD/TEMPFILE/temp.556.1139631551
+
+ALTER DATABASE RENAME FILE '+DATA/SVIPX9DR/DATAFILE/temp01.dbf' TO '+DATA/SVIPX9DR/DATAFILE/temp01.dbf';
+ALTER DATABASE RENAME FILE '+DATA' TO '+DATA/SVIPX9DR/DATAFILE/temp.554.1139631547';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_9.4294967295.4294967295' TO '+DATA/SVIPX9DR/DATAFILE/undotbs2.525.1139628215';
+
+pwcopy /u01/app/oracle/product/19.0.0.0/dbhome_svip/dbs/orapwsvipx9dr1 +DATA/SVIPX9DR/PASSWORD/orapwsvipx9dr1
+
+srvctl modify database –db svipx9dr -pwfile +DATA/SVIPX9DR/PASSWORD/orapwsvipx9dr1
+  ---------------
+  api
+ 
+ SQL> set linesize 500 pages 0
+SQL> col value for a90
+SQL> col name for a50
+SQL>
+SQL> select name, value from v$parameter
+  2  where name in ('db_name','db_unique_name','log_archive_config', 'log_archive_dest_1','log_archive_dest_2','log_archive_dest_3',
+  3                 'log_archive_dest_state_1','log_archive_dest_state_2','log_archive_dest_state_3','log_archive_dest_state_4','log_archive_dest_state_3','log_archive_dest_state_4', 'remote_login_passwordfile',
+               'log_archive_format','log_archive_max_processes','fal_server','fal_client','db_file_name_convert',
+  4    5                       'log_file_name_convert', 'standby_file_management');
+db_file_name_convert                               /oradata/API/, +DATA/APIX9PRD/DATAFILE/
+log_file_name_convert                              /oradata/API/, +DATA/APIX9PRD/ONLINELOG/
+log_archive_dest_1
+log_archive_dest_2
+log_archive_dest_3                                 SERVICE=API NOAFFIRM ASYNC VALID_FOR=(ONLINE_LOGFILES,PRIMARY_ROLE) DB_UNIQUE_NAME=API
+log_archive_dest_state_1                           enable
+log_archive_dest_state_2                           DEFER
+log_archive_dest_state_3                           ENABLE
+log_archive_dest_state_4                           enable
+fal_client                                         apix9prd
+fal_server                                         api
+log_archive_config                                 dg_config=(api,apix9prd)
+log_archive_format                                 %t_%s_%r.dbf
+log_archive_max_processes                          4
+standby_file_management                            MANUAL
+remote_login_passwordfile                          EXCLUSIVE
+db_name                                            api
+db_unique_name                                     APIX9PRD
+
+18 rows selected.
+
+
+Version 19.16.0.0.0
+[oracle@mdpx9prdvm01 ~]$ cat /tmp/pfile_api
+api.__data_transfer_cache_size=0
+APIX9PRD2.__data_transfer_cache_size=0
+APIX9PRD1.__data_transfer_cache_size=0
+api.__db_cache_size=3506438144
+APIX9PRD1.__db_cache_size=4160749568
+APIX9PRD2.__db_cache_size=4278190080
+api.__inmemory_ext_roarea=0
+APIX9PRD2.__inmemory_ext_roarea=0
+APIX9PRD1.__inmemory_ext_roarea=0
+api.__inmemory_ext_rwarea=0
+APIX9PRD2.__inmemory_ext_rwarea=0
+APIX9PRD1.__inmemory_ext_rwarea=0
+api.__java_pool_size=83886080
+APIX9PRD2.__java_pool_size=0
+APIX9PRD1.__java_pool_size=0
+api.__large_pool_size=16777216
+APIX9PRD2.__large_pool_size=50331648
+APIX9PRD1.__large_pool_size=67108864
+api.__oracle_base='/u01/app/oracle/product/19.0.0.0/dbhome_api'#ORACLE_BASE set from environment
+APIX9PRD1.__oracle_base='/u01/app/oracle'#ORACLE_BASE set from environment
+APIX9PRD2.__oracle_base='/u01/app/oracle'#ORACLE_BASE set from environment
+api.__pga_aggregate_target=2634022912
+APIX9PRD2.__pga_aggregate_target=2634022912
+APIX9PRD1.__pga_aggregate_target=2634022912
+api.__sga_target=6291456000
+APIX9PRD2.__sga_target=6291456000
+APIX9PRD1.__sga_target=6291456000
+api.__shared_io_pool_size=234881024
+APIX9PRD2.__shared_io_pool_size=134217728
+APIX9PRD1.__shared_io_pool_size=134217728
+api.__shared_pool_size=2281701376
+APIX9PRD1.__shared_pool_size=1778384896
+APIX9PRD2.__shared_pool_size=1677721600
+api.__streams_pool_size=16777216
+APIX9PRD2.__streams_pool_size=0
+APIX9PRD1.__streams_pool_size=0
+api.__unified_pga_pool_size=0
+APIX9PRD2.__unified_pga_pool_size=0
+APIX9PRD1.__unified_pga_pool_size=0
+*.audit_file_dest='/u01/app/oracle/admin/APIX9PRD/adump'
+*.audit_syslog_level='LOCAL0.INFO'
+*.audit_trail='OS'
+*.cluster_database=TRUE
+*.compatible='19.0.0'
+*.control_files='+DATA/APIX9PRD/CONTROLFILE/control01.ctl','+FRA/APIX9PRD/CONTROLFILE/control02.ctl'#Restore Controlfile
+*.db_block_size=8192
+*.db_create_file_dest='+DATA'
+*.db_create_online_log_dest_1='+DATA/'
+*.db_create_online_log_dest_2='+FRA/'
+*.DB_FILE_NAME_CONVERT='/oradata/API/','+DATA/APIX9PRD/DATAFILE/'
+*.db_name='api'
+*.db_recovery_file_dest='+FRA/'
+*.db_recovery_file_dest_size=161061273600
+*.db_unique_name='APIX9PRD'
+*.diagnostic_dest='/u01/app/oracle'
+*.dispatchers='(PROTOCOL=TCP) (SERVICE=apiXDB)'
+*.fal_client='apix9prd'
+*.fal_server='api'
+*.global_names=TRUE
+APIX9PRD1.instance_number=1
+APIX9PRD2.instance_number=2
+*.local_listener='LISTENER_API'
+APIX9PRD1.local_listener='(ADDRESS=(PROTOCOL=TCP)(HOST=10.10.110.102)(PORT=1521))'
+APIX9PRD2.local_listener='(ADDRESS=(PROTOCOL=TCP)(HOST=10.10.110.103)(PORT=1521))'
+*.log_archive_config='dg_config=(api,apix9prd)'
+*.log_archive_dest_3='SERVICE=API NOAFFIRM ASYNC VALID_FOR=(ONLINE_LOGFILES,PRIMARY_ROLE) DB_UNIQUE_NAME=API'
+*.log_archive_dest_state_2='DEFER'
+*.log_archive_dest_state_3='ENABLE'
+*.log_archive_trace=0
+*.log_buffer=134217728
+*.LOG_FILE_NAME_CONVERT='/oradata/API/','+DATA/APIX9PRD/ONLINELOG/'
+*.nls_language='AMERICAN'
+*.nls_territory='AMERICA'
+*.open_cursors=300
+*.pga_aggregate_limit=5368709120
+*.pga_aggregate_target=2621440000
+*.processes=640
+*.remote_login_passwordfile='EXCLUSIVE'
+*.resource_manager_plan=''
+*.sec_protocol_error_trace_action='LOG'
+*.service_names='apix9prd'
+*.sga_max_size=6291456000
+*.sga_target=6291456000
+*.standby_file_management='MANUAL'
+APIX9PRD1.thread=1
+APIX9PRD2.thread=2
+apix9prd2.thread=2
+APIX9PRD1.undo_tablespace='UNDOTBS1'
+APIX9PRD2.undo_tablespace='UNDOTBS02'
+apix9prd2.undo_tablespace='UNDOTBS02'
+
+
+api.__data_transfer_cache_size=0
+APIX9DR2.__data_transfer_cache_size=0
+APIX9DR1.__data_transfer_cache_size=0
+api.__db_cache_size=3506438144
+APIX9DR1.__db_cache_size=4160749568
+APIX9DR2.__db_cache_size=4278190080
+api.__inmemory_ext_roarea=0
+APIX9DR2.__inmemory_ext_roarea=0
+APIX9DR1.__inmemory_ext_roarea=0
+api.__inmemory_ext_rwarea=0
+APIX9DR2.__inmemory_ext_rwarea=0
+APIX9DR1.__inmemory_ext_rwarea=0
+api.__java_pool_size=83886080
+APIX9DR2.__java_pool_size=0
+APIX9DR1.__java_pool_size=0
+api.__large_pool_size=16777216
+APIX9DR2.__large_pool_size=50331648
+APIX9DR1.__large_pool_size=67108864
+api.__oracle_base='/u01/app/oracle/product/19.0.0.0/dbhome_api'#ORACLE_BASE set from environment
+APIX9DR1.__oracle_base='/u01/app/oracle'#ORACLE_BASE set from environment
+APIX9DR2.__oracle_base='/u01/app/oracle'#ORACLE_BASE set from environment
+api.__pga_aggregate_target=2634022912
+APIX9DR2.__pga_aggregate_target=2634022912
+APIX9DR1.__pga_aggregate_target=2634022912
+api.__sga_target=6291456000
+APIX9DR2.__sga_target=6291456000
+APIX9DR1.__sga_target=6291456000
+api.__shared_io_pool_size=234881024
+APIX9DR2.__shared_io_pool_size=134217728
+APIX9DR1.__shared_io_pool_size=134217728
+api.__shared_pool_size=2281701376
+APIX9DR1.__shared_pool_size=1778384896
+APIX9DR2.__shared_pool_size=1677721600
+api.__streams_pool_size=16777216
+APIX9DR2.__streams_pool_size=0
+APIX9DR1.__streams_pool_size=0
+api.__unified_pga_pool_size=0
+APIX9DR2.__unified_pga_pool_size=0
+APIX9DR1.__unified_pga_pool_size=0
+*.audit_file_dest='/u01/app/oracle/admin/apix9dr/adump'
+*.audit_syslog_level='LOCAL0.INFO'
+*.audit_trail='OS'
+*.cluster_database=TRUE
+*.compatible='19.0.0'
+*.control_files='+DATA/APIX9PRD/CONTROLFILE/current.297.1142092039','+FRA/APIX9PRD/CONTROLFILE/current.273.1142092191'#Restore Controlfile
+*.db_block_size=8192
+*.db_create_file_dest='+DATA'
+*.db_create_online_log_dest_1='+DATA/'
+*.db_create_online_log_dest_2='+FRA/'
+*.DB_FILE_NAME_CONVERT='+DATA/APIX9PRD/','+DATA/APIX9DR/'
+*.db_name='api'
+*.db_recovery_file_dest='+FRA/'
+*.db_recovery_file_dest_size=161061273600
+*.db_unique_name='APIX9DR'
+*.diagnostic_dest='/u01/app/oracle'
+*.dispatchers='(PROTOCOL=TCP) (SERVICE=apiXDB)'
+*.fal_client='apix9dr'
+*.fal_server='apix9prd'
+*.global_names=TRUE
+APIX9DR1.instance_number=1
+APIX9DR2.instance_number=2
+*.log_archive_config='dg_config=(apix9prd,apix9dr)'
+*.log_archive_dest_3='SERVICE=apix9prd LGWR ASYNC VALID_FOR=(ONLINE_LOGFILES,PRIMARY_ROLE) DB_UNIQUE_NAME=apix9prd'
+*.log_archive_dest_state_2='DEFER'
+*.log_archive_dest_state_3='DEFER'
+*.log_archive_trace=0
+*.log_buffer=134217728
+*.LOG_FILE_NAME_CONVERT='+DATA/APIX9PRD/','+DATA/APIX9DR/'
+*.nls_language='AMERICAN'
+*.nls_territory='AMERICA'
+*.open_cursors=300
+*.pga_aggregate_limit=5368709120
+*.pga_aggregate_target=2621440000
+*.processes=640
+*.remote_login_passwordfile='EXCLUSIVE'
+*.resource_manager_plan=''
+*.sec_protocol_error_trace_action='LOG'
+*.service_names='apix9prd'
+*.sga_max_size=6291456000
+*.sga_target=6291456000
+*.standby_file_management='AUTO'
+APIX9DR1.thread=1
+APIX9DR2.thread=2
+APIX9DR1.undo_tablespace='UNDOTBS1'
+APIX9DR2.undo_tablespace='UNDOTBS02'
+APIX9DR2.undo_tablespace='UNDOTBS02'
+
+alter system set LOG_ARCHIVE_CONFIG='DG_CONFIG=(apix9prd,apix9dr,api)' scope=both sid='*';
+alter system set LOG_ARCHIVE_DEST_2='SERVICE=apix9dr NOAFFIRM ASYNC VALID_FOR=(ONLINE_LOGFILES,PRIMARY_ROLE) DB_UNIQUE_NAME=apix9dr' scope=both sid='*';
+alter system set fal_server=apix9dr scope=both sid='*';
+alter system set fal_client=apix9prd scope=both sid='*';
+alter system set standby_file_management=AUTO scope=both sid='*';
+alter system set DB_FILE_NAME_CONVERT='+DATA/APIX9DR/DATAFILE','+DATA/APIX9PRD/DATAFILE/' SID='*' scope=spfile;
+alter system set LOG_FILE_NAME_CONVERT='+DATA/APIX9DR/ONLINELOG/','+DATA/APIX9PRD/ONLINELOG/' SID='*' scope=spfile;
+ALTER SYSTEM SET LOG_ARCHIVE_DEST_STATE_2=DEFER scope=both sid='*';
+ALTER SYSTEM SET log_archive_dest_3='SERVICE=apix9prd LGWR ASYNC VALID_FOR=(ONLINE_LOGFILES,PRIMARY_ROLE)DB_UNIQUE_NAME=apix9prd' scope=spfile sid='*';
+ALTER SYSTEM SET log_archive_dest_3='SERVICE=api NOAFFIRM ASYNC VALID_FOR=(ONLINE_LOGFILES,PRIMARY_ROLE) DB_UNIQUE_NAME=api' scope=both sid='*';
+
+ vi dup_apix9dr
+ 
+connect target sys/"qwe123#qwe123"@apix9prd
+connect  auxiliary sys/"qwe123#qwe123"@apix9dr
+run {
+allocate channel prmy1 type disk;
+allocate channel prmy2 type disk;
+allocate channel prmy3 type disk;
+allocate channel prmy4 type disk;
+allocate channel prmy5 type disk;
+allocate channel prmy6 type disk;
+allocate channel prmy7 type disk;
+allocate channel prmy8 type disk;
+allocate channel prmy9 type disk;
+allocate channel prmy10 type disk;
+allocate channel prmy11 type disk;
+allocate channel prmy12 type disk;
+allocate auxiliary channel stby1 type disk;
+allocate auxiliary channel stby2 type disk;
+allocate auxiliary channel stby3 type disk;
+allocate auxiliary channel stby4 type disk;
+allocate auxiliary channel stby5 type disk;
+allocate auxiliary channel stby6 type disk;
+allocate auxiliary channel stby7 type disk;
+allocate auxiliary channel stby8 type disk;
+allocate auxiliary channel stby9 type disk;
+allocate auxiliary channel stby10 type disk;
+allocate auxiliary channel stby11 type disk;
+allocate auxiliary channel stby12 type disk;
+
+duplicate target database
+for standby
+from active database
+dorecover
+  spfile
+    set db_unique_name='svipx9dr'
+    set control_files='+DATA/APIX9DR/CONTROLFILE/current01.ctl','+FRA/APIX9DR/CONTROLFILE/current02.ctl'
+    set log_archive_config='dg_config=(apix9prd,apix9dr)'
+    set audit_file_dest='/u01/app/oracle/admin/apix9dr/adump'
+    set cluster_database='false'
+	set db_file_name_convert='+DATA/APIX9PRD/DATAFILE','+DATA/APIX9DR/DATAFILE/'
+    set log_file_name_convert ='+DATA/APIX9PRD/ONLINELOG/','+DATA/APIX9DR/ONLINELOG/'
+   nofilenamecheck;
+  }
+  
+  
+  nohup rman @dup_apix9dr log=dup_apix9dr_from_DR.log &
+  
+  
+  
+SQL> select name, instance_name , open_mode, database_role from v$database, v$instance;
+
+
+SQL> alter database recover managed standby database using current logfile disconnect ;
+
+  SQL> select name from v$datafile;
+
+pwcopy /u01/app/oracle/product/19.0.0.0/dbhome_api/dbs/orapwapix9dr1 +DATA/APIX9DR/PASSWORD/pwdapix9dr -f
+
+srvctl add database -d apix9dr -o /u01/app/oracle/product/19.0.0.0/dbhome_api -p +DATA/APIX9DR/PARAMETERFILE/spfile.392.1142434709 -r physical_standby 
+
+srvctl modify database -d apix9dr -a "DATA,FRA" 
+srvctl add instance -d apix9dr  -i apix9dr1 -n mcdrdbadm01vm01
+srvctl add instance -d apix9dr  -i apix9dr2 -n mcdrdbadm02vm01
+srvctl config database -d apix9dr
+srvctl modify database –d apix9dr –pwfile +DATA/APIX9DR/PASSWORD/pwdapix9dr.457.1142525549
+
+srvctl status database -d apix9dr
+
+srvctl start database -d apix9dr -o mount
+srvctl status database -d apix9dr
+
+
+
+NAME
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
++DATA/APIX9DR/DATAFILE/system01.dbf
++DATA/MUST_RENAME_THIS_DATAFILE_2.4294967295.4294967295
++DATA/APIX9DR/DATAFILE/sysaux01.dbf
++DATA/APIX9DR/DATAFILE/undotbs01.dbf
++DATA/APIX9DR/DATAFILE/users02.dbf
++DATA/APIX9DR/DATAFILE/users01.dbf
++DATA/APIX9DR/DATAFILE/undo3.dbf
++DATA/MUST_RENAME_THIS_DATAFILE_9.4294967295.4294967295
+
+8 rows selected.
+
+SYSAUX.300.1142092249
+SYSTEM.298.1142092245
+UNDOTBS02.304.1142092257
+UNDOTBS1.302.1142092253
+UNDOTBS2.299.1142092247
+USERS.301.1142092253
+USERS.303.1142092255
+USERS.305.1142092261
+sysaux01.dbf
+system01.dbf
+undo3.dbf
+undotbs01.dbf
+users01.dbf
+users02.dbf
+
+
+WARNING: The converted filename '+DATA/APIX9DR/DATAFILE/users.572.1139918235'
+         is an ASM fully qualified filename.
+         Changing the filename to '+DATA/MUST_RENAME_THIS_DATAFILE_9.4294967295.4294967295'.
+         Please rename it accordingly.
+*****************************************
+2023-07-16T14:28:48.462003+03:00
+*****************************************
+WARNING: The converted filename '+DATA/APIX9DR/DATAFILE/undotbs2.492.1139624425'
+         is an ASM fully qualified filename.
+         Changing the filename to '+DATA/MUST_RENAME_THIS_DATAFILE_2.4294967295.4294967295'.
+         Please rename it accordingly.
+*****************************************
+*****************************************
+WARNING: The converted filename '+DATA/APIX9DR/DATAFILE/users.572.1139918235'
+         is an ASM fully qualified filename.
+         Changing the filename to '+DATA/MUST_RENAME_THIS_DATAFILE_9.4294967295.4294967295'.
+         Please rename it accordingly.
+
+
+ SQL> alter system set standby_file_management=manual scope=both sid='*';
+
+System altered.
+
+SQL>  ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_9.4294967295.4294967295' TO '+DATA/APIX9DR/DATAFILE/users.305.1142092261';
+
+Database altered.
+
+SQL>  ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_2.4294967295.4294967295' TO '+DATA/APIX9DR/DATAFILE/UNDOTBS2.299.1142092247';
+
+Database altered.
+
+SQL>  alter system set standby_file_management=AUTO scope=both sid='*';
+
+System altered.
+
+  SQL> alter database clear unarchived logfile group 16;
+
+Database altered.
+
+  
+  SQL> alter database clear unarchived logfile group 17;
+
+Database altered.
+
+SQL> alter database clear unarchived logfile group 18;
+
+Database altered.
+
+SQL> alter database clear unarchived logfile group 19;
+
+Database altered.
+
+
+  SQL> ALTER DATABASE RECOVER MANAGED STANDBY DATABASE CANCEL;
+
+Database altered.
+
+SQL> alter database clear unarchived logfile group 10;
+
+Database altered.
+
+SQL> alter database clear unarchived logfile group 11;
+
+Database altered.
+
+SQL> alter database clear unarchived logfile group 12;
+
+Database altered.
+
+SQL> alter database clear unarchived logfile group 13;
+
+Database altered.
+
+
+--------------
+svip
+
+alter database add standby LOGFILE thread 1 GROUP  16 ('+DATA','+FRA') SIZE 200 M ;
+alter database add standby LOGFILE thread 1 GROUP  17 ('+DATA','+FRA') SIZE 200 M ;
+alter database add standby LOGFILE thread 1 GROUP  18 ('+DATA','+FRA') SIZE 200 M ;
+alter database add standby LOGFILE thread 1 GROUP  19 ('+DATA','+FRA') SIZE 200 M ;
+alter database add standby LOGFILE thread 1 GROUP  21 ('+DATA','+FRA') SIZE 200 M ;
+alter database add standby LOGFILE thread 1 GROUP  22 ('+DATA','+FRA') SIZE 200 M ;
+alter database add standby LOGFILE thread 1 GROUP  23 ('+DATA','+FRA') SIZE 200 M ;
+
+
+pwcopy /u01/app/oracle/product/19.0.0.0/dbhome_svip/dbs/orapwsvipx9dr1 +DATA/SVIPX9DR/PASSWORD/pwdsvipx9dr -f
+
+srvctl add database -d svipx9dr -o /u01/app/oracle/product/19.0.0.0/dbhome_svip -p +DATA/SVIPX9DR/PARAMETERFILE/spfile.384.1142427889 -r physical_standby 
+
+srvctl modify database -d svipx9dr -a "DATA,FRA" 
+srvctl add instance -d svipx9dr  -i svipx9dr1 -n mcdrdbadm01vm01
+srvctl add instance -d svipx9dr  -i svipx9dr2 -n mcdrdbadm02vm01
+srvctl config database -d svipx9dr
+srvctl modify database -d svipx9dr -pwfile +DATA/SVIPX9DR/PASSWORD/pwdsvipx9dr
+srvctl modify database –d svipx9dr -s mount
+srvctl status database -d svipx9dr
+
+srvctl start database -d svipx9dr -o mount
+srvctl status database -d svipx9dr
+----------------------------------------------------------------------------------------------------
+fe
+# .bash_profile
+
+# Get the aliases and functions
+if [ -f ~/.bashrc ]; then
+        . ~/.bashrc
+fi
+
+# User specific environment and startup programs
+export TZ=Africa/Cairo
+
+ORACLE_BASE=/u01/app/oracle; export ORACLE_BASE
+ORACLE_HOME=$ORACLE_BASE/product/19.0.0.0/dbhome_fe; export ORACLE_HOME
+ORACLE_SID=fex9dr1;     export ORACLE_SID
+PATH=/usr/sbin:$PATH; export PATH
+PATH=$ORACLE_HOME/bin:$PATH; export PATH
+LD_LIBRARY_PATH=$ORACLE_HOME/lib:/lib:/usr/lib; export LD_LIBRARY_PATH
+CLASSPATH=$ORACLE_HOME/JRE:$ORACLE_HOME/jlib:$ORACLE_HOME/rdbms/jlib; export CLASSPATH
+
+
+FEX9PRD =
+  (DESCRIPTION =
+    (ADDRESS_LIST =
+      (ADDRESS = (PROTOCOL = TCP)(HOST = exa-scan)(PORT = 1521))
+    )
+    (CONNECT_DATA =
+    #  (sid = fex9prd1)  (UR = A)
+      (service_name= svferac) (UR = A)
+    )
+  )
+
+FEX9DR =
+  (DESCRIPTION =
+    (ADDRESS_LIST =
+      (ADDRESS = (PROTOCOL = TCP)(HOST = 10.19.110.102)(PORT = 1521))
+    )
+    (CONNECT_DATA =
+    #  (sid = fex9dr1)  (UR = A)
+      (service_name= fex9dr) (UR = A)
+    )
+  )
+  
+  
+  scp orapwfex9prd1 10.19.110.100:/u01/app/oracle/product/19.0.0.0/dbhome_fe/dbs/orapwfex9dr1
+  
+  in linstener.ora add
+  
+  SID_LIST_LISTENER =
+  (SID_LIST =
+    (SID_DESC =
+      (GLOBAL_DBNAME = fex9dr)
+      (SID_NAME = fex9dr1)
+      (ORACLE_HOME = /u01/app/oracle/product/19.0.0.0/dbhome_fe)
+    )
+  )
+
+SQL> select name, value from v$parameter
+  2  where name in ('db_name','db_unique_name','log_archive_config', 'log_archive_dest_1','log_archive_dest_2','log_archive_dest_3','log_archive_dest_4',
+  3                 'log_archive_dest_state_1','log_archive_dest_state_2','log_archive_dest_state_3','log_archive_dest_state_4','log_archive_dest_state_3','log_archive_dest_state_4', 'remote_login_passwordfile',
+               'log_archive_format','log_archi  4  ve_max_processes','fal_server','fal_client','db_file_name_convert',
+  5                       'log_file_name_convert', 'standby_file_management');
+db_file_name_convert                               +DATA/SVFREAC, +DATA/FEX9PRD/
+log_file_name_convert                              +FRA/SVFERAC, +FRA/FEX9PRD/
+log_archive_dest_1                                 location=USE_DB_RECOVERY_FILE_DEST, valid_for=(ALL_LOGFILES, ALL_ROLES)
+log_archive_dest_2
+log_archive_dest_3                                 SERVICE=svferac NOAFFIRM ASYNC VALID_FOR=(ONLINE_LOGFILES,PRIMARY_ROLE) DB_UNIQUE_NAME=SVF
+                                                   ERAC
+
+log_archive_dest_4
+log_archive_dest_state_1                           ENABLE
+log_archive_dest_state_2                           ENABLE
+log_archive_dest_state_3                           ENABLE
+log_archive_dest_state_4                           enable
+fal_client                                         FEX9PRD
+fal_server                                         svferac
+log_archive_config                                 dg_config=(svferac,fex9prd)
+log_archive_format                                 %t_%s_%r.dbf
+log_archive_max_processes                          1
+standby_file_management                            AUTO
+remote_login_passwordfile                          EXCLUSIVE
+db_name                                            svferac
+db_unique_name                                     FEX9PRD
+
+19 rows selected.
+
+production
+alter system set LOG_ARCHIVE_CONFIG='DG_CONFIG=(fex9prd,fex9dr,svferac)' scope=both sid='*';
+alter system set LOG_ARCHIVE_DEST_1='LOCATION=USE_DB_RECOVERY_FILE_DEST VALID_FOR=(ALL_LOGFILES,ALL_ROLES) DB_UNIQUE_NAME=FEX9PRD' scope=both sid='*';
+alter system set LOG_ARCHIVE_DEST_2='SERVICE=fex9dr NOAFFIRM ASYNC VALID_FOR=(ONLINE_LOGFILES,PRIMARY_ROLE) DB_UNIQUE_NAME=fex9dr' scope=both sid='*';
+alter system set fal_server=fex9dr,svferac scope=both sid='*';
+alter system set fal_client=FEX9PRD scope=both sid='*';
+alter system set standby_file_management=AUTO scope=both sid='*';
+alter system set DB_FILE_NAME_CONVERT='+DATA/FEX9DR/','+DATA/FEX9PRD/' SID='*' scope=spfile;
+alter system set LOG_FILE_NAME_CONVERT='+DATA/FEX9DR/','+DATA/FEX9PRD/' SID='*' scope=spfile;
+ALTER SYSTEM SET LOG_ARCHIVE_DEST_STATE_2=DEFER scope=both sid='*';
+
+
+SQL> select force_logging from v$database ;
+YES
+
+SQL> select sum(bytes)/1024/1024/1024 size_in_gb from dba_data_files;
+541.457108
+
+SQL> select GROUP#,THREAD#,BYTES/1024/1024 as "SIZE IN M" from v$log;
+         1          1        400
+         2          1        400
+         3          1        400
+         4          1        400
+         5          1        400
+         6          2        400
+         7          2        400
+         8          2        400
+         9          2        400
+        10          2        400
+
+10 rows selected.
+
+SQL> set lines 200 pages 5000
+
+SELECT group#, dbid, thread#, sequence#, status FROM v$standby_log;SQL> SQL>
+
+    GROUP# DBID                                        THREAD#  SEQUENCE# STATUS
+---------- ---------------------------------------- ---------- ---------- ----------
+        11 UNASSIGNED                                        1          0 UNASSIGNED
+        12 UNASSIGNED                                        1          0 UNASSIGNED
+        13 UNASSIGNED                                        1          0 UNASSIGNED
+        14 UNASSIGNED                                        1          0 UNASSIGNED
+        15 UNASSIGNED                                        1          0 UNASSIGNED
+        16 UNASSIGNED                                        1          0 UNASSIGNED
+        17 UNASSIGNED                                        1          0 UNASSIGNED
+        18 UNASSIGNED                                        2          0 UNASSIGNED
+        19 UNASSIGNED                                        2          0 UNASSIGNED
+        20 UNASSIGNED                                        2          0 UNASSIGNED
+        21 UNASSIGNED                                        2          0 UNASSIGNED
+        22 UNASSIGNED                                        2          0 UNASSIGNED
+
+12 rows selected.
+
+SQL> set pages 200
+set lines 180
+col MEMBER for a60
+select group#, type, member from v$logfile order by 1;SQL> SQL> SQL>
+
+    GROUP# TYPE    MEMBER
+---------- ------- ------------------------------------------------------------
+         1 ONLINE  +DATA/FEX9PRD/ONLINELOG/group_1.325.1138496993
+         1 ONLINE  +FRA/FEX9PRD/ONLINELOG/group_1.278.1138496993
+         2 ONLINE  +DATA/FEX9PRD/ONLINELOG/group_2.324.1138496995
+         2 ONLINE  +FRA/FEX9PRD/ONLINELOG/group_2.257.1138496995
+         3 ONLINE  +DATA/FEX9PRD/ONLINELOG/group_3.323.1138496997
+         3 ONLINE  +FRA/FEX9PRD/ONLINELOG/group_3.258.1138496997
+         4 ONLINE  +DATA/FEX9PRD/ONLINELOG/group_4.322.1138496999
+         4 ONLINE  +FRA/FEX9PRD/ONLINELOG/group_4.260.1138497001
+         5 ONLINE  +DATA/FEX9PRD/ONLINELOG/group_5.321.1138497003
+         5 ONLINE  +FRA/FEX9PRD/ONLINELOG/group_5.261.1138497003
+         6 ONLINE  +DATA/FEX9PRD/ONLINELOG/group_6.320.1138497005
+         6 ONLINE  +FRA/FEX9PRD/ONLINELOG/group_6.279.1138497007
+         7 ONLINE  +DATA/FEX9PRD/ONLINELOG/group_7.319.1138497007
+         7 ONLINE  +FRA/FEX9PRD/ONLINELOG/group_7.280.1138497009
+         8 ONLINE  +DATA/FEX9PRD/ONLINELOG/group_8.318.1138497009
+         8 ONLINE  +FRA/FEX9PRD/ONLINELOG/group_8.281.1138497011
+         9 ONLINE  +DATA/FEX9PRD/ONLINELOG/group_9.317.1138497013
+         9 ONLINE  +FRA/FEX9PRD/ONLINELOG/group_9.282.1138497013
+        10 ONLINE  +DATA/FEX9PRD/ONLINELOG/group_10.316.1138497015
+        10 ONLINE  +FRA/FEX9PRD/ONLINELOG/group_10.283.1138497015
+        11 STANDBY +DATA/FEX9PRD/ONLINELOG/group_11.315.1138497017
+        11 STANDBY +FRA/FEX9PRD/ONLINELOG/group_11.284.1138497017
+        12 STANDBY +DATA/FEX9PRD/ONLINELOG/group_12.314.1138497019
+        12 STANDBY +FRA/FEX9PRD/ONLINELOG/group_12.285.1138497021
+        13 STANDBY +DATA/FEX9PRD/ONLINELOG/group_13.313.1138497023
+        13 STANDBY +FRA/FEX9PRD/ONLINELOG/group_13.286.1138497023
+        14 STANDBY +DATA/FEX9PRD/ONLINELOG/group_14.312.1138497025
+        14 STANDBY +FRA/FEX9PRD/ONLINELOG/group_14.287.1138497025
+        15 STANDBY +DATA/FEX9PRD/ONLINELOG/group_15.311.1138497027
+        15 STANDBY +FRA/FEX9PRD/ONLINELOG/group_15.288.1138497027
+        16 STANDBY +DATA/FEX9PRD/ONLINELOG/group_16.310.1138497029
+        16 STANDBY +FRA/FEX9PRD/ONLINELOG/group_16.289.1138497031
+        17 STANDBY +DATA/FEX9PRD/ONLINELOG/group_17.309.1138497031
+        17 STANDBY +FRA/FEX9PRD/ONLINELOG/group_17.290.1138497033
+        18 STANDBY +DATA/FEX9PRD/ONLINELOG/group_18.308.1138497035
+        18 STANDBY +FRA/FEX9PRD/ONLINELOG/group_18.291.1138497035
+        19 STANDBY +DATA/FEX9PRD/ONLINELOG/group_19.307.1138497037
+        19 STANDBY +FRA/FEX9PRD/ONLINELOG/group_19.292.1138497039
+        20 STANDBY +DATA/FEX9PRD/ONLINELOG/group_20.306.1138497039
+        20 STANDBY +FRA/FEX9PRD/ONLINELOG/group_20.293.1138497041
+        21 STANDBY +FRA/FEX9PRD/ONLINELOG/group_21.294.1138497043
+        21 STANDBY +DATA/FEX9PRD/ONLINELOG/group_21.305.1138497043
+        22 STANDBY +FRA/FEX9PRD/ONLINELOG/group_22.295.1138497045
+        22 STANDBY +DATA/FEX9PRD/ONLINELOG/group_22.304.1138497045
+
+44 rows selected.
+
+create pfile='/tmp/pfile_fe' from spfile;
+
+*.__data_transfer_cache_size=0
+fex9prd2.__data_transfer_cache_size=0
+fex9prd1.__data_transfer_cache_size=0
+*.__db_cache_size=10304M
+fex9prd1.__db_cache_size=9026142208
+fex9prd2.__db_cache_size=9193914368
+*.__inmemory_ext_roarea=0
+fex9prd2.__inmemory_ext_roarea=0
+fex9prd1.__inmemory_ext_roarea=0
+*.__inmemory_ext_rwarea=0
+fex9prd2.__inmemory_ext_rwarea=0
+fex9prd1.__inmemory_ext_rwarea=0
+*.__java_pool_size=0
+fex9prd2.__java_pool_size=0
+fex9prd1.__java_pool_size=0
+*.__large_pool_size=160M
+fex9prd2.__large_pool_size=134217728
+fex9prd1.__large_pool_size=134217728
+*.__oracle_base='/u01/app/oracle'# ORACLE_BASE set from environment
+*.__pga_aggregate_target=1792M
+fex9prd2.__pga_aggregate_target=1879048192
+fex9prd1.__pga_aggregate_target=1879048192
+*.__sga_target=12G
+fex9prd2.__sga_target=12884901888
+fex9prd1.__sga_target=12884901888
+*.__shared_io_pool_size=128M
+fex9prd2.__shared_io_pool_size=134217728
+fex9prd1.__shared_io_pool_size=134217728
+*.__shared_pool_size=1152M
+fex9prd1.__shared_pool_size=2952790016
+fex9prd2.__shared_pool_size=2852126720
+*.__streams_pool_size=0
+fex9prd2.__streams_pool_size=0
+fex9prd1.__streams_pool_size=67108864
+*.__unified_pga_pool_size=0
+fex9prd2.__unified_pga_pool_size=0
+fex9prd1.__unified_pga_pool_size=0
+*._always_anti_join='CHOOSE'
+*._always_semi_join='CHOOSE'
+*._b_tree_bitmap_plans=TRUE
+*._bloom_serial_filter='ON'
+*._complex_view_merging=TRUE
+*._compression_compatibility='18.0.0'
+*._diag_adr_trace_dest='/u01/app/oracle/diag/rdbms/fex9dr/fex9prd1/trace'
+*._ds_xt_split_count=1
+*._eliminate_common_subexpr=TRUE
+*._fast_full_scan_enabled=TRUE
+*._generalized_pruning_enabled=TRUE
+*._gs_anti_semi_join_allowed=TRUE
+*._hang_resolution_scope='INSTANCE'# _hang_resolution_scope updated by kjznpahps
+*._high_priority_processes='LMS*|LM1*|LM2*|LM3*|LM4*|LM5*|LM6*|LM7*|LM8*|LM9*|LM*|LCK0|CKPT|DBRM|RMS0|LGWR|CR*|RS0*|RS1*|RS2*'
+*._improved_outerjoin_card=TRUE
+*._improved_row_length_enabled=TRUE
+*._index_join_enabled=TRUE
+*._key_vector_create_pushdown_threshold=20000
+*._ksb_restart_policy_times='0','60','120','240'# internal update to set default
+*._left_nested_loops_random=TRUE
+*._mv_access_compute_fresh_data='ON'
+*._new_initial_join_orders=TRUE
+*._new_sort_cost_estimate=TRUE
+*._nlj_batching_enabled=1
+*._optim_enhance_nnull_detection=TRUE
+*._optim_peek_user_binds=TRUE
+*._optimizer_ads_use_partial_results=TRUE
+*._optimizer_better_inlist_costing='ALL'
+*._optimizer_cbqt_or_expansion='ON'
+*._optimizer_cluster_by_rowid_control=129
+*._optimizer_control_shard_qry_processing=65528
+*._optimizer_cost_based_transformation='LINEAR'
+*._optimizer_cost_model='CHOOSE'
+*._optimizer_extended_cursor_sharing='UDO'
+*._optimizer_extended_cursor_sharing_rel='SIMPLE'
+*._optimizer_extended_stats_usage_control=192
+*._optimizer_join_order_control=3
+*._optimizer_max_permutations=2000
+*._optimizer_mode_force=TRUE
+*._optimizer_native_full_outer_join='FORCE'
+*._optimizer_or_expansion='DEPTH'
+*._optimizer_proc_rate_level='BASIC'
+*._optimizer_system_stats_usage=TRUE
+*._optimizer_try_st_before_jppd=TRUE
+*._optimizer_use_cbqt_star_transformation=TRUE
+*._or_expand_nvl_predicate=TRUE
+*._ordered_nested_loop=TRUE
+*._parallel_broadcast_enabled=TRUE
+*._pga_max_size=364320K
+*._pivot_implementation_method='CHOOSE'
+*._pred_move_around=TRUE
+*._push_join_predicate=TRUE
+*._push_join_union_view=TRUE
+*._push_join_union_view2=TRUE
+*._px_dist_agg_partial_rollup_pushdown='ADAPTIVE'
+*._px_groupby_pushdown='FORCE'
+*._px_partial_rollup_pushdown='ADAPTIVE'
+*._px_shared_hash_join=FALSE
+*._px_wif_dfo_declumping='CHOOSE'
+*._smm_max_size=182160
+*._smm_max_size_static=182160
+*._smm_min_size=1024
+*._smm_px_max_size=910848
+*._smm_px_max_size_static=910848
+*._sql_model_unfold_forloops='RUN_TIME'
+*._sqltune_category_parsed='DEFAULT'# parsed sqltune_category
+*._subquery_pruning_mv_enabled=FALSE
+*._table_scan_cost_plus_one=TRUE
+*._union_rewrite_for_gs='YES_GSET_MVS'
+*._unnest_subquery=TRUE
+*._use_column_stats_for_function=TRUE
+*._xt_sampling_scan_granules='ON'
+*.archive_lag_target=0
+*.audit_file_dest='/u01/app/oracle/admin/fex9dr/adump'
+*.audit_sys_operations=TRUE
+*.audit_syslog_level='LOCAL0.INFO'
+*.audit_trail='OS'
+*.cluster_database=TRUE
+*.compatible='18.0.0'
+*.connection_brokers='((TYPE=DEDICATED)(BROKERS=1))','((TYPE=EMON)(BROKERS=1))'# connection_brokers default value
+*.control_files='+DATA/FEX9DR/CONTROLFILE/current.356.1138494685','+FRA/FEX9DR/CONTROLFILE/current.265.1138494685'# Restore Controlfile
+*.core_dump_dest='/u01/app/oracle/diag/diag/rdbms/fex9dr/fex9dr1/cdump'
+*.data_guard_sync_latency=0
+*.db_block_size=8192
+*.db_cache_size=7G
+*.db_create_file_dest='+DATA'
+*.db_file_name_convert='+DATA/FEX9PRD','+DATA/FEX9DR'
+*.db_flashback_retention_target=2880
+*.db_keep_cache_size=384M
+*.db_name='svferac'
+*.db_recovery_file_dest='+FRA'
+*.db_recovery_file_dest_size=3T
+*.db_unique_name='FEX9PRD'
+#*.dg_broker_config_file1='+DATA/broker1.dat'
+#*.dg_broker_config_file2='+FRA/broker2.dat'
+*.dg_broker_start=FALSE
+*.diagnostic_dest='/u01/app/oracle'
+*.dispatchers='(PROTOCOL=TCP) (SERVICE=svferacXDB)'
+*.fal_client='FEX9DR'
+*.fal_server='FEX9PRD'
+*.global_names=FALSE
+fex9dr1.instance_number=1
+fex9dr2.instance_number=2
+*.job_queue_processes=480# job queue processes default tuning
+*.log_archive_config='dg_config=(fex9prd,fex9dr)'
+*.log_archive_dest_1='location=USE_DB_RECOVERY_FILE_DEST','valid_for=(ALL_LOGFILES, ALL_ROLES) DB_UNIQUE_NAME=FEX9DR'
+*.log_archive_dest_3='SERVICE=fex9prd NOAFFIRM ASYNC VALID_FOR=(ONLINE_LOGFILES,PRIMARY_ROLE) DB_UNIQUE_NAME=fex9prd'
+*.log_archive_dest_state_1='ENABLE'
+*.log_archive_dest_state_3='DEFER'
+*.log_archive_format='%t_%s_%r.dbf'
+*.log_archive_max_processes=1
+*.log_archive_min_succeed_dest=1
+*.log_buffer=128M# log buffer update
+*.log_file_name_convert='+DATA/FEX9PRD/','+DATA/FEX9DR/'
+*.nls_language='AMERICAN'
+*.nls_length_semantics='BYTE'
+*.nls_territory='AMERICA'
+*.open_cursors=600
+*.optimizer_mode='ALL_ROWS'
+*.pga_aggregate_target=1779M
+*.plsql_warnings='DISABLE:ALL'# PL/SQL warnings at init.ora
+*.processes=1500
+*.query_rewrite_enabled='TRUE'
+*.remote_login_passwordfile='EXCLUSIVE'
+*.resource_manager_plan='DEFAULT_PLAN'
+*.result_cache_max_size=8544K
+*.sec_case_sensitive_logon=FALSE#Deprecate parameter
+*.sec_protocol_error_trace_action='LOG'
+*.service_names='svferac'
+*.session_cached_cursors=300
+*.sessions=2280
+*.sga_max_size=12G# internally adjusted
+*.sga_target=12G
+*.shared_pool_size=832M
+*.standby_file_management='AUTO'
+*.tde_configuration='KEYSTORE_CONFIGURATION=FILE'
+fex9dr1.thread=1
+fex9dr2.thread=2
+fex9dr1.undo_tablespace='UNDOTBS1'
+fex9dr2.undo_tablespace='UNDOTBS2'
+*.wallet_root='/u01/app/oracle/wallet/FEX9DR1'
+
+mkdir -p /u01/app/oracle/wallet/FEX9DR1/tde/
+scp * 10.19.110.100:/u01/app/oracle/wallet/FEX9DR1/tde/
+
+[grid@mcdrdbadm01vm01 ~]$ asmcmd
+ASMCMD> ls
+DATA/
+FRA/
+ASMCMD> cd DATA
+ASMCMD> mkdir FEX9DR
+ASMCMD> cd FEX9DR
+ASMCMD> mkdir PARAMETERFILE DATAFILE CONTROLFILE TEMPFILE ONLINELOG BROKER PASSWORD
+ASMCMD> cd +FRA
+ASMCMD> mkdir FEX9DR
+ASMCMD> cd FEX9DR
+ASMCMD> mkdir ARCHIVELOG CONTROLFILE ONLINELOG
+
+mkdir -p /u01/app/oracle/admin/fex9dr/adump
+
+vi initfex9dr.ora
+*.db_unique_name='fex9dr'
+*.db_name='svferac'
+
+. .bash_profile_fe
+sqlplus / as sysdba
+startup nomount pfile='/home/oracle/initfex9dr.ora';
+
+ vi dup_fex9dr
+ chmod +x dup_fex9dr
+ 
+connect target sys/"qwe123#qwe123"@fex9prd
+connect  auxiliary sys/"qwe123#qwe123"@fex9dr
+run {
+allocate channel prmy1 type disk;
+allocate channel prmy2 type disk;
+allocate channel prmy3 type disk;
+allocate channel prmy4 type disk;
+allocate channel prmy5 type disk;
+allocate channel prmy6 type disk;
+allocate channel prmy7 type disk;
+allocate channel prmy8 type disk;
+allocate channel prmy9 type disk;
+allocate channel prmy10 type disk;
+allocate channel prmy11 type disk;
+allocate channel prmy12 type disk;
+allocate auxiliary channel stby1 type disk;
+allocate auxiliary channel stby2 type disk;
+allocate auxiliary channel stby3 type disk;
+allocate auxiliary channel stby4 type disk;
+allocate auxiliary channel stby5 type disk;
+allocate auxiliary channel stby6 type disk;
+allocate auxiliary channel stby7 type disk;
+allocate auxiliary channel stby8 type disk;
+allocate auxiliary channel stby9 type disk;
+allocate auxiliary channel stby10 type disk;
+allocate auxiliary channel stby11 type disk;
+allocate auxiliary channel stby12 type disk;
+
+duplicate target database
+for standby
+from active database
+dorecover
+  spfile
+    set db_unique_name='fex9dr'
+    set control_files='+DATA/FEX9DR/CONTROLFILE/current01.ctl','+FRA/FEX9DR/CONTROLFILE/current02.ctl'
+    set log_archive_config='dg_config=(fex9prd,fex9dr)'
+    set audit_file_dest='/u01/app/oracle/admin/fex9dr/adump'
+    set cluster_database='false'
+	set db_file_name_convert='+DATA/FEX9PRD/','+DATA/FEX9DR/'
+    set log_file_name_convert ='+DATA/FEX9PRD/','+DATA/FEX9DR/'
+   nofilenamecheck;
+  }
+  
+   nohup rman @dup_fex9dr log=dup_fex9dr_from_DR.log &
+   
+   
+   ALTER DATABASE CREATE STANDBY CONTROLFILE AS '/tmp/fex9dr_sty.ctl';
+scp fex9dr_sty.ctl 10.19.110.100:/tmp/
+startup nomount pfile ='/tmp/pfile_fex9dr';
+rman target /
+restore controlfile from '/tmp/fex9dr_sty.ctl';
+startup mount pfile ='/tmp/pfile_fex9dr';
+startup mount pfile ='/u01/app/oracle/product/19.0.0.0/dbhome_fe/dbs/initfex9dr.ora';
+
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_1.4294967295.4294967295' to '+DATA/FEX9DR/DATAFILE/SYSTEM.420.1142468031';
+
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_5.4294967295.4294967295' to '+DATA/FEX9DR/DATAFILE/USERS.424.1142468043';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_12.4294967295.4294967295' to '+DATA/FEX9DR/DATAFILE/OTHERS.430.1142468055';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_13.4294967295.4294967295' to '+DATA/FEX9DR/DATAFILE/SMSGATE.432.1142468067';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_9.4294967295.4294967295' to '+DATA/FEX9DR/DATAFILE/ACCOUNT.429.1142468053';
+
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_29.4294967295.4294967295' to '+DATA/FEX9DR/DATAFILE/BPCNDX.425.1142468045';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_28.4294967295.4294967295' to '+DATA/FEX9DR/DATAFILE/BPCNDX.526.1142641269';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_26.4294967295.4294967295' to '+DATA/FEX9DR/DATAFILE/BPCNDX.528.1142641269';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_23.4294967295.4294967295' to '+DATA/FEX9DR/DATAFILE/BPCNDX.536.1142641273';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_20.4294967295.4294967295' to '+DATA/FEX9DR/DATAFILE/BPCNDX.551.1142682913';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_7.4294967295.4294967295' to '+DATA/FEX9DR/DATAFILE/BPCNDX.552.1142699709';
+
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_30.4294967295.4294967295' to '+DATA/FEX9DR/DATAFILE/CURRTRANS.525.1142641269';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_27.4294967295.4294967295' to '+DATA/FEX9DR/DATAFILE/CURRTRANS.530.1142641271';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_25.4294967295.4294967295' to '+DATA/FEX9DR/DATAFILE/CURRTRANS.531.1142641271';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_24.4294967295.4294967295' to '+DATA/FEX9DR/DATAFILE/CURRTRANS.532.1142641271';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_22.4294967295.4294967295' to '+DATA/FEX9DR/DATAFILE/CURRTRANS.533.1142641271';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_19.4294967295.4294967295' to '+DATA/FEX9DR/DATAFILE/CURRTRANS.534.1142641271';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_6.4294967295.4294967295' to '+DATA/FEX9DR/DATAFILE/CURRTRANS.535.1142641271';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_21.4294967295.4294967295' to '+DATA/FEX9DR/DATAFILE/CURRTRANS.553.1142705985';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_31.4294967295.4294967295' to '+DATA/FEX9DR/DATAFILE/CURRTRANS.554.1142713175';
+
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_11.4294967295.4294967295' to '+DATA/FEX9DR/DATAFILE/BPC_AUDIT.431.1142468055';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_8.4294967295.4294967295' to '+DATA/FEX9DR/DATAFILE/CARDREF.426.1142468047';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_10.4294967295.4294967295' to '+DATA/FEX9DR/DATAFILE/MSGLOG.428.1142468049';
+
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_18.4294967295.4294967295' to '+DATA/FEX9DR/DATAFILE/SYSAUX.433.1142468071';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_17.4294967295.4294967295' to '+DATA/FEX9DR/DATAFILE/SYSAUX.434.1142468071';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_16.4294967295.4294967295' to '+DATA/FEX9DR/DATAFILE/SYSAUX.436.1142468103';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_15.4294967295.4294967295' to '+DATA/FEX9DR/DATAFILE/SYSAUX.438.1142468687';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_14.4294967295.4294967295' to '+DATA/FEX9DR/DATAFILE/SYSAUX.527.1142641269';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_2.4294967295.4294967295' to '+DATA/FEX9DR/DATAFILE/SYSAUX.529.1142641269';
+
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_3.4294967295.4294967295' to '+DATA/FEX9DR/DATAFILE/UNDOTBS1.422.1142468037';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_DATAFILE_4.4294967295.4294967295' to '+DATA/FEX9DR/DATAFILE/UNDOTBS2.423.1142468039';
+
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_TEMPFILE_7.4294967295.4294967295' to '+DATA/FEX9DR/TEMPFILE/TEMP.561.1139631741';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_TEMPFILE_8.4294967295.4294967295' to '+DATA/FEX9DR/TEMPFILE/TEMP.562.1139631743';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_TEMPFILE_9.4294967295.4294967295' to '+DATA/FEX9DR/TEMPFILE/TEMP.563.1139631745';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_TEMPFILE_10.4294967295.4294967295' to '+DATA/FEX9DR/TEMPFILE/TEMP.564.1139631745';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_TEMPFILE_11.4294967295.4294967295' to '+DATA/FEX9DR/TEMPFILE/TEMP.565.1139631749';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_TEMPFILE_12.4294967295.4294967295' to '+DATA/FEX9DR/TEMPFILE/TEMP.566.1139631749';
+
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_TEMPFILE_5.4294967295.4294967295' to '+DATA/FEX9DR/TEMPFILE/TEMP.537.1138885979';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_TEMPFILE_4.4294967295.4294967295' to '+DATA/FEX9DR/TEMPFILE/TEMP.536.1138885963';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_TEMPFILE_3.4294967295.4294967295' to '+DATA/FEX9DR/TEMPFILE/TEMP.511.1138885945';
+ALTER DATABASE RENAME FILE '+DATA/MUST_RENAME_THIS_TEMPFILE_2.4294967295.4294967295' to '+DATA/FEX9DR/TEMPFILE/MDP_TMP_TBS.413.1138537167';
+
+alter database clear unarchived logfile group 1;
+alter database clear unarchived logfile group 2;
+alter database clear unarchived logfile group 3;
+alter database clear unarchived logfile group 4;
+alter database clear unarchived logfile group 5;
+alter database clear unarchived logfile group 6;
+alter database clear unarchived logfile group 7;
+alter database clear unarchived logfile group 8;
+alter database clear unarchived logfile group 9;
+alter database clear unarchived logfile group 10;
+alter database clear unarchived logfile group 11;
+alter database clear unarchived logfile group 12;
+alter database clear unarchived logfile group 13;
+alter database clear unarchived logfile group 14;
+alter database clear unarchived logfile group 15;
+alter database clear unarchived logfile group 16;
+alter database clear unarchived logfile group 17;
+alter database clear unarchived logfile group 18;
+alter database clear unarchived logfile group 19;
+alter database clear unarchived logfile group 20;
+alter database clear unarchived logfile group 21;
+alter database clear unarchived logfile group 22;
+
+ALTER DATABASE RENAME FILE '+DATA/FEX9PRD/ONLINELOG/group_1.571.1142792191' TO '+DATA/FEX9DR/ONLINELOG/group_1.571.1142792191'; 
+ALTER DATABASE RENAME FILE '+FRA/FEX9PRD/ONLINELOG/group_1.1096.1142792191' TO '+FRA/FEX9DR/ONLINELOG/group_1.1096.1142792191'; 
+ALTER DATABASE RENAME FILE '+DATA/FEX9PRD/ONLINELOG/group_2.572.1142792191' TO '+DATA/FEX9DR/ONLINELOG/group_2.572.1142792191';
+ALTER DATABASE RENAME FILE '+FRA/FEX9PRD/ONLINELOG/group_2.1097.1142792191' TO '+FRA/FEX9DR/ONLINELOG/group_2.1097.1142792191';
+ALTER DATABASE RENAME FILE '+DATA/FEX9PRD/ONLINELOG/group_3.573.1142792193' TO '+DATA/FEX9DR/ONLINELOG/group_3.573.1142792193'; 
+ALTER DATABASE RENAME FILE '+FRA/FEX9PRD/ONLINELOG/group_3.1098.1142792193' TO '+FRA/FEX9DR/ONLINELOG/group_3.1098.1142792193'; 
+ALTER DATABASE RENAME FILE '+DATA/FEX9PRD/ONLINELOG/group_4.574.1142792193' TO '+DATA/FEX9DR/ONLINELOG/group_4.574.1142792193'; 
+ALTER DATABASE RENAME FILE '+FRA/FEX9PRD/ONLINELOG/group_4.1099.1142792193' TO '+FRA/FEX9DR/ONLINELOG/group_4.1099.1142792193'; 
+ALTER DATABASE RENAME FILE '+DATA/FEX9PRD/ONLINELOG/group_5.575.1142792195' TO '+DATA/FEX9DR/ONLINELOG/group_5.575.1142792195'; 
+ALTER DATABASE RENAME FILE '+FRA/FEX9PRD/ONLINELOG/group_5.1100.1142792195' TO '+FRA/FEX9DR/ONLINELOG/group_5.1100.1142792195'; 
+ALTER DATABASE RENAME FILE '+DATA/FEX9PRD/ONLINELOG/group_6.576.1142792195' TO '+DATA/FEX9DR/ONLINELOG/group_6.576.1142792195'; 
+ALTER DATABASE RENAME FILE '+FRA/FEX9PRD/ONLINELOG/group_6.1101.1142792197' TO '+FRA/FEX9DR/ONLINELOG/group_6.1101.1142792197'; 
+ALTER DATABASE RENAME FILE '+DATA/FEX9PRD/ONLINELOG/group_7.577.1142792197' TO '+DATA/FEX9DR/ONLINELOG/group_7.577.1142792197'; 
+ALTER DATABASE RENAME FILE '+FRA/FEX9PRD/ONLINELOG/group_7.1102.1142792197' TO '+FRA/FEX9DR/ONLINELOG/group_7.1102.1142792197'; 
+ALTER DATABASE RENAME FILE '+DATA/FEX9PRD/ONLINELOG/group_8.578.1142792199' TO '+DATA/FEX9DR/ONLINELOG/group_8.578.1142792199'; 
+ALTER DATABASE RENAME FILE '+FRA/FEX9PRD/ONLINELOG/group_8.1103.1142792199' TO '+FRA/FEX9DR/ONLINELOG/group_8.1103.1142792199'; 
+ALTER DATABASE RENAME FILE '+DATA/FEX9PRD/ONLINELOG/group_9.579.1142792199' TO '+DATA/FEX9DR/ONLINELOG/group_9.579.1142792199'; 
+ALTER DATABASE RENAME FILE '+FRA/FEX9PRD/ONLINELOG/group_9.1104.1142792201' TO '+FRA/FEX9DR/ONLINELOG/group_9.1104.1142792201'; 
+ALTER DATABASE RENAME FILE '+DATA/FEX9PRD/ONLINELOG/group_10.580.1142792201' TO '+DATA/FEX9DR/ONLINELOG/group_10.580.1142792201'; 
+ALTER DATABASE RENAME FILE '+FRA/FEX9PRD/ONLINELOG/group_10.1105.1142792201' TO '+FRA/FEX9DR/ONLINELOG/group_10.1105.1142792201'; 
+ALTER DATABASE RENAME FILE '+DATA/FEX9PRD/ONLINELOG/group_11.581.1142792203' TO '+DATA/FEX9DR/ONLINELOG/group_11.581.1142792203'; 
+ALTER DATABASE RENAME FILE '+FRA/FEX9PRD/ONLINELOG/group_11.1106.1142792203' TO '+FRA/FEX9DR/ONLINELOG/group_11.1106.1142792203'; 
+ALTER DATABASE RENAME FILE '+DATA/FEX9PRD/ONLINELOG/group_12.582.1142792203' TO '+DATA/FEX9DR/ONLINELOG/group_12.582.1142792203'; 
+ALTER DATABASE RENAME FILE '+FRA/FEX9PRD/ONLINELOG/group_12.1107.1142792203' TO '+FRA/FEX9DR/ONLINELOG/group_12.1107.1142792203'; 
+ALTER DATABASE RENAME FILE '+DATA/FEX9PRD/ONLINELOG/group_13.583.1142792205' TO '+DATA/FEX9DR/ONLINELOG/group_13.583.1142792205'; 
+ALTER DATABASE RENAME FILE '+FRA/FEX9PRD/ONLINELOG/group_13.1108.1142792205' TO '+FRA/FEX9DR/ONLINELOG/group_13.1108.1142792205'; 
+ALTER DATABASE RENAME FILE '+DATA/FEX9PRD/ONLINELOG/group_14.584.1142792205' TO '+DATA/FEX9DR/ONLINELOG/group_14.584.1142792205'; 
+ALTER DATABASE RENAME FILE '+FRA/FEX9PRD/ONLINELOG/group_14.1109.1142792205' TO '+FRA/FEX9DR/ONLINELOG/group_14.1109.1142792205'; 
+ALTER DATABASE RENAME FILE '+DATA/FEX9PRD/ONLINELOG/group_15.585.1142792207' TO '+DATA/FEX9DR/ONLINELOG/group_15.585.1142792207'; 
+ALTER DATABASE RENAME FILE '+FRA/FEX9PRD/ONLINELOG/group_15.1110.1142792207' TO '+FRA/FEX9DR/ONLINELOG/group_15.1110.1142792207'; 
+ALTER DATABASE RENAME FILE '+DATA/FEX9PRD/ONLINELOG/group_16.586.1142792207' TO '+DATA/FEX9DR/ONLINELOG/group_16.586.1142792207'; 
+ALTER DATABASE RENAME FILE '+FRA/FEX9PRD/ONLINELOG/group_16.1111.1142792209' TO '+FRA/FEX9DR/ONLINELOG/group_16.1111.1142792209'; 
+ALTER DATABASE RENAME FILE '+DATA/FEX9PRD/ONLINELOG/group_17.587.1142792211' TO '+DATA/FEX9DR/ONLINELOG/group_17.587.1142792211'; 
+ALTER DATABASE RENAME FILE '+FRA/FEX9PRD/ONLINELOG/group_17.1112.1142792211' TO '+FRA/FEX9DR/ONLINELOG/group_17.1112.1142792211'; 
+ALTER DATABASE RENAME FILE '+DATA/FEX9PRD/ONLINELOG/group_18.588.1142792211' TO '+DATA/FEX9DR/ONLINELOG/group_18.588.1142792211'; 
+ALTER DATABASE RENAME FILE '+FRA/FEX9PRD/ONLINELOG/group_18.1113.1142792213' TO '+FRA/FEX9DR/ONLINELOG/group_18.1113.1142792213'; 
+ALTER DATABASE RENAME FILE '+DATA/FEX9PRD/ONLINELOG/group_19.589.1142792213' TO '+DATA/FEX9DR/ONLINELOG/group_19.589.1142792213'; 
+ALTER DATABASE RENAME FILE '+FRA/FEX9PRD/ONLINELOG/group_19.1114.1142792215' TO '+FRA/FEX9DR/ONLINELOG/group_19.1114.1142792215'; 
+ALTER DATABASE RENAME FILE '+DATA/FEX9PRD/ONLINELOG/group_20.590.1142792215' TO '+DATA/FEX9DR/ONLINELOG/group_20.590.1142792215'; 
+ALTER DATABASE RENAME FILE '+FRA/FEX9PRD/ONLINELOG/group_20.1115.1142792215' TO '+FRA/FEX9DR/ONLINELOG/group_20.1115.1142792215'; 
+ALTER DATABASE RENAME FILE '+FRA/FEX9PRD/ONLINELOG/group_21.1116.1142792217' TO '+FRA/FEX9DR/ONLINELOG/group_21.1116.1142792217'; 
+ALTER DATABASE RENAME FILE '+DATA/FEX9PRD/ONLINELOG/group_21.591.1142792217' TO '+DATA/FEX9DR/ONLINELOG/group_21.591.1142792217'; 
+ALTER DATABASE RENAME FILE '+FRA/FEX9PRD/ONLINELOG/group_22.1117.1142792217' TO '+FRA/FEX9DR/ONLINELOG/group_22.1117.1142792217'; 
+ALTER DATABASE RENAME FILE '+DATA/FEX9PRD/ONLINELOG/group_22.592.1142792217' TO '+DATA/FEX9DR/ONLINELOG/group_22.592.1142792217'; 
+
+alter system set standby_file_management='auto' scope=both sid='*';
+
+
+ALTER DATABASE recover managed standby database disconnect;
+
+run{
+recover standby database from service FEX9PRD;}
+
+vi recover.sh
+rman target sys/ cmdfile='/home/oracle/recover.rman' log='/home/oracle/recover_2023217.log'
+
+
+srvctl add database -d fex9dr -o /u01/app/oracle/product/19.0.0.0/dbhome_fe -p +DATA/FEX9DR/PARAMETERFILE/spfile.614.1142876781 -r physical_standby -s mount 
+
+srvctl modify database -d fex9dr -a "DATA,FRA" 
+srvctl add instance -d fex9dr  -i fex9dr1 -n mcdrdbadm01vm01
+srvctl add instance -d fex9dr  -i fex9dr2 -n mcdrdbadm02vm01
+srvctl config database -d fex9dr
+srvctl modify database –db fex9dr -pwfile +DATA/FEX9DR/PASSWORD/orapwfex9dr1
+
+srvctl status database -d fex9dr
+
+srvctl start database -d fex9dr 
+srvctl status database -d fex9dr
+
+pwcopy /u01/app/oracle/product/19.0.0.0/dbhome_fe/dbs/orapwfex9dr1 +DATA/FEX9DR/PASSWORD/orapwfex9dr1
+
+
+   --------------------------------------------------------------------------------
+   ACS
+   
+   # tnsnames.ora.mdpx9prddmz01 Network Configuration File: /u01/app/oracle/product/19.0.0.0/dbhome_acs/network/admin/tnsnames.ora.mdpx9prddmz01
+# Generated by Oracle configuration tools.
+
+ACSX9PRD =
+  (DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = exadmz-scan)(PORT = 1521))
+    (CONNECT_DATA =
+      (SERVER = DEDICATED)
+      (SERVICE_NAME = acsx9prd) (UR = A)
+    )
+  )
+
+
+ACSX9DR =
+  (DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = 10.19.107.103)(PORT = 1521))
+    (CONNECT_DATA =
+      (SERVER = DEDICATED)
+      (SERVICE_NAME = acsx9dr) (UR = A)
+    )
+  )
+  
+sveco =
+   (DESCRIPTION =
+     (ADDRESS = (PROTOCOL = TCP)(HOST = 10.10.107.9)(PORT = 1521))
+     (CONNECT_DATA =
+       (SERVER = DEDICATED)
+       (SID = sveco)
+     )
+   )
+
+
+# .bash_profile
+
+# Get the aliases and functions
+if [ -f ~/.bashrc ]; then
+        . ~/.bashrc
+fi
+
+# User specific environment and startup programs
+export TZ=Africa/Cairo
+
+ORACLE_BASE=/u01/app/oracle; export ORACLE_BASE
+ORACLE_HOME=$ORACLE_BASE/product/19.0.0.0/dbhome_acs; export ORACLE_HOME
+ORACLE_SID=acsx9dr1;     export ORACLE_SID
+PATH=/usr/sbin:$PATH; export PATH
+PATH=$ORACLE_HOME/bin:$PATH; export PATH
+LD_LIBRARY_PATH=$ORACLE_HOME/lib:/lib:/usr/lib; export LD_LIBRARY_PATH
+CLASSPATH=$ORACLE_HOME/JRE:$ORACLE_HOME/jlib:$ORACLE_HOME/rdbms/jlib; export CLASSPATH
+
+
+SID_LIST_LISTENER =
+  (SID_LIST =
+    (SID_DESC =
+      (GLOBAL_DBNAME = acsx9dr)
+      (SID_NAME = acsx9dr1)
+      (ORACLE_HOME = /u01/app/oracle/product/19.0.0.0/dbhome_acs)
+    )
+  )
+  
+  scp orapwacsx9prd1 10.19.107.101:/u01/app/oracle/product/19.0.0.0/dbhome_acs/dbs/orapwacsx9dr1
+  
+  
+  
+  [oracle@mcdrdbadm01vm02 tde]$ nslookup dr-scan
+Server:         10.19.101.101
+Address:        10.19.101.101#53
+
+Name:   dr-scan.mcf.local
+Address: 10.19.110.104
+Name:   dr-scan.mcf.local
+Address: 10.19.110.105
+Name:   dr-scan.mcf.local
+Address: 10.19.110.106
+
+ mkdir -p /u01/app/oracle/admin/acsx9dr/adump
+mkdir -p /u01/app/oracle/admin/acsx9dr/wallet/tde
+scp * 10.19.107.101:/u01/app/oracle/admin/acsx9dr/wallet/tde/
+
+vi initacsx9dr.ora
+*.db_unique_name='acsx9dr'
+*.db_name='SVECO'
+
+SQL> select name, value from v$parameter
+  2  where name in ('db_name','db_unique_name','log_archive_config', 'log_archive_dest_1','log_archive_dest_2','log_archive_dest_3','log_archive_dest_4',
+               'log_archive_dest_state_1','log_archive_dest_state_2','log_archive_dest_state_3','log_archive_dest_state_4','log_archive_dest_state_3',  3  'log_archive_dest_state_4', 'remote_login_passwordfile',
+  4                 'log_archive_format','log_archive_max_processes','fal_server','fal_client','db_file_name_convert',
+                     'log_file_name_convert', 'standby_file_management');  5
+db_file_name_convert                               /oradata/sveco/, +DMZDATA/ACSX9PRD/DATAFILE/
+log_file_name_convert                              /oradata/sveco/, +DMZFRA/ACSX9PRD/ONLINELOG/
+log_archive_dest_1                                 location=USE_DB_RECOVERY_FILE_DEST, valid_for=(ALL_LOGFILES, ALL_ROLES)
+log_archive_dest_2                                 service="SVECODG", ASYNC NOAFFIRM delay=0 optional compression=disable max_failure=0 reope
+                                                   n=300 db_unique_name="SVECODG" net_timeout=30, valid_for=(online_logfile,all_roles)
+
+log_archive_dest_3                                 SERVICE=sveco NOAFFIRM ASYNC VALID_FOR=(ONLINE_LOGFILES,PRIMARY_ROLE) DB_UNIQUE_NAME=SVECO
+log_archive_dest_4
+log_archive_dest_state_1                           enable
+log_archive_dest_state_2                           ENABLE
+log_archive_dest_state_3                           ENABLE
+log_archive_dest_state_4                           enable
+fal_client                                         ACSX9PRD
+fal_server                                         SVECO
+log_archive_config                                 dg_config=(sveco,acsx9prd)
+log_archive_format                                 sveco_%t_%r_%s.arc
+log_archive_max_processes                          4
+standby_file_management                            AUTO
+remote_login_passwordfile                          EXCLUSIVE
+db_name                                            SVECO
+db_unique_name                                     acsx9prd
+
+19 rows selected.
+
+alter system set LOG_ARCHIVE_CONFIG='DG_CONFIG=(acsx9prd,acsx9dr,sveco)' scope=both sid='*';
+alter system set LOG_ARCHIVE_DEST_1='LOCATION=USE_DB_RECOVERY_FILE_DEST VALID_FOR=(ALL_LOGFILES,ALL_ROLES) DB_UNIQUE_NAME=acsx9prd' scope=both sid='*';
+alter system set LOG_ARCHIVE_DEST_4='SERVICE=acsx9dr NOAFFIRM ASYNC VALID_FOR=(ONLINE_LOGFILES,PRIMARY_ROLE) DB_UNIQUE_NAME=acsx9dr' scope=both sid='*';
+alter system set fal_server=acsx9dr,SVECO scope=both sid='*';
+alter system set fal_client=ACSX9PRD scope=both sid='*';
+alter system set DB_FILE_NAME_CONVERT='+DMZDATA/ACSX9DR/','+DMZDATA/ACSX9PRD/' SID='*' scope=spfile;
+alter system set LOG_FILE_NAME_CONVERT='+DMZDATA/ACSX9DR/','+DMZDATA/ACSX9PRD/' SID='*' scope=spfile;
+ALTER SYSTEM SET LOG_ARCHIVE_DEST_STATE_4=DEFER scope=both sid='*';
+
+
+create pfile='/tmp/pfile_acs' from spfile;
+
+
+
+SQL> select force_logging from v$database ;
+YES
+
+SQL> select sum(bytes)/1024/1024/1024 size_in_gb from dba_data_files;
+88.8515472
+
+SQL> select GROUP#,THREAD#,BYTES/1024/1024 as "SIZE IN M" from v$log;
+         5          2       1000
+         6          2       1000
+         7          2       1000
+         8          1        512
+         9          1        512
+        14          1        512
+
+6 rows selected.
+
+SQL> set lines 200 pages 5000
+
+SELECT group#, dbid, thread#, sequence#, status FROM v$standby_log;SQL> SQL>
+
+    GROUP# DBID                                        THREAD#  SEQUENCE# STATUS
+---------- ---------------------------------------- ---------- ---------- ----------
+        10 UNASSIGNED                                        1          0 UNASSIGNED
+        11 UNASSIGNED                                        1          0 UNASSIGNED
+        12 UNASSIGNED                                        1          0 UNASSIGNED
+        13 UNASSIGNED                                        1          0 UNASSIGNED
+        15 UNASSIGNED                                        1          0 UNASSIGNED
+        16 UNASSIGNED                                        1          0 UNASSIGNED
+        17 UNASSIGNED                                        1          0 UNASSIGNED
+        20 UNASSIGNED                                        2          0 UNASSIGNED
+        21 UNASSIGNED                                        2          0 UNASSIGNED
+        22 UNASSIGNED                                        2          0 UNASSIGNED
+        23 UNASSIGNED                                        2          0 UNASSIGNED
+
+11 rows selected.
+
+SQL> set pages 200
+set lines 180
+col MEMBER for a60
+select group#, type, member from v$logfile order by 1;SQL> SQL> SQL>
+
+    GROUP# TYPE    MEMBER
+---------- ------- ------------------------------------------------------------
+         5 ONLINE  +DMZDATA/ACSX9PRD/ONLINELOG/group_5.270.1138808725
+         6 ONLINE  +DMZDATA/ACSX9PRD/ONLINELOG/group_6.259.1138808725
+         7 ONLINE  +DMZDATA/ACSX9PRD/ONLINELOG/group_7.275.1138808727
+         8 ONLINE  +DMZFRA/ACSX9PRD/ONLINELOG/redo5.log
+         9 ONLINE  +DMZFRA/ACSX9PRD/ONLINELOG/redo6.log
+        10 STANDBY +DMZFRA/ACSX9PRD/ONLINELOG/standby_redo01.log
+        11 STANDBY +DMZFRA/ACSX9PRD/ONLINELOG/standby_redo02.log
+        12 STANDBY +DMZFRA/ACSX9PRD/ONLINELOG/standby_redo03.log
+        13 STANDBY +DMZFRA/ACSX9PRD/ONLINELOG/standby_redo04.log
+        14 ONLINE  +DMZFRA/ACSX9PRD/ONLINELOG/redo7.log
+        15 STANDBY +DMZDATA/ACSX9PRD/ONLINELOG/group_15.292.1138639067
+        15 STANDBY +DMZFRA/ACSX9PRD/ONLINELOG/group_15.281.1138639067
+        16 STANDBY +DMZFRA/ACSX9PRD/ONLINELOG/group_16.282.1138639085
+        16 STANDBY +DMZDATA/ACSX9PRD/ONLINELOG/group_16.293.1138639083
+        17 STANDBY +DMZDATA/ACSX9PRD/ONLINELOG/group_17.294.1138639085
+        17 STANDBY +DMZFRA/ACSX9PRD/ONLINELOG/group_17.283.1138639087
+        20 STANDBY +DMZDATA/ACSX9PRD/ONLINELOG/group_20.265.1138808809
+        21 STANDBY +DMZDATA/ACSX9PRD/ONLINELOG/group_21.274.1138808809
+        22 STANDBY +DMZDATA/ACSX9PRD/ONLINELOG/group_22.273.1138808811
+        23 STANDBY +DMZDATA/ACSX9PRD/ONLINELOG/group_23.272.1138808811
+
+20 rows selected.
+
+[oracle@mdpx9prddmz01 tmp]$ cat pfile_acs
+acsx9prd1.__data_transfer_cache_size=0
+acsx9prd2.__data_transfer_cache_size=0
+acsx9prd1.__db_cache_size=1912602624
+acsx9prd2.__db_cache_size=2046820352
+acsx9prd1.__inmemory_ext_roarea=0
+acsx9prd2.__inmemory_ext_roarea=0
+acsx9prd1.__inmemory_ext_rwarea=0
+acsx9prd2.__inmemory_ext_rwarea=0
+acsx9prd1.__java_pool_size=0
+acsx9prd2.__java_pool_size=0
+acsx9prd1.__large_pool_size=33554432
+acsx9prd2.__large_pool_size=33554432
+acsx9prd1.__oracle_base='/u01/app/oracle'#ORACLE_BASE set from environment
+acsx9prd2.__oracle_base='/u01/app/oracle'#ORACLE_BASE set from environment
+acsx9prd1.__pga_aggregate_target=872415232
+acsx9prd2.__pga_aggregate_target=872415232
+acsx9prd1.__sga_target=4294967296
+acsx9prd2.__sga_target=4294967296
+acsx9prd1.__shared_io_pool_size=134217728
+acsx9prd2.__shared_io_pool_size=134217728
+acsx9prd1.__shared_pool_size=2181038080
+acsx9prd2.__shared_pool_size=2046820352
+acsx9prd1.__streams_pool_size=0
+acsx9prd2.__streams_pool_size=0
+acsx9prd1.__unified_pga_pool_size=0
+acsx9prd2.__unified_pga_pool_size=0
+*._trace_files_public=FALSE
+*.archive_lag_target=0
+*.audit_file_dest='/u01/app/oracle/admin/acsx9prd/adump'
+*.audit_syslog_level='LOCAL0.INFO'
+*.audit_trail='OS'
+*.cluster_database=TRUE
+*.compatible='19.0.0'
+*.control_files='+DMZDATA/ACSX9PRD/CONTROLFILE/current01.ctl','+DMZFRA/ACSX9PRD/CONTROLFILE/current02.ctl'#Restore Controlfile
+*.data_guard_sync_latency=0
+*.db_block_size=8192
+*.db_create_file_dest='+DMZDATA'
+*.db_domain=''
+*.db_file_name_convert='+DMZDATA/ACSX9DR/','+DMZDATA/ACSX9PRD/'
+*.db_name='SVECO'
+*.db_recovery_file_dest_size=500G
+*.db_recovery_file_dest='+DMZFRA'
+*.db_unique_name='acsx9prd'
+*.dg_broker_config_file1='/oradata/sveco/broker1a.cfg'
+*.dg_broker_config_file2='/oradata/sveco/broker2a.cfg'
+*.dg_broker_start=TRUE
+*.fal_client='ACSX9PRD'
+*.fal_server='ACSX9DR','SVECO'
+acsx9prd1.instance_number=1
+acsx9prd2.instance_number=2
+*.local_listener='sveco'
+acsx9prd1.local_listener='(ADDRESS=(PROTOCOL=TCP)(HOST=10.10.107.103)(PORT=1521))'
+acsx9prd2.local_listener='(ADDRESS=(PROTOCOL=TCP)(HOST=10.10.107.104)(PORT=1521))'
+*.log_archive_config='DG_CONFIG=(acsx9prd,acsx9dr,sveco)'
+sveco.log_archive_dest_1='LOCATION=USE_DB_RECOVERY_FILE_DEST MANDATORY','valid_for=(ALL_LOGFILES,ALL_ROLES)'
+*.log_archive_dest_1='LOCATION=USE_DB_RECOVERY_FILE_DEST VALID_FOR=(ALL_LOGFILES,ALL_ROLES) DB_UNIQUE_NAME=acsx9prd'
+*.log_archive_dest_2='service="SVECODG"','ASYNC NOAFFIRM delay=0 optional compression=disable max_failure=0 reopen=300 db_unique_name="SVECODG" net_timeout=30','valid_for=(online_logfile,all_roles)'
+*.log_archive_dest_3='SERVICE=sveco NOAFFIRM ASYNC VALID_FOR=(ONLINE_LOGFILES,PRIMARY_ROLE) DB_UNIQUE_NAME=SVECO'
+*.log_archive_dest_4='SERVICE=acsx9dr NOAFFIRM ASYNC VALID_FOR=(ONLINE_LOGFILES,PRIMARY_ROLE) DB_UNIQUE_NAME=acsx9dr'
+sveco.log_archive_dest_state_1='ENABLE'
+*.log_archive_dest_state_2='ENABLE'
+*.log_archive_dest_state_3='ENABLE'
+*.log_archive_dest_state_4='DEFER'
+*.log_archive_format='sveco_%t_%r_%s.arc'
+sveco.log_archive_format='sveco_%t_%r_%s.arc'
+*.log_archive_max_processes=4
+*.log_archive_min_succeed_dest=1
+sveco.log_archive_trace=0
+*.log_file_name_convert='+DMZDATA/ACSX9DR/','+DMZDATA/ACSX9PRD/'
+*.memory_max_target=0
+*.memory_target=0
+*.nls_length_semantics='CHAR'
+*.open_cursors=300
+*.os_authent_prefix=''
+*.processes=650
+*.remote_login_passwordfile='EXCLUSIVE'
+*.remote_os_authent=FALSE
+*.sec_protocol_error_trace_action='LOG'
+*.sessions=5997
+*.sga_max_size=4294967296
+*.sga_target=4294967296
+*.standby_file_management='AUTO'
+*.tde_configuration='KEYSTORE_CONFIGURATION=FILE'
+acsx9prd1.thread=1
+acsx9prd2.thread=2
+*.undo_management='AUTO'
+*.undo_tablespace='UNDOTBS1'
+acsx9prd1.undo_tablespace='UNDOTBS1'
+acsx9prd2.undo_tablespace='UNDOTBS2'
+*.use_dedicated_broker=FALSE
+*.wallet_root='/u01/app/oracle/admin/acsx9prd/wallet'
+
+
+acsx9dr1.__data_transfer_cache_size=0
+acsx9dr2.__data_transfer_cache_size=0
+acsx9dr1.__db_cache_size=1912602624
+acsx9dr2.__db_cache_size=2046820352
+acsx9dr1.__inmemory_ext_roarea=0
+acsx9dr2.__inmemory_ext_roarea=0
+acsx9dr1.__inmemory_ext_rwarea=0
+acsx9dr2.__inmemory_ext_rwarea=0
+acsx9dr1.__java_pool_size=0
+acsx9dr2.__java_pool_size=0
+acsx9dr1.__large_pool_size=33554432
+acsx9dr2.__large_pool_size=33554432
+acsx9dr1.__oracle_base='/u01/app/oracle'#ORACLE_BASE set from environment
+acsx9dr2.__oracle_base='/u01/app/oracle'#ORACLE_BASE set from environment
+acsx9dr1.__pga_aggregate_target=872415232
+acsx9dr2.__pga_aggregate_target=872415232
+acsx9dr1.__sga_target=4294967296
+acsx9dr2.__sga_target=4294967296
+acsx9dr1.__shared_io_pool_size=134217728
+acsx9dr2.__shared_io_pool_size=134217728
+acsx9dr1.__shared_pool_size=2181038080
+acsx9dr2.__shared_pool_size=2046820352
+acsx9dr1.__streams_pool_size=0
+acsx9dr2.__streams_pool_size=0
+acsx9dr1.__unified_pga_pool_size=0
+acsx9dr2.__unified_pga_pool_size=0
+*._trace_files_public=FALSE
+*.archive_lag_target=0
+*.audit_file_dest='/u01/app/oracle/admin/acsx9dr/adump'
+*.audit_syslog_level='LOCAL0.INFO'
+*.audit_trail='OS'
+*.cluster_database=TRUE
+*.compatible='19.0.0'
+*.control_files='+DMZDATA/ACSX9DR/CONTROLFILE/current01.ctl','+DMZFRA/ACSX9DR/CONTROLFILE/current02.ctl'#Restore Controlfile
+*.data_guard_sync_latency=0
+*.db_block_size=8192
+*.db_create_file_dest='+DMZDATA'
+*.db_domain=''
+*.db_file_name_convert='+DMZDATA/ACSX9PRD/','+DMZDATA/ACSX9DR/'
+*.db_name='SVECO'
+*.db_recovery_file_dest_size=500G
+*.db_recovery_file_dest='+DMZFRA'
+*.db_unique_name='acsx9dr'
+*.dg_broker_start=TRUE
+*.fal_client='ACSX9DR'
+*.fal_server='ACSX9PRD'
+acsx9DR1.instance_number=1
+acsx9DR2.instance_number=2
+*.log_archive_config='DG_CONFIG=(acsx9prd,acsx9dr)'
+#*.log_archive_dest_1='LOCATION=USE_DB_RECOVERY_FILE_DEST VALID_FOR=(ALL_LOGFILES,ALL_ROLES) DB_UNIQUE_NAME=acsx9dr'
+*.log_archive_dest_4='SERVICE=acsx9prd NOAFFIRM ASYNC VALID_FOR=(ONLINE_LOGFILES,PRIMARY_ROLE) DB_UNIQUE_NAME=acsx9prd'
+#sveco.log_archive_dest_state_1='ENABLE''
+*.log_archive_dest_state_4='DEFER'
+*.log_archive_format='sveco_%t_%r_%s.arc'
+sveco.log_archive_format='sveco_%t_%r_%s.arc'
+*.log_archive_max_processes=4
+*.log_archive_min_succeed_dest=1
+sveco.log_archive_trace=0
+*.log_file_name_convert='+DMZDATA/ACSX9PRD/','+DMZDATA/ACSX9DR/'
+*.memory_max_target=0
+*.memory_target=0
+*.nls_length_semantics='CHAR'
+*.open_cursors=300
+*.os_authent_prefix=''
+*.processes=650
+*.remote_login_passwordfile='EXCLUSIVE'
+#*.remote_os_authent=FALSE
+*.sec_protocol_error_trace_action='LOG'
+*.sessions=5997
+*.sga_max_size=4294967296
+*.sga_target=4294967296
+*.standby_file_management='AUTO'
+*.tde_configuration='KEYSTORE_CONFIGURATION=FILE'
+acsx9dr1.thread=1
+acsx9dr2.thread=2
+acsx9dr1.instance_number=1
+acsx9dr2.instance_number=2
+*.undo_management='AUTO'
+*.undo_tablespace='UNDOTBS1'
+acsx9dr1.undo_tablespace='UNDOTBS1'
+acsx9dr2.undo_tablespace='UNDOTBS2'
+*.use_dedicated_broker=FALSE
+*.wallet_root='/u01/app/oracle/admin/acsx9dr/wallet'
+
+startup nomount pfile='/home/oracle/initacsx9dr.ora';
+
+vi dup_acsx9dr
+
+connect target sys/"qwe123#qwe123"@acsx9prd
+connect auxiliary sys/"qwe123#qwe123"@acsx9dr
+run {
+allocate channel prmy1 type disk;
+allocate channel prmy2 type disk;
+allocate channel prmy3 type disk;
+allocate channel prmy4 type disk;
+allocate channel prmy5 type disk;
+allocate channel prmy6 type disk;
+allocate channel prmy7 type disk;
+allocate channel prmy8 type disk;
+allocate channel prmy9 type disk;
+allocate channel prmy10 type disk;
+allocate channel prmy11 type disk;
+allocate channel prmy12 type disk;
+allocate auxiliary channel stby1 type disk;
+allocate auxiliary channel stby2 type disk;
+allocate auxiliary channel stby3 type disk;
+allocate auxiliary channel stby4 type disk;
+allocate auxiliary channel stby5 type disk;
+allocate auxiliary channel stby6 type disk;
+allocate auxiliary channel stby7 type disk;
+allocate auxiliary channel stby8 type disk;
+allocate auxiliary channel stby9 type disk;
+allocate auxiliary channel stby10 type disk;
+allocate auxiliary channel stby11 type disk;
+allocate auxiliary channel stby12 type disk;
+
+duplicate target database
+for standby
+from active database
+dorecover
+  spfile
+    set db_unique_name='acsx9dr'
+    set control_files='+DMZDATA/ACSX9DR/CONTROLFILE/current01.ctl','+DMZFRA/ACSX9DR/CONTROLFILE/current02.ctl'
+    set log_archive_config='dg_config=(acsx9prd,acsx9dr)'
+    set audit_file_dest='/u01/app/oracle/admin/acsx9dr/adump'
+    set cluster_database='false'
+	set db_file_name_convert='+DMZDATA/ACSX9PRD/','+DMZDATA/ACSX9DR/'
+    set log_file_name_convert ='+DMZDATA/ACSX9PRD/','+DMZDATA/ACSX9DR/'
+   nofilenamecheck;
+  }
+  
+  chmod +x dup_acsx9dr
+  
+   nohup rman @dup_acsx9dr log=dup_acsx9dr_from_DR.log &
+
+connect target sys/qwe123#qwe123@(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=exadmz-scan)(PORT=1521))(CONNECT_DATA=(SERVER=DEDICATED)(SERVICE_NAME=acsx9prd)(UR=A)))
+connect auxiliary sys/qwe123#qwe123@(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=10.19.107.103)(PORT=1521))(CONNECT_DATA=(SERVER=DEDICATED)(SERVICE_NAME=acsx9dr)(UR=A)))
+
+ACSX9DR =
+  (DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = 10.19.107.103)(PORT = 1521))
+    (CONNECT_DATA =
+      (SERVER = DEDICATED)
+      (SERVICE_NAME = acsx9dr) (UR = A)
+    )
+  )
+  
+  
+  restore controlfile from '/tmp/acsx9dr.ctl';
+  
+  create spfile='+DMZDATA' from pfile='/tmp/pfile_acsx9dr';
+  
+  spfile='+DMZDATA/ACSX9DR/PARAMETERFILE/spfile.278.1142638323'
+  startup mount pfile='/u01/app/oracle/product/19.0.0.0/dbhome_acs/dbs/initacsx9dr.ora';
+  
+  RMAN> alter database rename file '+DMZDATA/MUST_RENAME_THIS_DATAFILE_9.4294967295.4294967295' to '+DMZDATA/ACSX9DR/DATAFILE/UNDOTBS2.269.1142520577';
+
+Statement processed
+
+RMAN> alter database rename file '+DMZDATA/MUST_RENAME_THIS_TEMPFILE_3.4294967295.4294967295' to '+DMZDATA/ACSX9DR/TEMPFILE/temp.269.1139631959';
+
+Statement processed
+
+RMAN> alter database rename file '+DMZDATA/MUST_RENAME_THIS_TEMPFILE_4.4294967295.4294967295' to '+DMZDATA/ACSX9DR/TEMPFILE/temp.268.1139631963';
+
+Statement processed
+
+RMAN> alter database rename file '+DMZDATA/MUST_RENAME_THIS_TEMPFILE_5.4294967295.4294967295' to '+DMZDATA/ACSX9DR/TEMPFILE/temp.276.1139631965';
+
+Statement processed
+
+alter system set standby_file_management=AUTO scope=both sid='*';
+
+SQL> alter system set standby_file_management=manual scope=both sid='*';
+
+System altered.
+
+SQL> alter database rename file '+DMZFRA/ACSX9PRD/ONLINELOG/redo5.log' to '+DMZFRA/ACSX9DR/ONLINELOG/redo5.log';
+
+Database altered.
+
+SQL> alter database rename file '+DMZFRA/ACSX9PRD/ONLINELOG/redo6.log' to '+DMZFRA/ACSX9DR/ONLINELOG/redo6.log';
+
+Database altered.
+
+SQL> alter database rename file '+DMZFRA/ACSX9PRD/ONLINELOG/standby_redo01.log' to '+DMZFRA/ACSX9DR/ONLINELOG/standby_redo01.log';
+
+Database altered.
+
+SQL> alter database rename file '+DMZFRA/ACSX9PRD/ONLINELOG/standby_redo02.log' to '+DMZFRA/ACSX9DR/ONLINELOG/standby_redo02.log';
+
+Database altered.
+
+SQL> alter database rename file '+DMZFRA/ACSX9PRD/ONLINELOG/standby_redo03.log' to '+DMZFRA/ACSX9DR/ONLINELOG/standby_redo03.log';
+
+Database altered.
+
+SQL> alter database rename file '+DMZFRA/ACSX9PRD/ONLINELOG/standby_redo04.log' to '+DMZFRA/ACSX9DR/ONLINELOG/standby_redo04.log';
+
+Database altered.
+
+SQL> alter database rename file '+DMZFRA/ACSX9PRD/ONLINELOG/redo7.log' to '+DMZFRA/ACSX9DR/ONLINELOG/redo7.log';
+
+Database altered.
+
+SQL> alter system set standby_file_management=auto scope=both sid='*';
+
+
+  
+FRAUDM_LIMIT.457.1138570769
+FRAUD_IDX.456.1138570769
+FRAUD_TABLES.455.1138570765
+FRAUD_TABLES.463.1138570797
+FRAUD_TRANSACTIONS.454.1138570765
+OTHERS.459.1138570765
+SYSAUX.451.1138570763
+SYSAUX.452.1138570769
+SYSAUX.460.1138570771
+SYSAUX.461.1138570795
+SYSAUX.462.1138570795
+SYSTEM.458.1138570763
+UNDOTBS1.453.1138570763
+UNDOTBS2.546.1139625957
+
+FRAUDM_LIMIT.408.1142447053
+FRAUD_IDX.405.1142441843
+FRAUD_TABLES.437.1142468461
+FRAUD_TRANSACTIONS.406.1142441851
+OTHERS.407.1142441913
+SYSAUX.402.1142441833
+SYSAUX.409.1142447211
+SYSAUX.411.1142452759
+SYSAUX.412.1142458607
+SYSAUX.415.1142462377
+SYSTEM.401.1142441831
+UNDOTBS1.403.1142441835
+UNDOTBS2.439.1142474439
+
+
+
+ASMCMD> cd +DATA/FEX9DR/DATAFILE
+ASMCMD> ls
+ACCOUNT.429.1142468053
+BPCNDX.425.1142468045
+BPC_AUDIT.431.1142468055
+CARDREF.426.1142468047
+MSGLOG.428.1142468049
+OTHERS.430.1142468055
+SMSGATE.432.1142468067
+SYSAUX.433.1142468071
+SYSAUX.434.1142468071
+SYSAUX.436.1142468103
+SYSAUX.438.1142468687
+SYSTEM.420.1142468031
+UNDOTBS1.422.1142468037
+UNDOTBS2.423.1142468039
+USERS.424.1142468043
+
+
+srvctl add database -d acsx9dr -o /u01/app/oracle/product/19.0.0.0/dbhome_acs -p +DMZDATA/ACSX9DR/PARAMETERFILE/spfile.278.1142638323 -r physical_standby -s mount 
+
+srvctl modify database -d acsx9dr -a "DMZDATA,DMZFRA" 
+srvctl add instance -d acsx9dr  -i acsx9dr1 -n mcdrdbadm01vm02
+srvctl add instance -d acsx9dr  -i acsx9dr2 -n mcdrdbadm02vm02
+srvctl config database -d acsx9dr
+srvctl modify database –db acsx9dr -pwfile +DMZDATA/ACSX9DR/PASSWORD/orapwacsx9dr1
+
+srvctl status database -d acsx9dr
+
+srvctl start database -d acsx9dr -o mount
+srvctl status database -d acsx9dr
+
+pwcopy /u01/app/oracle/product/19.0.0.0/dbhome_acs/dbs/orapwacsx9dr1 +DMZDATA/ACSX9DR/PASSWORD/orapwacsx9dr1

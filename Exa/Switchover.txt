@@ -1,0 +1,387 @@
+﻿Run Create_RestorePoint script as Oracle:
+
+on mdpx9prdvm01 /home/oracle:	# . Create_RestorePoint
+
+on mdpx9prddmz01 /home/oracle:	# . Create_RestorePoint
+
+FM
+------------------------------------------------------------------------------------------------------------------------------------------
+SQL> alter database switchover to fmx9dr verify;					//Verification
+SQL> alter database switchover to fmx9dr;						//Switchover
+
+FMX9DR:
+SQL> alter database open;
+
+srvctl modify database -d FMX9DR -role PRIMARY
+
+FMX9PRD:
+SQL> alter system set db_file_name_convert='+DATA/FMX9DR','+DATA/FMX9PRD' scope=spfile sid='*';
+     alter system set log_file_name_convert='+FRA/FMX9DR','+FRA/FMX9PRD' scope=spfile sid='*';
+     shutdown immediate;
+
+# srvctl modify database -d FMX9DR -role PHYSICAL_STANDBY
+
+SQL> startup mount
+     ALTER DATABASE RECOVER MANAGED STANDBY DATABASE DISCONNECT;
+
+Post Switchover, run through the following:
+SQL> alter system switch logfile;
+SQL> select dest_id,error,status from v$archive_dest where dest_id=n;
+SQL> select max(sequence#),thread# from v$log_history group by thread#;
+SQL> select max(sequence#)  from v$archived_log where applied='YES' and dest_id=n;
+
+FMX9DR:
+select to_char(sysdate,'DD.MM.RR HH24:MI:SS') time,
+ a.thread#, (select max(sequence#) 
+from v$archived_log where archived='YES' and thread#=a.thread#) archived, 
+max(a.sequence#) applied, (select max(sequence#) 
+from v$archived_log where archived='YES' and thread#=a.thread#)-max(a.sequence#) gap 
+from v$archived_log a where a.applied='YES' group by a.thread#;
+------------------------------------------------------------------------------------------------------------------------------------------
+
+FE
+------------------------------------------------------------------------------------------------------------------------------------------
+SQL> alter database switchover to fex9dr verify;					//Verification
+SQL> alter database switchover to fex9dr;						//Switchover
+
+FEX9DR:
+SQL> alter database open;
+
+srvctl modify database -d FEX9DR -role PRIMARY
+
+FEX9PRD:
+SQL> alter system set db_file_name_convert='+DATA/FEX9DR','+DATA/FEX9PRD' scope=spfile sid='*';
+     alter system set log_file_name_convert='+FRA/FEX9DR','+FRA/FEX9PRD' scope=spfile sid='*';
+     shutdown immediate;
+
+# srvctl modify database -d FEX9DR -role PHYSICAL_STANDBY
+
+SQL> startup mount
+     ALTER DATABASE RECOVER MANAGED STANDBY DATABASE DISCONNECT;
+
+Post Switchover, run through the following:
+SQL> alter system switch logfile;
+SQL> select dest_id,error,status from v$archive_dest where dest_id=n;
+SQL> select max(sequence#),thread# from v$log_history group by thread#;
+SQL> select max(sequence#)  from v$archived_log where applied='YES' and dest_id=n;
+
+FEX9DR:
+select to_char(sysdate,'DD.MM.RR HH24:MI:SS') time,
+ a.thread#, (select max(sequence#) 
+from v$archived_log where archived='YES' and thread#=a.thread#) archived, 
+max(a.sequence#) applied, (select max(sequence#) 
+from v$archived_log where archived='YES' and thread#=a.thread#)-max(a.sequence#) gap 
+from v$archived_log a where a.applied='YES' group by a.thread#;
+------------------------------------------------------------------------------------------------------------------------------------------
+
+BO
+------------------------------------------------------------------------------------------------------------------------------------------
+SQL> alter database switchover to svx9dr verify;					//Verification
+SQL> alter database switchover to svx9dr;						//Switchover
+
+SVX9DR:
+SQL> alter database open;
+
+srvctl modify database -d SVX9DR -role PRIMARY
+
+SVX9PRD:
+SQL> alter system set db_file_name_convert='+DATA/SVX9DR','+DATA/SVX9PRD' scope=spfile sid='*';
+     alter system set log_file_name_convert='+FRA/SVX9DR','+FRA/SVX9PRD' scope=spfile sid='*';
+     shutdown immediate;
+
+# srvctl modify database -d SVX9DR -role PHYSICAL_STANDBY
+
+SQL> startup mount
+     ALTER DATABASE RECOVER MANAGED STANDBY DATABASE DISCONNECT;
+
+Post Switchover, run through the following:
+SQL> alter system switch logfile;
+SQL> select dest_id,error,status from v$archive_dest where dest_id=n;
+SQL> select max(sequence#),thread# from v$log_history group by thread#;
+SQL> select max(sequence#)  from v$archived_log where applied='YES' and dest_id=n;
+
+SVX9DR:
+select to_char(sysdate,'DD.MM.RR HH24:MI:SS') time,
+ a.thread#, (select max(sequence#) 
+from v$archived_log where archived='YES' and thread#=a.thread#) archived, 
+max(a.sequence#) applied, (select max(sequence#) 
+from v$archived_log where archived='YES' and thread#=a.thread#)-max(a.sequence#) gap 
+from v$archived_log a where a.applied='YES' group by a.thread#;
+------------------------------------------------------------------------------------------------------------------------------------------
+
+SVIP
+------------------------------------------------------------------------------------------------------------------------------------------
+SQL> alter database switchover to svipx9dr verify;					//Verification
+SQL> alter database switchover to svipx9dr;						//Switchover
+
+SVIPX9DR:
+SQL> alter database open;
+
+srvctl modify database -d SVIPX9DR -role PRIMARY
+
+SVIPX9PRD:
+SQL> alter system set db_file_name_convert='+DATA/SVIPX9DR','+DATA/SVIPX9PRD' scope=spfile sid='*';
+     alter system set log_file_name_convert='+FRA/SVIPX9DR','+FRA/SVIPX9PRD' scope=spfile sid='*';
+     shutdown immediate;
+
+# srvctl modify database -d SVIPX9DR -role PHYSICAL_STANDBY
+
+SQL> startup mount
+     ALTER DATABASE RECOVER MANAGED STANDBY DATABASE DISCONNECT;
+
+Post Switchover, run through the following:
+SQL> alter system switch logfile;
+SQL> select dest_id,error,status from v$archive_dest where dest_id=n;
+SQL> select max(sequence#),thread# from v$log_history group by thread#;
+SQL> select max(sequence#)  from v$archived_log where applied='YES' and dest_id=n;
+
+SVIPX9DR:
+select to_char(sysdate,'DD.MM.RR HH24:MI:SS') time,
+ a.thread#, (select max(sequence#) 
+from v$archived_log where archived='YES' and thread#=a.thread#) archived, 
+max(a.sequence#) applied, (select max(sequence#) 
+from v$archived_log where archived='YES' and thread#=a.thread#)-max(a.sequence#) gap 
+from v$archived_log a where a.applied='YES' group by a.thread#;
+------------------------------------------------------------------------------------------------------------------------------------------
+
+API
+------------------------------------------------------------------------------------------------------------------------------------------
+SQL> alter database switchover to apix9dr verify;					//Verification
+SQL> alter database switchover to apix9dr;						//Switchover
+
+APIX9DR:
+SQL> alter database open;
+
+srvctl modify database -d APIX9DR -role PRIMARY
+
+APIX9PRD:
+SQL> alter system set db_file_name_convert='+DATA/APIX9DR','+DATA/APIX9PRD' scope=spfile sid='*';
+     alter system set log_file_name_convert='+FRA/APIX9DR','+FRA/APIX9PRD' scope=spfile sid='*';
+     shutdown immediate;
+
+# srvctl modify database -d APIX9DR -role PHYSICAL_STANDBY
+
+SQL> startup mount
+     ALTER DATABASE RECOVER MANAGED STANDBY DATABASE DISCONNECT;
+
+Post Switchover, run through the following:
+SQL> alter system switch logfile;
+SQL> select dest_id,error,status from v$archive_dest where dest_id=n;
+SQL> select max(sequence#),thread# from v$log_history group by thread#;
+SQL> select max(sequence#)  from v$archived_log where applied='YES' and dest_id=n;
+
+APIX9PRD:
+select to_char(sysdate,'DD.MM.RR HH24:MI:SS') time,
+ a.thread#, (select max(sequence#) 
+from v$archived_log where archived='YES' and thread#=a.thread#) archived, 
+max(a.sequence#) applied, (select max(sequence#) 
+from v$archived_log where archived='YES' and thread#=a.thread#)-max(a.sequence#) gap 
+from v$archived_log a where a.applied='YES' group by a.thread#;
+------------------------------------------------------------------------------------------------------------------------------------------
+
+AC
+------------------------------------------------------------------------------------------------------------------------------------------
+SQL> alter database switchover to acx9dr verify;					//Verification
+SQL> alter database switchover to acx9dr;						//Switchover
+
+ACX9DR:
+SQL> alter database open;
+
+srvctl modify database -d ACX9DR -role PRIMARY
+
+ACX9PRD:
+SQL> alter system set db_file_name_convert='+DATA/ACX9DR','+DATA/ACX9PRD' scope=spfile sid='*';
+     alter system set log_file_name_convert='+FRA/ACX9DR','+FRA/ACX9PRD' scope=spfile sid='*';
+     shutdown immediate;
+
+# srvctl modify database -d ACX9DR -role PHYSICAL_STANDBY
+
+SQL> startup mount
+     ALTER DATABASE RECOVER MANAGED STANDBY DATABASE DISCONNECT;
+
+Post Switchover, run through the following:
+SQL> alter system switch logfile;
+SQL> select dest_id,error,status from v$archive_dest where dest_id=n;
+SQL> select max(sequence#),thread# from v$log_history group by thread#;
+SQL> select max(sequence#)  from v$archived_log where applied='YES' and dest_id=n;
+
+ACX9DR:
+select to_char(sysdate,'DD.MM.RR HH24:MI:SS') time,
+ a.thread#, (select max(sequence#) 
+from v$archived_log where archived='YES' and thread#=a.thread#) archived, 
+max(a.sequence#) applied, (select max(sequence#) 
+from v$archived_log where archived='YES' and thread#=a.thread#)-max(a.sequence#) gap 
+from v$archived_log a where a.applied='YES' group by a.thread#;
+------------------------------------------------------------------------------------------------------------------------------------------
+
+CG
+------------------------------------------------------------------------------------------------------------------------------------------
+SQL> alter database switchover to svcgx9dr verify;					//Verification
+SQL> alter database switchover to svcgx9dr;						//Switchover
+
+SVCGX9DR:
+SQL> alter database open;
+
+srvctl modify database -d SVCGX9DR -role PRIMARY
+
+SVCGX9PRD:
+SQL> alter system set db_file_name_convert='+DATA/SVCGX9DR','+DATA/SVCGX9PRD' scope=spfile sid='*';
+     alter system set log_file_name_convert='+FRA/SVCGX9DR','+FRA/SVCGX9PRD' scope=spfile sid='*';
+     shutdown immediate;
+
+# srvctl modify database -d SVCGX9DR -role PHYSICAL_STANDBY
+
+SQL> startup mount
+     ALTER DATABASE RECOVER MANAGED STANDBY DATABASE DISCONNECT;
+
+Post Switchover, run through the following:
+SQL> alter system switch logfile;
+SQL> select dest_id,error,status from v$archive_dest where dest_id=n;
+SQL> select max(sequence#),thread# from v$log_history group by thread#;
+SQL> select max(sequence#)  from v$archived_log where applied='YES' and dest_id=n;
+
+SVCGX9DR:
+select to_char(sysdate,'DD.MM.RR HH24:MI:SS') time,
+ a.thread#, (select max(sequence#) 
+from v$archived_log where archived='YES' and thread#=a.thread#) archived, 
+max(a.sequence#) applied, (select max(sequence#) 
+from v$archived_log where archived='YES' and thread#=a.thread#)-max(a.sequence#) gap 
+from v$archived_log a where a.applied='YES' group by a.thread#;
+------------------------------------------------------------------------------------------------------------------------------------------
+
+PM
+------------------------------------------------------------------------------------------------------------------------------------------
+SQL> alter database switchover to pmx9dr verify;					//Verification
+SQL> alter database switchover to pmx9dr;						//Switchover
+
+PMX9DR:
+SQL> alter database open;
+
+srvctl modify database -d PMX9DR -role PRIMARY
+
+PMX9PRD:
+SQL> alter system set db_file_name_convert='+DATA/PMX9DR','+DATA/PMX9PRD' scope=spfile sid='*';
+     alter system set log_file_name_convert='+FRA/PMX9DR','+FRA/PMX9PRD' scope=spfile sid='*';
+     shutdown immediate;
+
+# srvctl modify database -d PMX9DR -role PHYSICAL_STANDBY
+
+SQL> startup mount
+     ALTER DATABASE RECOVER MANAGED STANDBY DATABASE DISCONNECT;
+
+Post Switchover, run through the following:
+SQL> alter system switch logfile;
+SQL> select dest_id,error,status from v$archive_dest where dest_id=n;
+SQL> select max(sequence#),thread# from v$log_history group by thread#;
+SQL> select max(sequence#)  from v$archived_log where applied='YES' and dest_id=n;
+
+PMX9DR:
+select to_char(sysdate,'DD.MM.RR HH24:MI:SS') time,
+ a.thread#, (select max(sequence#) 
+from v$archived_log where archived='YES' and thread#=a.thread#) archived, 
+max(a.sequence#) applied, (select max(sequence#) 
+from v$archived_log where archived='YES' and thread#=a.thread#)-max(a.sequence#) gap 
+from v$archived_log a where a.applied='YES' group by a.thread#;
+------------------------------------------------------------------------------------------------------------------------------------------
+
+NTF
+------------------------------------------------------------------------------------------------------------------------------------------
+SQL> alter database switchover to ntfx9dr verify;					//Verification
+SQL> alter database switchover to ntfx9dr;						//Switchover
+
+NTFX9DR:
+SQL> alter database open;
+
+srvctl modify database -d NTFX9DR -role PRIMARY
+
+NTFX9PRD:
+SQL> alter system set db_file_name_convert='+DATA/NTFX9DR','+DATA/NTFX9PRD' scope=spfile sid='*';
+     alter system set log_file_name_convert='+FRA/NTFX9DR','+FRA/NTFX9PRD' scope=spfile sid='*';
+     shutdown immediate;
+
+# srvctl modify database -d NTFX9DR -role PHYSICAL_STANDBY
+
+SQL> startup mount
+     ALTER DATABASE RECOVER MANAGED STANDBY DATABASE DISCONNECT;
+
+Post Switchover, run through the following:
+SQL> alter system switch logfile;
+SQL> select dest_id,error,status from v$archive_dest where dest_id=n;
+SQL> select max(sequence#),thread# from v$log_history group by thread#;
+SQL> select max(sequence#)  from v$archived_log where applied='YES' and dest_id=n;
+
+NTFX9DR:
+select to_char(sysdate,'DD.MM.RR HH24:MI:SS') time,
+ a.thread#, (select max(sequence#) 
+from v$archived_log where archived='YES' and thread#=a.thread#) archived, 
+max(a.sequence#) applied, (select max(sequence#) 
+from v$archived_log where archived='YES' and thread#=a.thread#)-max(a.sequence#) gap 
+from v$archived_log a where a.applied='YES' group by a.thread#;
+------------------------------------------------------------------------------------------------------------------------------------------
+
+ACS
+------------------------------------------------------------------------------------------------------------------------------------------
+SQL> alter database switchover to acsx9dr verify;					//Verification
+SQL> alter database switchover to acsx9dr;						//Switchover
+
+ACSX9DR:
+SQL> alter database open;
+
+srvctl modify database -d ACSX9DR -role PRIMARY
+
+ACSX9PRD:
+SQL> alter system set db_file_name_convert='+DATA/ACSX9DR','+DATA/ACSX9PRD' scope=spfile sid='*';
+     alter system set log_file_name_convert='+FRA/ACSX9DR','+FRA/ACSX9PRD' scope=spfile sid='*';
+     shutdown immediate;
+
+# srvctl modify database -d ACSX9DR -role PHYSICAL_STANDBY
+
+SQL> startup mount
+     ALTER DATABASE RECOVER MANAGED STANDBY DATABASE DISCONNECT;
+
+Post Switchover, run through the following:
+SQL> alter system switch logfile;
+SQL> select dest_id,error,status from v$archive_dest where dest_id=n;
+SQL> select max(sequence#),thread# from v$log_history group by thread#;
+SQL> select max(sequence#)  from v$archived_log where applied='YES' and dest_id=n;
+
+ACSX9DR:
+select to_char(sysdate,'DD.MM.RR HH24:MI:SS') time,
+ a.thread#, (select max(sequence#) 
+from v$archived_log where archived='YES' and thread#=a.thread#) archived, 
+max(a.sequence#) applied, (select max(sequence#) 
+from v$archived_log where archived='YES' and thread#=a.thread#)-max(a.sequence#) gap 
+from v$archived_log a where a.applied='YES' group by a.thread#;
+------------------------------------------------------------------------------------------------------------------------------------------
+
+CS
+------------------------------------------------------------------------------------------------------------------------------------------
+SQL> alter database switchover to csx9dr verify;					//Verification
+SQL> alter database switchover to csx9dr;						//Switchover
+
+CSX9DR:
+SQL> alter database open;
+
+srvctl modify database -d CSX9DR -role PRIMARY
+
+CSX9PRD:
+SQL> alter system set db_file_name_convert='+DATA/CSX9DR','+DATA/CSX9PRD' scope=spfile sid='*';
+     alter system set log_file_name_convert='+FRA/CSX9DR','+FRA/CSX9PRD' scope=spfile sid='*';
+     shutdown immediate;
+
+# srvctl modify database -d CSX9DR -role PHYSICAL_STANDBY
+
+Post Switchover, run through the following:
+SQL> alter system switch logfile;
+SQL> select dest_id,error,status from v$archive_dest where dest_id=n;
+SQL> select max(sequence#),thread# from v$log_history group by thread#;
+SQL> select max(sequence#)  from v$archived_log where applied='YES' and dest_id=n;
+
+CSX9DR:
+select to_char(sysdate,'DD.MM.RR HH24:MI:SS') time,
+ a.thread#, (select max(sequence#) 
+from v$archived_log where archived='YES' and thread#=a.thread#) archived, 
+max(a.sequence#) applied, (select max(sequence#) 
+from v$archived_log where archived='YES' and thread#=a.thread#)-max(a.sequence#) gap 
+from v$archived_log a where a.applied='YES' group by a.thread#;
+------------------------------------------------------------------------------------------------------------------------------------------

@@ -1,0 +1,43 @@
+1.Move ASM password file
+
+Get the current password file location:
+#asmcmd pwget --asm
+
+Move the ASM password file:
+#asmcmd pwmove --asm -f <source_path> <destination_path>  
+
+Verify that the location has been updated:
+#asmcmd pwget --asm
+
+2.Move ASM Spfile
+
+Get the current spfile location:
+#asmcmd spget
+
+Move the ASM spfile:
+#asmcmd spmove <source> <destination>
+Verify:
+#asmcmd spget
+
+3.Move OCR
+Get the current OCR location:
+#ocrcheck -config
+
+Move the OCR:
+#ocrconfig -add <new_diskgroup>
+#ocrconfig -delete <old_diskgroup>
+
+Verify that the location has been updated:
+#ocrcheck -config
+
+4.Move voting files
+Get the current voting files location:
+#crsctl query css votedisk
+
+Move the voting files:
+#crsctl replace votedisk <+new_diskgroup>
+
+Verify that the voting files have been moved to the new disk group:
+#crsctl query css votedisk
+
+Reconfigure OCR backups

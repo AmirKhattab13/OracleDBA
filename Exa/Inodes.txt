@@ -1,0 +1,4 @@
+# df -Pi / | awk 'END{print $3}'
+# find / -xdev -printf '%h\n' | sort | uniq -c | sort -k 1 -n ( Will give the folder name along with how many files it hold)
+
+/opt/oracle/ExaWatcher/archive

@@ -1,0 +1,26 @@
+If you are decreasing the amount of memory used by the guest, then you must first review and adjust Oracle Database memory usage and the 
+operating system huge pages configuration settings in the guest:
+
+- Review the SGA size of databases and reduce if necessary.
+If you do not first reduce the memory requirements of the databases running in the guest, then the guest might fail to restart because 
+too much memory is reserved for huge pages when the Oracle Linux operating system attempts to boot. 
+
+- Review the operating system configuration and reduce the memory allocation for huge pages if necessary.
+
+- If you modify the huge pages settings in the operating system kernel configuration file (/etc/sysctl.conf), regenerate the initramfs 
+file to reflect the system configuration change.
+You should backup up the existing initramfs file and then regenerate it by using the dracut command:
+
+# ls -l /boot/initramfs-$(uname -r).img
+-rw------- 1 root root 55845440 Jan  8 10:34 /boot/initramfs-4.14.35-2047.508.3.3.el7uek.x86_64.img
+
+# cp /boot/initramfs-$(uname -r).img backup_directory
+
+# dracut --force
+
+------------------------------------------------------------------------------------------------------------------------------------------
+If you are increasing the amount of memory used by the guest, then use the following command to determine the amount of free memory available:
+
+# vm_maker --list --memory
+
+# vm_maker --set --memory 32G --domain db01_guest01.example.com --restart-domain

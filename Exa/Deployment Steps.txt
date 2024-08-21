@@ -1,0 +1,67 @@
+Step 1
+As the install.sh script is meant for many different configurations, the step 1 will perform some checks and adapt the list of steps that 
+are needed for your particular configuration. Check the output of the script to see if anything is wrong and we can then continue.
+
+List of Steps
+The -l option can be used to list all those steps now that the step 1 has adapted it to your configuration. 
+
+Step 2
+This step will check for all the ISO files needed for all the installation steps, you will be prompted for missing files then copy the 
+missing files in the WorkDir directory and relaunch the step. 
+
+Step 3
+This step will create the required users 
+
+Step 4
+This step will set up the cell connectivity creating the /etc/oracle/cell/network-config/cellip.ora and 
+/etc/oracle/cell/network-config/cellinit.ora files 
+
+Step 5
+This step will check the Infiniband configuration and test the performances of it using the infinicheck script 
+
+Step 6
+This step will check the cells using the cellcli -e calibrate command. It also tests the performance of the cell disks and report any 
+issue. 
+
+Step 7
+This step will create the cell disks, flashlog and flashcache 
+
+Step 8
+This step will create the grid disks 
+
+Step 9
+This step will install the Grid Infrastructure 
+
+Step 10
+This step will run the root.sh script on all the nodes. 
+
+Step 11
+This step will install Oracle database 
+
+Step 12
+This step will relink the installed Oracle databases homes with RDS (protocol to use Infiniband) 
+
+Step 13
+This step will create the ASM diskgroups according to what has been defined by the client in the XML configuration file 
+(this is the perfect timing to double check, triple check, etc... the name of the diskgroups before creating it to avoid to have to 
+rename the diskgroups later) 
+
+Step 14
+This step will create the databases as defined in the <client>-<cluster>.xml file. In my cases, no databases were defined there as the 
+client wanted to create them manually. 
+
+Step 15
+This step applies some security fixes; 
+
+Step 16
+This step installs the Exachk tool 
+
+Step 17
+This step creates an installation summary 
+
+Step 18
+This step is to “ Resecure the machine ”; this step is meant to :
+expire all passwords (need to be changed at next login)
+implement password aging and complexity
+tightened some permissions
+drop the root ssh keys

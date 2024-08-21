@@ -1,0 +1,2 @@
+./install.sh -cf /home/a.khattab/MDP-mcdr-Es.xml -l
+./install.sh -cf /home/a.khattab/MDP-mcdr-Es.xml -s <num>

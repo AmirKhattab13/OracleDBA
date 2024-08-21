@@ -1,0 +1,7 @@
+ipmitool sunoem cli "show /SP system_identifier" | grep "system_identifier ="			//Serial Number
+
+dcli -g /root/dbs_group.lst -l root dmidecode -s system-serial-number				//Serial for compute nodes
+
+dcli -g /root/cell_group.lst -l root dmidecode -s system-serial-number				//Serial for cell nodes
+
+imageinfo											//Version
