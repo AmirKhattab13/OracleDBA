@@ -1,0 +1,44 @@
+# vi dup_apix9dr
+ 
+connect target sys/"qwe123#qwe123"@apix9prd
+connect  auxiliary sys/"qwe123#qwe123"@apix9dr
+run {
+allocate channel prmy1 type disk;
+allocate channel prmy2 type disk;
+allocate channel prmy3 type disk;
+allocate channel prmy4 type disk;
+allocate channel prmy5 type disk;
+allocate channel prmy6 type disk;
+allocate channel prmy7 type disk;
+allocate channel prmy8 type disk;
+allocate channel prmy9 type disk;
+allocate channel prmy10 type disk;
+allocate channel prmy11 type disk;
+allocate channel prmy12 type disk;
+allocate auxiliary channel stby1 type disk;
+allocate auxiliary channel stby2 type disk;
+allocate auxiliary channel stby3 type disk;
+allocate auxiliary channel stby4 type disk;
+allocate auxiliary channel stby5 type disk;
+allocate auxiliary channel stby6 type disk;
+allocate auxiliary channel stby7 type disk;
+allocate auxiliary channel stby8 type disk;
+allocate auxiliary channel stby9 type disk;
+allocate auxiliary channel stby10 type disk;
+allocate auxiliary channel stby11 type disk;
+allocate auxiliary channel stby12 type disk;
+
+duplicate target database
+for standby
+from active database
+dorecover
+  spfile
+    set db_unique_name='svipx9dr'
+    set control_files='+DATA/APIX9DR/CONTROLFILE/current01.ctl','+FRA/APIX9DR/CONTROLFILE/current02.ctl'
+    set log_archive_config='dg_config=(apix9prd,apix9dr)'
+    set audit_file_dest='/u01/app/oracle/admin/apix9dr/adump'
+    set cluster_database='false'
+	set db_file_name_convert='+DATA/APIX9PRD/DATAFILE','+DATA/APIX9DR/DATAFILE/'
+    set log_file_name_convert ='+DATA/APIX9PRD/ONLINELOG/','+DATA/APIX9DR/ONLINELOG/'
+   nofilenamecheck;
+  }

@@ -1,0 +1,37 @@
+1# Copy files from prod to standby and edit them.
+	- bash profiles.
+	- tnsnames.ora.
+	- parameter files.
+	- password files.
+	- wallet (if existed).
+	- backup set.
+
+2# On standby:
+	SQL> startup nomount
+
+3# rman target /
+	restore controlfile from '/path/to/ct'
+
+4# SQL> alter database mount;
+
+5# rman target /
+	catalog start with 'path/to/backup';		//yes
+
+6# Edit and run restore script:				//add the datafiles and tempfiles of prod but with the new path
+	# nohup ./restore_script.sh &
+	# tail -100f restore.log 
+
+7# Change and clear redo log files:
+	SQL> alter database rename file '+DISK/path/redo1.log' to '+DISK/path/redo1.log';
+	SQL> alter database rename file '+DISK/path/redo2.log' to '+DISK/path/redo2.log';
+	SQL> alter database rename file '+DISK/path/redo3.log' to '+DISK/path/redo3.log';
+
+	Check the group num of the file: 
+	select group#, thread#, sequence#, status, archived from v$log;
+
+	SQL> alter database clear logfile group 1;
+	SQL> alter database clear logfile group 2;
+	SQL> alter database clear logfile group 3;
+
+8# open database:
+	SQL> alter database open resetlogs;

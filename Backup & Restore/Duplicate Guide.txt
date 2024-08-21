@@ -1,0 +1,41 @@
+1# Edit pfile, startup nomount pfile
+
+2# Run script:
+	# chmod 755 <script.>
+	# nohup rman @dup_acx9dr log=dup_acx9dr_from_DR.log &
+
+3# Check log:
+	# tail -100f dup_apix9dr_from_DR.log
+
+
+On listener file: $ORACLE_HOME/network/admin/tnsnames.ora
+
+acx9prd =
+  (DESCRIPTION =
+      (ADDRESS = (PROTOCOL = TCP)(HOST = 10.10.110.102)(PORT = 1521))
+       (CONNECT_DATA =
+    #  (sid = acx9prd)  (UR = A)
+      (service_name= acx9prd) (UR = A)
+    )
+  )
+
+
+acx9dr =
+  (DESCRIPTION =
+      (ADDRESS = (PROTOCOL = TCP)(HOST = 10.19.110.102)(PORT = 1521))
+    (CONNECT_DATA =
+      (sid = acx9dr)
+      #(service_name = acx9dr) (UR = A)
+    )
+  )
+
+
+On listener file: /u01/app/21.0.0.0/grid/network/admin/listener.ora
+
+SID_LIST_LISTENER =
+  (SID_LIST =
+     (SID_DESC =
+      (GLOBAL_DBNAME = acx9dr)
+      (ORACLE_HOME = /u01/app/oracle/product/19.0.0.0/dbhome)
+      (SID_NAME = ACX9DR)
+  )
