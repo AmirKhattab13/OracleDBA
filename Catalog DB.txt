@@ -1,0 +1,16 @@
+1. Create tablespace					ex: RMANTS
+
+2. Create user with quota on RMANTS			ex: RMANUSER
+
+3. Grant privileges to RMANUSER				ex: Connect, RECOVERY_CATALOG_OWNER
+
+4. Configure tnsnames.ora
+
+5. #rman target / catalog RMANUSER@CatDB
+
+6. RMAN> create catalog;
+
+7. RMAN> register database;
+
+8. RMAN> report schema;
+
