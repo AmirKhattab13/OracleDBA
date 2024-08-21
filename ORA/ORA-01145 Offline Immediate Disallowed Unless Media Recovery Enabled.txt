@@ -1,0 +1,5 @@
+SQL> shut immediate
+SQL> startup mount
+SQL> alter database archivelog;
+SQL> alter database open;
+SQL> archive log list

@@ -1,0 +1,1 @@
+SQL> alter database datafile <> online | offline;

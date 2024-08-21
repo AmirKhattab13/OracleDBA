@@ -1,0 +1,4 @@
+# chmod 6751 /u01/app/21.0.0.0/grid/bin/oracle
+
+# id oracle
+uid=1001(oracle) gid=1001(oinstall) groups=1001(oinstall),1004(asmdba),1002(dba),1003(racoper)

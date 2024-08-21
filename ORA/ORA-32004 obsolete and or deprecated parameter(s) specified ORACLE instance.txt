@@ -1,0 +1,3 @@
+check alert log 
+
+# tail -100f $ORACLE_BASE/diag/rdbms/sid/instance/trace/alert_instance.log

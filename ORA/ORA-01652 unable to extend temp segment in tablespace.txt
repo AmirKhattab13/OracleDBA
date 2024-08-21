@@ -1,0 +1,15 @@
+SQL> SELECT * From DBA_DATA_FILES;				//use DBA_TEMP_FILES for temp tablespaces
+
+determine the name of the file for the tablespace.
+
+SQL> ALTER TABLESPACE ADD DATAFILE
+
+----------------------------------------------------------------------------------
+To resolve the error when it seems space exists
+
+SQL> select tablespace_name, total_blocks, used_blocks, free_blocks from gv$sort_segment;
+
+find out how much temp segment space you have available to use
+
+If free_blocks regularly shows as ‘0’, the free space for the table has been requested from other instances 
+To fix this, increase the size of the temp tablespace or increase the sort_area_size or the pga_aggregate_target

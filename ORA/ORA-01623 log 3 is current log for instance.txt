@@ -1,0 +1,3 @@
+SQL> alter database disable thread 4;
+
+SQL> alter database drop logfile group ;

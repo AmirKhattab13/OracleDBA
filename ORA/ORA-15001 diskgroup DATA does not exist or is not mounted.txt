@@ -1,0 +1,5 @@
+SQL> ALTER DATABASE RENAME FILE '/<full_path_of_old_location>/<old_datafile_name.dbf>' TO '/<full_path_of_new_location>/<new_datafile_name.dbf>';
+SQL> alter database open resetlogs;
+SQL> alter database clear logfile group 1;
+
+SQL> alter database drop logfile group 1;

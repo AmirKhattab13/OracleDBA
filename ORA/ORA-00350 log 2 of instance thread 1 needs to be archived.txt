@@ -1,0 +1,13 @@
+SQL> select group#, thread#, sequence#, status, archived from v$log;
+
+SQL> alter system checkpoint;
+
+SQL> alter system archive log all;
+
+SQL> select group#, thread#, sequence#, status, archived from v$log;
+
+------------------------------------------------------------------------------------- if still exist
+SQL> ALTER DATABASE CLEAR UNARCHIVED LOGFILE GROUP 2;
+
+or SQL> alter database clear unarchived logfile 'E:\ORACLE\ORADATA\ORCL\REDO02.LOG';
+

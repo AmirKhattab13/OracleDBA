@@ -1,0 +1,5 @@
+SQL> col member format a50
+ select GROUP#,TYPE,MEMBER from v$logfile;
+
+SQL> alter database add logfile thread 2 group <> ('+DATA/<>/ONLINELOG/*.log','+FRA/<>/ONLINELOG/*.log') size <>;
+SQL> alter database add logfile thread 2 group <> ('+DATA/<>/ONLINELOG/*.log','+FRA/<>/ONLINELOG/*.log') size <>;

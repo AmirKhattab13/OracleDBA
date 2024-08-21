@@ -1,0 +1,3 @@
+RMAN> list incarnation of database;
+
+RMAN> reset database to incarnation 1;

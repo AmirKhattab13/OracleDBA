@@ -1,0 +1,3 @@
+ALTER USER <username> QUOTA 100M ON <tablespace name>
+ 
+GRANT UNLIMITED TABLESPACE TO <username>

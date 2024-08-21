@@ -1,0 +1,3 @@
+increase db_recovery_file_dest_size.
+
+or increase orafra dir

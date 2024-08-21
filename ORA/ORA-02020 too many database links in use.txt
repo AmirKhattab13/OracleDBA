@@ -1,0 +1,22 @@
+Cause:  The current session has exceeded the INIT.ORA open_links maximum.
+
+To find:
+
+———
+
+SQL> show parameter open_links;
+
+
+Action:
+
+——-
+
+Increase the open_links limit, or free up some open links by committing or rolling back the transaction and canceling open cursors that reference remote databases.
+
+To Change:
+
+———-
+
+SQL> alter system set open_links_per_instance=10 scope=spfile;
+
+SQL> alter system set open_links=10 scope=spfile;

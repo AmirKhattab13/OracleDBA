@@ -1,0 +1,9 @@
+in mount mode;
+
+SQL>  select flashback_on from v$database;
+
+SQL> alter databsae flashback off;
+
+SQL> drop restore point <name>;
+
+SQL> alter database open;
