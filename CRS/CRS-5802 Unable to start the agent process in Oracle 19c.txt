@@ -1,0 +1,5 @@
+# cd /u01/app/grid/crsdata/mcdrvm01clu01/output
+
+-rw-r--r-- 1 grid oinstall    7 Nov 12 07:41 crsd_oraagent_oracle.pid
+-rw-r--r-- 1 grid oinstall 4.4K Nov 12 07:41 crsd_oraagent_oracleOUT.trc
+[root@mcdrvm01clu01 output]# chown oracle:oinstall crsd_oraagent_oracle.pid crsd_oraagent_oracleOUT.trc
