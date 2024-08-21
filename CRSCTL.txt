@@ -1,0 +1,25 @@
+CRSCTL provides cluster-aware commands with which you can perform check, start, and stop operations on the cluster. 
+You can run these commands from any node in the cluster on another node in the cluster, or on all nodes in the cluster, depending on the 
+operation.
+
+1# Starting and stopping Oracle Clusterware resources
+
+2# Enabling and disabling Oracle Clusterware daemons
+
+3# Checking the health of the cluster
+
+4# Managing resources that represent third-party applications
+
+5# Integrating Intelligent Platform Management Interface (IPMI) with Oracle Clusterware to provide failure isolation support and to ensure 
+cluster integrity
+
+6# Debugging Oracle Clusterware components
+
+
+Clusterized commands include the following:
+
+root# crsctl check cluster
+
+root# crsctl start cluster
+
+root# crsctl stop cluster

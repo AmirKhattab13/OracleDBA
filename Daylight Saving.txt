@@ -1,0 +1,46 @@
+SQL> SELECT version FROM v$timezone_file;
+ 
+       VERSION
+--------------
+            14
+  
+SQL> SELECT PROPERTY_NAME, SUBSTR(property_value, 1, 30) value
+ 	FROM DATABASE_PROPERTIES
+ 	WHERE PROPERTY_NAME LIKE 'DST_%'
+ 	ORDER BY PROPERTY_NAME;
+ 
+PROPERTY_NAME               VALUE
+--------------------------- ------------------------------
+DST_PRIMARY_TT_VERSION      14
+DST_SECONDARY_TT_VERSION    4
+DST_UPGRADE_STATE           DATAPUMP(1)
+
+
+SQL> update props$ set value$=0 where name='DST_SECONDARY_TT_VERSION'; 
+ 
+SQL> update props$ set value$='NONE' where name='DST_UPGRADE_STATE';
+ 
+SQL> select * from props$ where name like 'DST%';
+NAME                                     
+-----------------------------------------
+VALUE$                                   
+-----------------------------------------
+COMMENT$                                 
+-----------------------------------------
+DST_UPGRADE_STATE                        
+NONE                                     
+State of Day Light Saving Time Upgrade                                            
+DST_PRIMARY_TT_VERSION                   
+14                                       
+Version of primary timezone data file                                           
+DST_SECONDARY_TT_VERSION                 
+0                                        
+Version of secondary timezone data file  
+  
+
+SQL> commit;
+
+SQL> exec DBMS_DST.BEGIN_PREPARE(31);
+A prepare window has been successfully started.
+ 
+PL/SQL procedure successfully completed.

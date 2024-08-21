@@ -1,0 +1,40 @@
+User process ==> Listener ==> Instance
+
+Connect to db:
+1. Local		2. Remote
+
+Listener is a process on server must be up and running to connect to db remotely
+# lsnrctl start
+# lsnrctl stop
+# lsnrctl status
+
+--------------------------------------------------------------------------------------------------------------------
+
+Startup status:
+Shutdown ==> No Mount ==> Mount ==> Startup
+
+No Mount ==> check spfile or pfile, if not exist the db will not start
+  - read parameter file	   - open alert log file and traces file
+  - start bg processes     - allocate SGA
+
+Mount ==> read control file and associate db with started instance
+  - compare CKPT between control files & redo log files
+
+Startup ==> all files opened
+
+--------------------------------------------------------------------------------------------------------------------
+
+# sqlplus / as sysdba
+SQL> startup nomount;	//start in nomount to restore control file
+SQL> startup mount;
+SQL> startup;
+
+--------------------------------------------------------------------------------------------------------------------
+
+Shutdown modes:
+SQL> shutdown normal;	//waiting for user commit or rollback, user disconnect session
+SQL> shutdown immediate;	//rollback any uncommitted transaction, end session 
+SQL> shutdown transactional;	//no more sessions, waiting for user commit or rollback and session disconnected by engine
+SQL> shutdown abort;	//unclean shutdown
+
+--------------------------------------------------------------------------------------------------------------------
