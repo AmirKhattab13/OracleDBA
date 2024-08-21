@@ -1,0 +1,2 @@
+RDBMS: SELECT BANNER, BANNER_FULL FROM v$version;
+Grid: crsctl query crs releaseversion

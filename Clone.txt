@@ -1,0 +1,20 @@
+1. Export data from production
+# expdp schemas=schema_name directory=dir_name dumpfile=name.dmp logfile=name.log
+note: for BO schema ==> main, for FE schema ==> svista
+
+# expdp schemas=MAIN directory=DUMPDR dumpfile=SVBO_240923.dmp logfile=SVBO_240923.log exclude=statistics
+exclude=TABLE:\" IN \(\'PRC_FILE_RAW_DATA\',\'TRC_LOG\', \'PRC_SESSION_FILE\'\)\"    (For BO)
+
+# expdp directory=DUMPDIR_NEW1 schemas=SVISTA dumpfile=SVISTA_260723.dmp logfile=SVISTA_260723.log    (For FE)
+
+2. Stop listener on stg, then kill the opened session
+
+3. Connect to stg and drop user.
+# sqlplus / as sysdba
+SQL> drop user <name> cascade;
+
+4. create the user
+
+5. Import data
+# impdp directory=dir_name schemas=schema_name dumpfile=SVISTA_260723.dmp logfile=SVISTA_260723.log
+
