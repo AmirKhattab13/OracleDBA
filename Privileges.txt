@@ -1,0 +1,35 @@
+System privilege	==>	create object
+Object privilege	==>	select
+
+- with admin option	==>	grant the same privilege to another user
+- with grant option	==>	same as admin, but if the privilege revoked from the user
+			it will revoked from the other one
+
+Role		==>	group of privileges
+   - SQL> create role <roleName>;
+   - SQL> grant <privilege> to <role>;
+   - SQL> revoke <privilege> from <role>;
+   - SQL> grant <role> to <user>;
+
+Predefined roles:
+- Connect	==> create session		- Resource	==> create table, sequence, ...
+- DBA ==> group of roles and privileges
+
+--------------------------------------------------------------------------------------------------------------------
+
+Profile ==> limit resources and passwords for users
+
+v$dba_profile ==> default profiles 
+
+SQL> create profile <profileName>
+         connect_time [unlimited]		//working hours
+         password_life_time <number>	//password expiration 
+         faild_login_attempts <number>;	//lock profile after faild login
+
+SQL> alter user <userName> profile <profileName>;
+
+SQL> alter user <userName> account lock | unlock;
+
+SQL> alter user <userName> quota <size> on <tablespace>;
+
+--------------------------------------------------------------------------------------------------------------------

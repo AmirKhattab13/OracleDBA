@@ -1,0 +1,49 @@
+RMAN> CHANGE ARCHIVELOG ALL UNCATALOG;
+RMAN> CHANGE BACKUPPIECE ‘/oradata2/oft7qq’ UNCATALOG
+RMAN> CHANGE ARCHIVELOG ALL UNCATALOG;
+
+RMAN> crosscheck archivelog sequence 638 thread 2;
+
+run {
+ALLOCATE CHANNEL ch1 DEVICE TYPE DISK;
+RESTORE ARCHIVELOG FROM SEQUENCE 10455 UNTIL SEQUENCE 10455;
+RELEASE CHANNEL ch1;
+ }
+
+RUN
+{
+ALLOCATE CHANNEL C1 DEVICE TYPE DISK;
+ALLOCATE CHANNEL C2 DEVICE TYPE DISK;
+ALLOCATE CHANNEL C3 DEVICE TYPE DISK;
+RESTORE ARCHIVELOG ALL;
+}
+
+RUN
+{
+ALLOCATE CHANNEL C1 DEVICE TYPE DISK;
+ALLOCATE CHANNEL C2 DEVICE TYPE DISK;
+ALLOCATE CHANNEL C3 DEVICE TYPE DISK;
+RESTORE ARCHIVELOG FROM LOGSEQ 638 UNTIL LOGSEQ 773 THREAD 2;
+}
+
+
+run
+  {	
+  set newname for logfile '+DATA/fmx9prd/redo01.log' to '+FRATEST/SIT/FMX9SIT/ONLINELOG';
+  restore database ;
+  switch datafile all;
+  switch tempfile all;
+}
+
+recover database;
+
+
+
+RMAN> crosscheck backup;
+RMAN> crosscheck copy;
+
+RMAN> restore archivelog all validate;
+SQL> select sequence#,status from v$archived_log;
+RMAN> list archivelog all;
+RMAN> restore validate check logical archivelog from sequence 220;
+RMAN> restore  archivelog all validate;

@@ -1,0 +1,24 @@
+r8: M@$$$ri@3020@#$XS@#@#
+s: qwe123#qwe123
+h: welcome1
+DC3d$D$#fdf$@@
+G@#mm0033	129
+
+#Ora1@Grid1#
+
+
+G@#mm0033Ash12
+
+
+chage -l root
+chage -I -1 -m 0 -M 99999 -E -1 root
+
+
+ALTER GRIDDISK size=1T WHERE name like 'DATAHUB.*'
+ALTER GRIDDISK size=1T WHERE name like 'FRAHUB.*'
+alter diskgroup DATAHUB resize all rebalance power 32;
+alter diskgroup FRAHUB resize all rebalance power 32;
+
+select * from gv$asm_operation;
+
+select name, total_mb/1024 "GB" from v$asm_disk_stat where name like 'DATAHUB%';

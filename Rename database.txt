@@ -1,0 +1,10 @@
+1# cluster_database=false
+
+2# startup mount pfile 		//"old_name"
+
+3# nid target=sys/pass dbname=new_name setname=yes
+
+4# shutdown and rename pfile
+
+5# alter database open resetlogs
+

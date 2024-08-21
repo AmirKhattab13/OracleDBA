@@ -1,0 +1,11 @@
+BO ==> main / HQ_mdp$ma1n_2023	main2
+FE ==> svista / 		Masria@2019SV1ista
+
+A_KHATTAB / MDP@123#123
+
+BO : svx9prd  
+FE : svferac   
+FM : fmx9prd 
+API : apix9prd       
+SVIP : svipx9prd   
+ACS : acsx9prd

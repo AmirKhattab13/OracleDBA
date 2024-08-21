@@ -1,0 +1,17 @@
+Recover DB from Service:
+rman target /
+RMAN> CONNECT CATALOG sys/qwe123#qwe123@svx9prd;
+RMAN> RECOVER STANDBY DATABASE FROM SERVICE svx9prd;
+
+Recover Gap:
+run{
+ALLOCATE CHANNEL ch1 type disk;
+restore archivelog from sequence 22681 thread 1; 
+release channel ch1;
+}
+
+rman target sys/qwe123#qwe123@svx9prd catalog sys/qwe123#qwe123@svx9dr auxiliary /
+run {
+ set archivelog destination to '+FRA/SVX9DR/ARCHIVELOG';
+ restore clone archivelog from sequence 9423 until sequence 9522;
+}

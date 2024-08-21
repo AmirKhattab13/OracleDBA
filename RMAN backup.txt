@@ -1,0 +1,50 @@
+Backup using RMAN
+
+	- Hot Backup (online)	   //opened, archive log mode
+	- Cold Backup (offline) //in mount mode
+
+	- Full Backup (level 0)
+	- Incremental (level 1)
+
+Hot:
+SQL> shutdown immediate;
+SQL> startup mount;
+SQL> alter database archivelog;
+SQL> alter database open;
+
+SQL> archive log list;		//to know that DB is in archive log mode or not
+SQL> select log_mode from v$database;
+
+Cold:
+SQL> shutdown immediate;
+SQL> startup mount;
+
+RMAN> backup database;		//default is backup set
+RMAN> backup archivelog all;		
+RMAN> backup database plus archivelog;
+RMAN> backup spfile;		//no backup for pfile using RMAN
+RMAN> backup device type disk maxsetsize=<size> tablespace users, sysaux;
+RMAN> backup device type disk format '/path/%U' <datafile>;
+RMAN> backup device type disk format '/path/%U' as copy <datafile>;	//copy & paste
+ 							free + used size
+RMAN> configure device type disk backup to copy;	//copy all DB as copy
+RMAN> configure device type disk backup to backupset; 
+RMAN> backup as copy database;
+RMAN> backup archivelog from time '<date>';	//only with archivelog
+RMAN> backup archivelog from time '<date>' until time '<date>';
+RMAN> backup archivelog all delete input;		//delete original 
+RMAN> backup archivelog from SCN = <number> until SCN <number>;
+RMAN> backup as compressed backupset <datafile or database>;
+RMAN> backup tag 'tag_name' <database>;		//label for backup
+RMAN> backup device type sbt backupset all delete input;	//backup to tape and delete 						backup from disk
+RMAN> list backup;
+
+RMAN> blockrecover corruption list;	//repair all corrupted blocks in backup
+
+RMAN> change archivelog all crosscheck	//check the archivelogs that removed manually
+
+v$database_block_corruption		//has a list of any corrupted blocks
+
+RMAN> backup validate <database>;	//validation for corrupted blocks
+
+--------------------------------------------------------------------------------------------------------------------

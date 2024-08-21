@@ -1,0 +1,2 @@
+select date'2020-01-01' + level - 1 as dt  
+from dual connect by level <= number of days

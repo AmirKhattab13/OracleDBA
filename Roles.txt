@@ -1,0 +1,4 @@
+Role: APP_S
+1. create session
+2. select any table
+3. debug any procedure

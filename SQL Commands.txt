@@ -1,0 +1,37 @@
+SQLPLUS [
+          [{username[/password][@connect_identifier] | / }
+          [AS {SYSOPER | SYSDBA | SYSASM}][edition=value]]
+        | /NOLOG
+        ]
+
+Execute host commands
+HOST [ command ]
+
+Show SQL*Plus system variables or environment settings
+SHOW { ALL | ERRORS | USER | system_variable [, system_variable]
+
+Alter SQL*Plus system variables or environment settings
+SET system_variable value
+
+Start up a database
+STARTUP [ PFILE = filename ]
+  [ MOUNT [ dbname ] | NOMOUNT ]
+
+Connect to a database
+CONNECT [{username[/password] [@connect_identifier] | /
+         | proxy_user [ username ] [/password] [@connect_identifier]}
+         [AS {SYSOPER | SYSDBA | SYSASM}] [edition=value]
+        ] 
+
+List column definitions for a table, view, or synonym, or specifications for a function or procedure
+DESCRIBE [ schema. ] object
+
+Shut down a database
+SHUTDOWN [ ABORT | IMMEDIATE | NORMAL ]
+
+Log out of SQL*Plus
+{ EXIT | QUIT }
+  [ SUCCESS | FAILURE | WARNING ]
+  [ COMMIT | ROLLBACK ]
+
+Archive log list

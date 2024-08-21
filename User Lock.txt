@@ -1,0 +1,45 @@
+1. Check the User default profile
+
+col username for a10
+col account_status for a16
+col profile for a20
+select username,account_status,LOCK_DATE,profile from dba_users where username='HR';
+
+
+USERNAME   ACCOUNT_STATUS   LOCK_DATE PROFILE
+---------- ---------------- --------- --------------------
+HR         OPEN                       DEFAULT
+
+2. Check the setting of PASSWORD_LOCK_TIME and FAILED_LOGIN_ATTEMPTS in profile.
+
+col resource_name for a23
+col limit for a20
+SELECT resource_name, limit FROM dba_profiles WHERE profile = 'DEFAULT' and resource_name in ('PASSWORD_LOCK_TIME','FAILED_LOGIN_ATTEMPTS');
+
+3. you have two option first create new profile or change the DEFAULT Porfile.
+
+-- I am going with changing the same profile.
+alter profile default limit PASSWORD_LOCK_TIME unlimited;
+alter profile default limit Failed_login_attempts unlimited;
+
+4. Unlock the user account.
+
+alter user HR account unlock;
+User altered.
+
+
+1. Let see other method of creating new profile with all unlimited limits
+
+CREATE PROFILE USER_UNLIMITED LIMIT
+COMPOSITE_LIMIT UNLIMITED
+PASSWORD_LIFE_TIME UNLIMITED
+PASSWORD_REUSE_TIME UNLIMITED
+PASSWORD_REUSE_MAX UNLIMITED
+PASSWORD_VERIFY_FUNCTION NULL
+PASSWORD_LOCK_TIME UNLIMITED
+PASSWORD_GRACE_TIME UNLIMITED
+FAILED_LOGIN_ATTEMPTS UNLIMITED;
+
+2. Assign that profile to user.
+
+Alter user HR profile USER_UNLIMITED;

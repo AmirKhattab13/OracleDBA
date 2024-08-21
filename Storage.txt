@@ -1,0 +1,82 @@
+Database block: default size 8KB		Default OS block size: 512 Bytes
+
+Data block status in buffer cache:
+1. Pinned ==> not committed
+2. Dirty ==> data updated and committed but not written on data files
+3. Clean ==> data updated, committed and written on data files
+4. Free ==> <unused> embty block, the instance has just started
+
+--------------------------------------------------------------------------------------------------------------------
+
+Data files ==> .dpf 	
+  - the actual data
+
+Control files ==> .ctl		//important in recovery
+  - db name	- archive log mode <optional> by def: disabled
+  - db ID		- db creation date		
+  - data file CKPT	- last SCN
+
+Parameter file ==> 2 files, default - spfile
+  - parameter = value	- configuration	
+  - control file	- db name
+  - pfile	//param file - init<SID>.ora
+    SQL> create pfile from spfile;
+  - spfile	//server param file - spfile<SID>.ora ==> default
+    SQL> create spfile from pfile;
+
+Password file ==> for administrators <encrypted> to connect to database 
+
+Backup files ==> not exist by default
+
+Alert and trace log files ==> .log
+  - all the important events happened in db
+  - any issues
+# vim alert_<SID>.log
+# tail -f alert_<SID>.log
+
+--------------------------------------------------------------------------------------------------------------------
+
+Logical storage:
+Data files ==> Table Space ==> Segment <object> ==> Extents ==> DB blocks ==> OS blocks 
+
+Data file must belong to one tablespace
+
+Tablespace ==> logical storage, one data file or more 
+Tablespace helps in controlling storage, group of users can access taplespace and can not access others
+
+default tablespaces:
+System tablespace ==> data dictionary, one or more data file
+Sysaux tablespace ==> auxiliary tablespace, support system tablespace and add on such as EM
+Enterprise Manager ==> GUI tool that manages db
+
+DBA can create tablespace, every user has default tablespace
+  - small file	//default, limited in size max 32GB
+  - big file		//max size up to 8 Exabytes
+
+Segment <object>:
+1. data segment ==> table <data stored in data extents>
+2. index segment ==> index <pointer to data, data stored in index extents>
+3. undo segment ==> undo tablespace 
+4. temporary segment ==> temporary tablespace
+
+--------------------------------------------------------------------------------------------------------------------
+
+Logical storage:
+DB ==> schemas
+Schema ==> is a group of objects belong to a specific user
+
+--------------------------------------------------------------------------------------------------------------------
+
+Physical storage:
+DB ==> data files ==> OS blocks
+  
+--------------------------------------------------------------------------------------------------------------------
+
+Information views about storage
+
+ Views in disk		Views in memory 
+ - dba_tablespaces		- v$tablespace
+ - dba_data_files		- v$datafile
+ - dba_temp_files		- v$tempfile
+
+--------------------------------------------------------------------------------------------------------------------

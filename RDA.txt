@@ -1,0 +1,1 @@
+./rda.sh -vCRP -e DFT/B_NO_OCM=1,DFT/N_SQL_TIMEOUT=120,DFT/N_TIMEOUT=120/N_ATTEMPTS=25 -p Maa_Exa_Assessment

@@ -1,0 +1,36 @@
+Convert from Physical Standby to Snapshot:
+SQL> alter database recover managed standby database cancel; 						//in mount mode
+SQL> select status,instance_name,database_role,open_mode from v$database,v$Instance;
+SQL> SELECT THREAD# , max(sequence#) from gv$archived_log where applied='YES'  group by thread#;	//show applied archives
+SQL> select flashback_on from v$database;								//optional
+SQL> alter database flashback on;									//optional
+SQL> alter database convert to snapshot standby;
+SQL> alter database open;
+
+Convert from Snapshot to Physical Standby:
+SQL> shut immediate;
+SQL> startup mount;
+SQL> select status,instance_name,database_role,open_mode from v$database,v$Instance;
+SQL> alter database convert to physical standby;
+SQL> select status,instance_name,database_role,open_mode from v$database,v$Instance;
+SQL> alter database recover managed standby database disconnect from session;
+
+
+ALTER DATABASE RECOVER MANAGED STANDBY DATABASE CANCEL;							//stop replication
+ALTER DATABASE RECOVER MANAGED STANDBY DATABASE DISCONNECT;						//start replication
+
+Show The Gap:
+SELECT   ARCH.THREAD# "Thread", ARCH.SEQUENCE# "Last Sequence Received", APPL.SEQUENCE# "Last Sequence Applied", (ARCH.SEQUENCE# - APPL.SEQUENCE#) "Difference"
+  FROM   (SELECT   THREAD#, SEQUENCE# FROM   V$ARCHIVED_LOG WHERE   (THREAD#, FIRST_TIME) IN (  SELECT   THREAD#, MAX (FIRST_TIME) FROM   V$ARCHIVED_LOG GROUP BY   THREAD#)) ARCH,
+         (SELECT   THREAD#, SEQUENCE# FROM   V$LOG_HISTORY WHERE   (THREAD#, FIRST_TIME) IN (  SELECT   THREAD#, MAX (FIRST_TIME) FROM   V$LOG_HISTORY  GROUP BY   THREAD#)) APPL
+WHERE   ARCH.THREAD# = APPL.THREAD#;
+
+You can check the gap between your primary and standby database using below query ( run this on both Primary & standby database)
+SELECT THREAD# , max(sequence#) from gv$archived_log where applied='YES'  group by thread#; -- on standby
+SELECT THREAD# , max(sequence#) from gv$archived_log group by thread#; -- on primary
+
+Check Standby Processes:
+SQL> select process,status,sequence# from v$managed_standby;
+
+RFS: Remote File Server, process writes the redo data to standby redo log files on the standby database.
+MRP: Managed Recovery Process, applies information from the archived redo logs to the standby database.

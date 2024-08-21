@@ -1,0 +1,21 @@
+1. Download all the files including .bin in same directory. No need to unzip the downloaded software.
+2. As the install user who will be installing the product, set the execute permission for the .bin file. Example: chmod +x em13500_linux64.bin
+3. Installation guides and general Enterprise Manager documentation can be found here.
+https://docs.oracle.com/en/enterprise-manager/
+
+/opt/OracleHomes/agent_home/agent_13.5.0.0.0/		==> agent_home on VMs
+
+# $AGENT_HOME/agent_13.5.0.0.0/bin/emctl stop agent
+# $OMS_HOME/bin/emctl stop oms -all
+# sqlplus / as sysdba
+SQL> shut immediate
+# lsnrctl stop
+
+# lsnrctl start
+SQL> startup
+# $AGENT_HOME/agent_13.5.0.0.0/bin/emctl start agent
+# $OMS_HOME/bin/emctl start oms
+# sqlplus / as sysdba
+
+
+

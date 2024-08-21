@@ -1,0 +1,8 @@
+create profile unlimited_pwd_prof limit
+  password_life_time unlimited;
+
+alter user <username> profile unlimited_pwd_prof;
+
+ALTER PROFILE default LIMIT
+   FAILED_LOGIN_ATTEMPTS unlimited
+   PASSWORD_LOCK_TIME unlimited;

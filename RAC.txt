@@ -1,0 +1,189 @@
+Real Application Clusters (RAC) Overview
+
+Oracle RAC have a one-to-many relationship between the database and instances "up to 100 instances"
+all of which access one database.
+
+each cluster has Grid Infrastructure (GI) installed locally on each node. Grid Infrastructure 
+includes several products: 
+Automatic Storage Management ASM, Oracle Clusterware, and others.
+
+Each node also requires local storage which is used to store the GI and Oracle Database software.
+
+Each Instance in the Oracle RAC cluster accesses the database files stored on shared storage.
+
+Each node needs at least a public interface and a private interface. Each network may use multiple 
+network interface cards to increase bandwidth, availability or fault tolerance.
+
+the public network ==> Application clients
+the private network ==> Shared storage
+
+Oracle RAC uses Oracle Clusterware for the infrastructure to bind multiple servers so they operate 
+as a single system.
+
+Oracle Clusterware also manages resources, such as Virtual Internet Protocol (VIP) addresses, 
+databases, listeners, services, and so on.
+
+Oracle Clusterware enables both noncluster Oracle databases and Oracle RAC databases to use the 
+Oracle high-availability infrastructure.
+
+---------------------------------------------------------------------------------------------------
+RAC Database
+
+A RAC database is a set of files on shared storage and can span multiple nodes. has multiple 
+database Instances hosted on a RAC Cluster. These instances access a single set of Database files 
+on Shared Storage.
+
+A RAC database instance is a set of processes and memory that operates on the database files.
+Shared storage is provided by an ASM instance local to the node hosting the RAC database instance.
+
+A RAC database instance has the same memory and background processes as a single instance database, 
+with the addition of Cache Fusion, and Global Processes.
+
+Cache Fusion is a diskless cache coherency mechanism in Oracle Real Application Clusters that 
+provides copies of blocks directly from a holding instance's buffer cache to a requesting 
+instance's buffer cache, This provides a logical merging of the SGA’s across the DB instances in 
+the cluster.
+uses the Private Network (Interconnect) for communication between cluster nodes.
+
+---------------------------------------------------------------------------------------------------
+RAC One Node
+
+The main difference between Oracle RAC One Node and Oracle RAC is that with an Oracle RAC One Node 
+Database, there is only one instance running at a time under normal operation. Should this one 
+instance be impacted by unplanned downtime, there is a short period of time during which no 
+database instance is running.
+
+---------------------------------------------------------------------------------------------------
+RAC Tools
+
+You administer a cluster database as a single-system image using the Server Control Utility 
+(SRVCTL), Oracle Enterprise Manager, SQL*Plus, and other utilities.
+
+---------------------------------------------------------------------------------------------------
+Database Files in RAC
+
+Every instance must have access to all the datafiles, redo log files.
+Each instance must have at least two redo log groups also called a thread.
+
+All the Undo Tablespaces, tempfiles must be on Shared Storage.
+A common (default) SPFILE with both the common parameters and instance specific parameters is 
+highly recommended in shared storage.can be stored in ASM.
+Some initialization parameters must be the same across all instances in a cluster, and some must be 
+unique per instance.
+Password file (orapwd*) may be placed in shared storage, or may be on each local node
+
+When using ASM with normal redundancy each redo log member is mirrored, and a second Multiplexed
+member is placed in a different disk group.
+
+When create a new database, SPFILE can be in ASM disk group, cluster file system file, or a shared 
+raw device.
+If you manually create your database, it is recommended that you create an SPFILE from a PFILE.
+You can change the SPFILE settings by using EM or ALTER SYSTEM SQL statements.
+
+Using SPFILE simplifies administration, maintaining consistent parameter settings, and guaranteeing 
+parameter settings persistence across database shutdown and startup. In addition, you can configure 
+RMAN to back up your SPFILE.
+
+---------------------------------------------------------------------------------------------------
+TDE Keystores in RAC
+
+Sqlnet.ora ==> contains the information (like tracing options, encryption, route of connections, 
+external naming parameters etc.
+
+Step 1: Keystore Location Setup
+ENCRYPTION_WALLET_LOCATION=
+
+ (SOURCE=
+
+  (METHOD=FILE)
+
+   (METHOD_DATA=
+
+    (DIRECTORY=OS_PATH_TO_KEYSTORE)))
+If the directory is not configured in the SQLNET.ORA file, then the Oracle database looks for a key
+store at the default location, which is ORACLE_HOME/<Database_name>/ADMIN/ORACLE/WALLET.
+
+Step 2: Software Keystore Creation
+ADMINISTER KEY MANAGEMENT CREATE KEYSTORE '<Keystore_location>' IDENTIFIED BY <Keystore_password>;
+			//requires user password
+
+Step 3: Open the Software Keystore
+ADMINISTER KEY MANAGEMENT SET KEYSTORE OPEN IDENTIFIED BY <Keystore_password> [Container = All | Current];
+
+Step 4: Set the TDE Master Encryption Key
+ADMINISTER KEY MANAGEMENT SET KEY [USING TAG 'Tag'] IDENTIFIED BY <Keystore_password> [WITH BACKUP [USING 'Backup_identifier']] [CONTAINER = ALL | CURRENT];
+
+Using clause is used for adding additional comments for the backup.
+
+Step 5: Encrypting Data
+3DES168, AES128, AES198, AES256
+
+---------------------------------------------------------------------------------------------------
+Undo Tablespaces in RAC
+
+ALTER SYSTEM SET UNDO_TABLESPACE=undotbs3 SID='RAC01';
+You assign undo tablespaces in your RAC database by specifying a different value for the 
+UNDO_TABLESPACE parameter for each instance in your SPFILE or individual PFILEs. if not set, each 
+instance uses the first available undo tablespace.
+
+It is highly recommended that you use the AUM - Automatic Undo Management mode. 
+
+---------------------------------------------------------------------------------------------------
+Backup Files in RAC
+
+Backup files in RAC have the same characteristics as in a single instance database. the backup 
+files must be accessible to any instance at the time of the restore and recovery operations.
+It is highly recommended that the backup files and archive log files be placed in shared storage, 
+so that they are available to all instances at all times.
+
+---------------------------------------------------------------------------------------------------
+Listeners in RAC
+
+SCAN - Single Client Access Name ==> a single name assigned to the cluster, DNS resolves this name 
+to one of 3 or more IP address using round robin. SCAN listeners and SCAN addresses are optional, 
+but recommended.
+
+The IP addresses assigned to SCAN, are relocatable, each SCAN IP will move to an active node in the
+cluster if the current node fails.
+
+A SCAN listener is assigned to each SCAN IP. The SCAN name should be configured in DNS.
+
+The SCAN listener receives requests and routes the requests to the Local listener.
+
+The MGMTLISTENER allows the Cluster Health Monitor to communicate with the Grid Infrastructure 
+Management Repository (GIMR). GIMR is optional, but with reduced functionality.
+
+---------------------------------------------------------------------------------------------------
+Clustered Node
+
+==> DB Instance, ASM Instance, Clusterware Processes, Local Disk Storage, GI Home, DB Home, OS
+
+---------------------------------------------------------------------------------------------------
+Cluster Configuration Options
+
+1. Standalone Cluster ==> single cluster with local nodes hosting GI & ASM.
+2. Extended Cluster ==> cluster with nodes spread over a geograohic area.
+3. Cluster Domain
+   - Domain Services Cluster ==> provides centralized services for a cluster domain.
+   - Member Cluster ==> belongs to a Cluster Domain, recieves services from Domain Services Cluster
+A standalone cluster may be converted to a member cluster.
+
+---------------------------------------------------------------------------------------------------
+Cluster Storage Options
+
+1. Oracle Automatic Storage Management (strongly recommended).
+2. Network file system (NFS).
+3. Oracle Cluster File System (OCFS2) for Linux.
+4. Oracle also provides ASM Cluster File system (ACFS), which is a general purpose.
+	note: You cannot put Oracle Grid Infrastructure binaries and files on ACFS. 
+
+---------------------------------------------------------------------------------------------------
+Grid Infrastructure Files and Management Database
+
+Clusterware tools
+1. ocrconfig
+2. ocrcheck
+3. ocrdump
+4. crsctl
+5. srvctl
+6. crsctl query calog

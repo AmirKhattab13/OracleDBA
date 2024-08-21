@@ -1,0 +1,35 @@
+alter database add standby LOGFILE thread 1 GROUP 7 ('+DATA/SVCGX9DR/ONLINELOG/standby_redo07.log','+FRA/SVCGX9DR/ONLINELOG/standby_redo07.log') SIZE 200M;
+alter database add standby LOGFILE thread 1 GROUP 14 ('+DATA/fmx9prd/ONLINELOG/standby_redo14.log') SIZE 512M;
+alter database add standby LOGFILE thread 2 GROUP 15 ('+DATA/fmx9prd/ONLINELOG/standby_redo15.log') SIZE 1000M;
+alter database add standby LOGFILE thread 2 GROUP 10 ('+DATA/SVCGX9DR/ONLINELOG/standby_redo10.log','+FRA/SVCGX9DR/ONLINELOG/standby_redo10.log') SIZE 200M;
+alter database add standby LOGFILE thread 2 GROUP 11 ('+DATA/SVCGX9DR/ONLINELOG/standby_redo11.log','+FRA/SVCGX9DR/ONLINELOG/standby_redo11.log') SIZE 200M;
+alter database add standby LOGFILE thread 2 GROUP 12 ('+DATA/SVCGX9DR/ONLINELOG/standby_redo12.log','+FRA/SVCGX9DR/ONLINELOG/standby_redo12.log') SIZE 200M;
+alter database add standby LOGFILE thread 2 GROUP 13 ('+DATA/SVCGX9DR/ONLINELOG/standby_redo13.log','+FRA/SVCGX9DR/ONLINELOG/standby_redo13.log') SIZE 200M;
+
+Find redo log file members.
+SQL> col member format a50
+ select GROUP#,TYPE,MEMBER from v$logfile;
+
+To find standby redo log file size.
+SQL> select GROUP#, THREAD#, SEQUENCE#, bytes/1024/1024, 
+STATUS from v$standby_log;
+
+To find redo log file size.
+SQL> select GROUP#,THREAD#,SEQUENCE#,bytes/1024/1024,
+MEMBERS,STATUS from v$log;
+
+Combined view of both v$logfile & v$log.
+SQL> column REDOLOG_FILE_NAME format a50
+ SELECT
+ a.GROUP#,
+ a.THREAD#,
+ a.SEQUENCE#,
+ a.ARCHIVED,
+ a.STATUS,
+ b.MEMBER AS REDOLOG_FILE_NAME,
+ (a.BYTES/1024/1024) AS SIZE_MB
+FROM v$log a
+JOIN v$logfile b ON a.Group#=b.Group#
+ORDER BY a.GROUP#
+
+

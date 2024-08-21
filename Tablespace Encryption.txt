@@ -1,0 +1,76 @@
+By default, any new tablespaces created by using the SQL CREATE TABLESPACE command 
+are encrypted with the AES128 encryption algorithm. 
+You do not need to include the USING 'encrypt_algorithm' clause to use the default 
+encryption.
+
+You can specify another supported algorithm by including the USING 'encrypt_algorithm' 
+clause in the CREATE TABLESPACE command. 
+Supported algorithms are AES256, AES192, AES128, and 3DES168.
+
+You can manage the software keystore (known as an Oracle wallet), the master encryption 
+key, and control whether encryption is enabled by default.
+
+---------------------------------------------------------------------------------------
+ENCRYPT_NEW_TABLESPACES: controls default encryption of new tablespaces.
+
+ALWAYS ==> During creation, tablespaces are transparently encrypted with the AES128 
+
+CLOUD_ONLY ==> Tablespaces created in a Database Classic Cloud Service database
+
+DDL ==> Tablespaces are only encrypted if the ENCRYPTION clause is specified.
+
+TABLESPACE_ENCRYPTION: specifies the tablespace encryption policy for a database
+
+AUTO_ENABLE ==> Encrypt all tablespaces in the database.
+
+MANUAL_ENABLE ==> Manually control which tablespaces are encrypted.
+
+DECRYPT_ONLY ==> If you do not want any encrypted tablespaces in the database.
+
+---------------------------------------------------------------------------------------
+Offline encryption
+1.Take an existing tablespace offline.
+SQL> alter tablespace <offline_test> offline normal;
+
+2.Encrypt the tablespace using the ALTER TABLESPACE command.
+SQL> alter tablespace <offline_test> encryption offline encrypt;
+ 
+3.If would like to encrypt individual datafiles of that tablespace,you can do so by 
+using the ALTER DATABASE statement, 
+SQL>alter database datafile 'test.dbf' encrypt;
+
+4.Bring the tablespace back online.
+SQL>alter tablespace <offline_test> online;
+
+---------------------------------------------------------------------------------------
+Offline decryption
+1.Take the tablespace offline.
+SQL> alter tablespace <offline_test> offline normal;
+ 
+2.Decrypt the tablespace using the ALTER TABLESPACE command. 
+SQL> alter tablespace <offline_test> encryption offline decrypt;
+ 
+3.Bring the tablespace back online.
+SQL> alter tablespace <offline_test> online;
+
+---------------------------------------------------------------------------------------
+Online encryption 
+1.Ensure that the COMPATIBLE initialization parameter is set to db version.
+
+2.Encrypt the tablespace using the alter tablespace command.
+SQL> alter tablespace <online_test> encryption online encrypt file_name_convert = ('test.dbf', 'test_enc.dbf');
+
+test.dbf is the existing datafile and test_enc.dbf is the encrypted version of the datafile. 
+This clause is not required when using Oracle-managed files.
+
+---------------------------------------------------------------------------------------
+Online decryption
+1.Ensure that the COMPATIBLE initialization parameter is set to db version.
+
+2.Decrypt the tablespace using the alter tablespace command.
+
+SQL> alter tablespace online_test encryption online decrypt file_name_convert = ('test_enc.dbf', 'test.dbf');
+
+---------------------------------------------------------------------------------------
+You can encrypt, decrypt, or rekey existing user tablespaces, and the SYSTEM, SYSAUX, 
+and UNDO tablespace when they are online.

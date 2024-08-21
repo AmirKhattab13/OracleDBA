@@ -1,0 +1,108 @@
+There are two types of restore points in Oracle Database: a normal restore point and a guaranteed restore point. The differences are:
+
+1. Guaranteed restore points: let you revert to the restore point regardless of the DB_FLASHBACK_RETENTION_TARGET initialization parameter.
+In other words, using guaranteed restore points is always possible as long as you have enough space in the flash recovery area.
+Guaranteed restore points never “age out” of the control file, as normal restore points do. Instead, you must always explicitly drop them.
+
+How to Create a Guaranteed Restore Point in Oracle Database
+In order to create a guaranteed restore point in Oracle Database, you need the following prerequisites:
+
+You must have SYSDBA system privileges.
+You must have created a flash recovery area.
+The database must be in ARCHIVELOG mode.
+
+The first step is to create a guaranteed restore point, so that you can return to it each time that you start a new workload. 
+First, run the commands:
+
+1. $> su – oracle
+
+2. $> sqlplus / as sysdba;
+
+To find out if ARCHIVELOG is enabled, run the command:
+
+3. SQL> select log_mode from v$database;
+
+If ARCHIVELOG is not enabled then continue; otherwise, skip to step 8.
+
+4. SQL> shutdown immediate;
+
+5. SQL> startup mount;
+
+6. SQL> alter database archivelog;
+
+7. SQL> alter database open;
+
+8. SQL> create restore point <name> guarantee flashback database;
+
+To view the guaranteed restore point, run the command:
+
+9. SQL> select * from v$restore_point;
+
+-------------------------------------------------------------------------------------------------------------------------------------------
+How to Flashback to a Guaranteed Restore Point
+To restore your database to a guaranteed restore point, follow the steps below:
+
+1. $> su – oracle
+
+2. $> sqlplus / as sysdba;
+
+3. SQL> select current_scn from v$database;
+
+4. SQL> shutdown immediate;
+
+5. SQL> startup mount;
+
+6. SQL> select * from v$restore_point;
+
+7. SQL> flashback database to restore point <name>;
+
+8. SQL> alter database open resetlogs;
+
+9. SQL> select current_scn from v$database;
+
+Compare this SCN to the reference SCN.
+ 
+-------------------------------------------------------------------------------------------------------------------------------------------
+To flashback to a point in time:
+
+1. $> su – oracle
+
+2. $> RMAN
+
+3. RMAN> connect target /
+
+4. RMAN> shutdown immediate;
+
+5. RMAN> startup mount;
+
+6. RMAN> run
+
+7. RMAN> {
+
+8. RMAN> set until restore point <restore_point_name>;
+
+9. RMAN> restore database;
+
+10. RMAN> recover database;
+
+11. RMAN> }
+
+12. RMAN> alter database open resetlogs;
+
+13. Database opened
+
+14. RMAN>
+
+15. SQL> select current_scn from v$database;
+
+-------------------------------------------------------------------------------------------------------------------------------------------
+How to Drop a Guaranteed Restore Point
+Once a restore point is no longer needed, the best practice is to drop (i.e. remove) the restore point, because it uses a good deal of space in the flash recovery area.
+
+To show the restore point names:
+
+select name from v$restore_point;
+
+To drop a given restore point:
+
+drop restore point <restore point name>;

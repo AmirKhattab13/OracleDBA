@@ -1,0 +1,70 @@
+#You can create a service as follows.
+
+BEGIN
+DBMS_SERVICE.CREATE_SERVICE(
+service_name => 'SERVICE_NAME',
+network_name => 'SERVICE_NAME_NETWORK'
+);
+END;
+/
+ 
+
+#You can start an existing service as follows.
+
+BEGIN
+DBMS_SERVICE.START_SERVICE(
+service_name => 'SERVICE_NAME'
+);
+END;
+/
+ 
+
+#You can stop an existing service as follows.
+
+BEGIN
+DBMS_SERVICE.STOP_SERVICE(
+service_name => 'SERVICE_NAME'
+);
+END;
+/
+ 
+
+#You can delete an existing service as follows.
+
+BEGIN
+DBMS_SERVICE.DELETE_SERVICE(
+service_name => 'SERVICE_NAME'
+);
+END;
+/
+ 
+
+#All corresponding sessions are disconnected using DISCONNECT_SERVICE procedure as follows.
+
+BEGIN
+DBMS_SERVICE.DISCONNECT_SESSION (
+service_name => 'SERVICE_NAME'
+);
+END;
+/
+ 
+
+ 
+
+
+#You can display informations about existing services using dba_services view as follows.
+COLUMN name FORMAT A30
+COLUMN network_name FORMAT A30
+SELECT name,network_name FROM dba_services;
+ 
+
+#You can display informations about active services using v$active_services view as follows.
+COLUMN name FORMAT A30
+COLUMN network_name FORMAT A30
+SELECT name,network_name FROM v$active_services;
+ 
+
+#You can display statistics about services using v$service_stats view as follows.
+COLUMN name FORMAT A30
+COLUMN network_name FORMAT A30
+select * from gv$service_stats;

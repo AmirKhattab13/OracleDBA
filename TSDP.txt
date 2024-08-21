@@ -1,0 +1,171 @@
+Transparent Sensitive Data Protection
+
+--------------------------------------------------------------------------------------
+Step 1: Create a Sensitive Type
+The sensitive type is a class of data that you designate as sensitive.
+
+To create a sensitive type,
+BEGIN
+ DBMS_TSDP_MANAGE.ADD_SENSITIVE_TYPE (
+  sensitive_type  => 'credit_card_num_type',
+  user_comment    => 'Type for credit card columns using a number data type');
+END;
+/
+
+To drop a sensitive type,
+DBMS_TSDP_MANAGE.DROP_SENSITIVE_TYPE
+
+You can find existing sensitive types by querying the DBA_SENSITIVE_COLUMN_TYPES
+data dictionary view.
+SQL> SELECT NAME FROM DBA_SENSITIVE_COLUMN_TYPES;
+
+--------------------------------------------------------------------------------------
+Step 2: Identify the Sensitive Columns to Protect
+
+BEGIN
+ DBMS_TSDP_MANAGE.ADD_SENSITIVE_COLUMN(
+ schema_name        => 'OE',
+ table_name         => 'CUST_CC',
+ column_name        => 'CREDIT_CARD',
+ sensitive_type     => 'credit_card_num_type',
+ user_comment       => 'Sensitive column addition of credit_card_num_type');
+END;
+/
+
+--------------------------------------------------------------------------------------
+If you had used an Application Data Model to create the list of sensitive columns, 
+then import this list into your database by running procedure.
+
+BEGIN
+ DBMS_TSDP_MANAGE.IMPORT_DISCOVERY_RESULT (
+ discovery_result      => xml_adm_result,
+ discovery_source      => 'ADM_Demo');
+END;
+/
+
+You can find a list of the Application Data Models from the Data Discovery and Modeling 
+page in Enterprise Manager Cloud Control. (To access this page, from the Enterprise 
+menu, select Quality Management, and then Data Discovery and Modeling. You can find a 
+list of the sensitive columns and their associated types in the Sensitive Columns tab.)
+
+--------------------------------------------------------------------------------------
+Step 4: Create the Transparent Sensitive Data Protection Policy
+
+The DBMS_TSDP_PROTECT.ADD_POLICY procedure names the TSDP policy and executes the 
+FEATURE_OPTIONS and POLICY_CONDITIONS settings.
+
+To create the transparent sensitive data protection policy, you must configure it for 
+the Virtual Private Database or Oracle Data Redaction settings that you want to use
+
+DECLARE
+  redact_feature_options DBMS_TSDP_PROTECT.FEATURE_OPTIONS;
+  policy_conditions DBMS_TSDP_PROTECT.POLICY_CONDITIONS;
+BEGIN
+  redact_feature_options ('expression') := 
+   'SYS_CONTEXT(''USERENV'',''SESSION_USER'') =''APPUSER''';
+  redact_feature_options ('function_type') := 'DBMS_REDACT.PARTIAL';
+  redact_feature_options ('function_parameters') := '0,1,6';
+  policy_conditions(DBMS_TSDP_PROTECT.DATATYPE) := 'NUMBER';
+  policy_conditions(DBMS_TSDP_PROTECT.LENGTH) := '16';
+ DBMS_TSDP_PROTECT.ADD_POLICY ('redact_partial_cc', 
+  DBMS_TSDP_PROTECT.REDACT,redact_feature_options,
+   policy_conditions);
+END;
+/
+
+POLICY_CONDITIONS settings:
+
+DBMS_TSDP_PROTECT.DATATYPE enables you to specify a data type.
+
+DBMS_TSDP_PROTECT.LENGTH enables you to specify a data type length for the 
+DBMS_TSDP_PROTECT.DATATYPE key.
+
+DBMS_TSDP_PROTECT.PARENT_SCHEMA enables you to restrict the policy to a specific 
+schema. If you omit this setting, then the policy applies to all schemas in the 
+database.
+
+DBMS_TSDP_PROTECT.PARENT_TABLE enables you to restrict the policy to a table specified 
+by the DBMS_TSDP_PROTECT.PARENT_SCHEMA key. If you omit this setting, then the policy 
+applies to all tables within the specified schema.
+
+--------------------------------------------------------------------------------------
+Step 5: Associate the Policy with a Sensitive Type
+
+SELECT NAME FROM DBA_SENSITIVE_COLUMN_TYPES ORDER BY NAME;
+
+BEGIN
+ DBMS_TSDP_PROTECT.ASSOCIATE_POLICY(
+ policy_name        => 'redact_partial_cc',
+ sensitive_type     => 'credit_card_num_type',
+ associate          => true);
+END;
+/
+
+SELECT POLICY_NAME, SENSITIVE_TYPE FROM DBA_TSDP_POLICY_TYPE ORDER BY SENSITIVE_TYPE;
+
+POLICY_NAME       SENSITIVE_TYPE
+----------------- --------------------
+redact_partial_cc  credit_card_num_type
+
+--------------------------------------------------------------------------------------
+Step 6: Enable the Transparent Sensitive Data Protection Policy
+
+BEGIN
+ DBMS_TSDP_PROTECT.ENABLE_PROTECTION_SOURCE(
+  discovery_source       => 'orders_db');
+END;
+/
+
+BEGIN
+ DBMS_TSDP_PROTECT.ENABLE_PROTECTION_COLUMN(
+  schema_name          => 'OE',
+  table_name           => 'CUST_CC',
+  column_name          => 'CREDIT_CARD',
+  policy               => 'redact_partial_cc');
+END;
+/
+
+BEGIN
+ DBMS_TSDP_PROTECT.ENABLE_PROTECTION_TYPE(
+  sensitive_type           => 'credit_card_num_type');
+END;
+/
+
+--------------------------------------------------------------------------------------
+Step 7: Optionally, Export the Policy to Other Databases
+
+DECLARE
+  redact_feature_options SYS.DBMS_TSDP_PROTECT.FEATURE_OPTIONS;
+  policy_conditions SYS.DBMS_TSDP_PROTECT.POLICY_CONDITIONS;
+  BEGIN
+  redact_feature_options ('expression') := 
+   'SYS_CONTEXT(''USERENV'',''SESSION_ USER'') =''APPUSER''';
+  redact_feature_options ('function_type') := 'DBMS_REDACT.PARTIAL';
+  redact_feature_options ('function_parameters') := '9,1,6';
+  policy_conditions(DBMS_TSDP_PROTECT.DATATYPE) := 'NUMBER';
+  policy_conditions(DBMS_TSDP_PROTECT.LENGTH) := '22';
+ DBMS_TSDP_PROTECT.ALTER_POLICY ('redact_partial_cc',  
+  redact_feature_options, policy_conditions);
+END;
+/
+
+SELECT COLUMN_NAME, TSDP_POLICY FROM DBA_TSDP_POLICY_PROTECTION WHERE TABLE_NAME = 'CUST_CC';
+
+BEGIN
+ DBMS_TSDP_PROTECT.DISABLE_PROTECTION_COLUMN(
+  schema_name          => 'OE',
+  table_name           => 'CUST_CC',
+  column_name          => 'CREDIT_CARD',
+  policy               => 'redact_partial_cc');
+END;
+/
+
+BEGIN
+ DBMS_TSDP_PROTECT.DISABLE_PROTECTION_COLUMN(
+  schema_name          => 'OE',
+  table_name           => 'CUST_CC',
+  column_name          => '%');
+END;
+/
+
+

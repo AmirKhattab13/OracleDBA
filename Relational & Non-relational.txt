@@ -1,0 +1,42 @@
+Relational database ==> a type of database that stores and provides access to data points that are related to one another based on relational model <representing data in tables>
+Ex. Oracle, MySQL, Microsoft SQL Server, PostgreSQL, SQLite, and MariaDB.
+
+SQL stands for Structured Query Language and it’s the language relational databases are written in
+
+MySQL
+a free and open-source software, and one of the most popular databases in the world. It is used by many high-traffic websites like Facebook and YouTube
+Pros: 
+- it’s free and open-source 		- a lot of documentation and online support
+Cons: 
+- it doesn’t scale very well 		- stop working when it’s given too many operations at a given time
+Microsoft SQL server
+Pros:  
+- rich user interface 			- handle large quantities of data
+Cons: 
+- it can be expensive – Enterprise level costing thousands of dollars
+
+PostgreSQL
+based on the object-relational model. Another free and open-source database. It’s able to handle complicated data workloads
+Pros: 
+- extensible, if you need additional features in PostgreSQL, you can add it yourself which is difficult in most databases
+Cons: 
+- installation and configuration can be difficult 
+- there is no as much documentation as more popular databases 
+
+MariaDB
+It is an improved version of MySQL with various inbuilt features, enhanced security, and performance and is highly compatible
+
+--------------------------------------------------------------------------------------------------------------------
+
+Non-relational database
+
+A non-relational database is any database that does not use the tabular schema of rows and columns like in relational databases. Rather, its storage model is optimized for the type of data it’s storing. < NoSQL databases >
+
+Types:
+1. Document-oriented databases
+2. Key-Value Stores 
+3. Wide-Column Stores
+4. Graph Stores
+
+--------------------------------------------------------------------------------------------------------------------
+Ex. MongoDB, Redis

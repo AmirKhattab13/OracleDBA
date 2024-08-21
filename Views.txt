@@ -1,0 +1,47 @@
+						System Resource Views
+USER_ERRORS			Displays the errors found in views, stored procedures, and other objects.
+DBA_TABLESPACES			Provides information about each tablespace in the database.
+DBA_USERS			Provides information about each user in the database.
+DBA_DATAFILES			Gives information about the datafiles.
+DBA_SEGMENTS			Describes the storage usage for the segments. "contains physical storage of object"
+DBA_EXTENTS			More detailed information on space used for segments.  (Too many extents per segment can take hours if dropping the associated table.  You can also check the next extent size to make sure you have sufficient free space.)
+DBA_UNDO_EXTENTS		Used to monitor the space used for automatic undo management.  (If not using AUM you will have rollback segments instead, and the view to use for that is DBA_ROLLBACK_SEGS.)
+DBA_TABLES			Lets the DBA view information about any table.
+DBA_TAB_COLUMNS			Provides detailled information about each column of a table.
+DBA_INDEXES			Show information about table indexes; helps when trying to decide if some index is useful or not.  A related view is DBA_IND_COLUMNS which tells which columns of a table are indexed.
+DBA_CONSTRAINTS			Lists the restristions that have been placed on the contents of columns of tables and views.  More detailed information comes from the related view DBA_CONS_COLUMNS.
+PRODUCT_COMPONENT_VERSION	Shows the current versions of all installed components.
+
+						Performance Monitoring Views
+V$SYSSTAT	Statistics such as the amount of data changed and the number of transactions executed.
+V$SQL		The actual SQL commands recently executed, how many time it was executed and how much CPU time it took.
+V$SESSTAT	Shows resources consumed per session.  (Related: V$SESSION_WAIT)
+V$FILESTAT	The number of reads and writes per file, and time spent on disk I/O.
+V$DATAFILE	Lists the file number and name for each DB file.  In many views and tables Oracle identifies files by the number rather than name.  (Related: V$DATAFILE_HEADER)
+V$DATABASE	General information about the database
+V$DBFILE	Shows file name to numbers
+V$FIXED_TABLE	Shows the names of all dynamic tables and views.
+V$INSTANCE	General information about each instance.
+V$PARAMETER	Shows all the initializatino parameters and their current values.
+V$SGA		Summary statistics for the use of space in the SGA.
+V$TEMPFILE	Shows Statistics for locally-managed temporary tablespace files.
+V$LOG
+V$LOGFILE
+V$LOG_HISTORY
+
+						Security Related Views
+DBA_TAB_PRIVS		xxx
+USER_SYS_PRIVS
+ALL_TAB_PRIVS_MADE	xxx
+DBA_TAB_PRIVS_MADE	xxx
+DBA_USERS		Lists users who can access a database.
+DBA_PROFILES		xxx
+DBA_ROLES		xxx
+DBA_ROLE_PRIVS		xxx
+DBA_SYS_PRIVS		Privs of the role.
+DBA_TAB_PRIVS		xxx
+DBA_TS_QUOTA		xxx
+DBA_VIEWS		xxx
+
+V$ENCRYPTION_WALLET	The keystore location and its status, WRL_PARAMETER column gives you the location
+

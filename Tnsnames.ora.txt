@@ -1,0 +1,22 @@
+TNSNAMES.ORA is a configuration file that the Oracle database uses. 
+It allows users and applications to connect to Oracle databases by matching a connection name with all of the relevant details.
+
+The location of the TNSNAMES.ORA file is:
+$ORACLE_HOME\network\admin\
+
+This file contains a series of entries, where each of them represents a connection string to the database.
+net_service_name =
+  (DESCRIPTION=
+    (ADDRESS = (PROTOCOL = TCP)(HOST = <>)(PORT = 1521)
+  )
+  (CONNECT_DATA =
+    (SERVICE_NAME=service_name)
+  )
+)
+
+net_service_name: This is the name that you use for a connection string later. You can choose what this is. 
+It’s like a name you give to this set of connection details.
+host: The IP address or server name where the database lives or that you want to connect to.
+port: The port that is required for the connection. In most cases the default port of 1521 will be fine.
+service_name: This is the name of the database you want to connect to.
+

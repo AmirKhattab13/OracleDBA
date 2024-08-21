@@ -1,0 +1,29 @@
+Easy develop of modern applications
+
+Simply complete for any data
+- Converged DB: best support for all data models and workloads.
+	- Eliminate Data Fragmentation
+	- Unique Qureies and Transactions
+	- Create Value "acroos all data types"
+	- Build into your Apps 
+==> Structured: 
+
+Simply complete for any Workload
+- All Transactional/Analytical Workloads
+	IOT, Distributed, .....
+	ML, Data Warehouse, .....
+
+Simply complete for any Development Style
+- Decentralized/Accelerated App Dev
+	
+Simply complete for any Cloud Native Development
+ADB - Autonomous DB: automated tools "fully managed by Oracle"
+	- manage, provision, tune and patch
+	- auto indexing and partitioning 
+	- automatically scale up or down
+	- self service tools for analytics and data access
+
+Simply complete for any Mission-Critical Capabilities
+	- Complete Scaling in Every Dimension "Scale-out, ...."
+	- Complete Protection from Risk	"Disaster Recovery, ..."
+

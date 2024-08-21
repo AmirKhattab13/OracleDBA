@@ -1,0 +1,103 @@
+RMAN ==> Recovery Manager, an Oracle utility to backup and recover database, reaching data blocks
+
+Features:
+1. Backup including datafiles, control files and archived redo logs
+2. Detecting corrupted blocks during backup
+
+Environment:
+RMAN executable		//command login to utility
+Target DB		//DB to backup
+Recovery Catalog DB 	//metadata about backup <optional> if not used, it will be in control file, can be centralized for multiple target DBs
+Media Management SW	//connect to media library <tape>
+
+--------------------------------------------------------------------------------------------------------------------
+
+RMAN is located in $ORACLE_HOME/bin
+
+RMAN> list
+RMAN> report
+RMAN> show
+
+--------------------------------------------------------------------------------------------------------------------
+
+Database Connection
+
+1. Target DB
+# rman target / [no catalog]			//SYS
+RMAN> connect target <user>/<pass>@<tnsname>	//to connect from RMAN prompt
+
+2. Recovery Catalog DB
+# rman target / catalog <ownerName>/<Pass>@<tnsname>
+RMAN> connect catalog		//to connect from RMAN prompt
+RMAN> resync			//metadata from control file to catalog
+
+//create catalog DB
+# dbca				//create database using GUI
+# sqlplus system/<passwd>@<tnsname>	//connect to DB
+SQL> create tablespace <name> datafile <data> size <number>;
+SQL> create user <name> identified by <pass> default tablespace <tbname> temporary tablespace <tbname> quota unlimited on <tbname>;
+SQL> grant connect, resource, recovery_catalog_owner to <username>;
+# rman catalog <username>/<passwd>@<tnsname>
+				//if ORACLE_SID=<dbname>, we can ignore @
+RMAN> create catalog;
+# rman targrt / catalog <username>/<passwd>@<tnsname>
+RMAN> register database;		//register catalog to target
+
+3. Auxiliary DB ==> clone target DB
+
+--------------------------------------------------------------------------------------------------------------------
+
+Config RMAN
+
+# rman
+RMAN> show all;		//all config parameters
+RMAN> show <paramName>;
+
+1. Retention policy ==> backup valid time
+RMAN> configure retention policy to recovery window of 5 days;
+			//after 5 days the backup can not be used
+
+RMAN> configure retention policy to redundancy 3;	
+			//use just the last recent 3 backup, default 1
+
+RMAN> report obsolete;	//show all back up that not used
+RMAN> delete obsolete;	//delete all not used backup
+
+RMAN> configure retention policy to none; 	//use any backup
+RMAN> configure retention policy clear; 		//default value
+
+2. Backup Optimization
+RMAN> configure backup optimization [on | off];	//backup only changes
+
+3. Default device type
+RMAN> configure default device type to [disk | sbt];
+
+4. Control file autobackup
+RMAN> configure control file autobackup [on | off];	//backup control file, spfile automatic
+
+5. RMAN channels
+
+- automatic allocation		//config the path to backup
+RMAN> configure channel device type disk format '/<path>/%U';
+%U ==> generate unique name to backup	
+
+- manual allocation
+RMAN> run	//run block
+        2> {
+        3> allocate channel <name> device type disk format '/<path>/%U';
+        4> backup database;
+        5> }		//deallocation after execution
+
+6. Parallelism
+RMAN> configure device type disk parallelis 3;	//number of automatic channels
+					Max up to 256, optimum 4 or max 8
+7. Backup set	//group of backup pieces
+RMAN> configure maxsetsize to <number>[K | M | G]; 	//default:byte
+		//datafile must be in just one backup piece
+max set must be > the largest datafile
+
+8. RMAN Encrypted Backups
+RMAN> configure encryption for database [on | off];
+		//backup sets encrypted
+
+--------------------------------------------------------------------------------------------------------------------

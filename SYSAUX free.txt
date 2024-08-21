@@ -1,0 +1,17 @@
+AUD$UNIFIED
+BEGIN
+DBMS_AUDIT_MGMT.SET_LAST_ARCHIVE_TIMESTAMP(audit_trail_type => DBMS_AUDIT_MGMT.AUDIT_TRAIL_UNIFIED,last_archive_time => TO_TIMESTAMP('01-AUG-2414:10:10.0','DD-MON-RRHH24:MI:SS.FF'));
+END;
+/
+ 
+BEGIN
+DBMS_AUDIT_MGMT.CLEAN_AUDIT_TRAIL(
+   audit_trail_type         =>  DBMS_AUDIT_MGMT.AUDIT_TRAIL_UNIFIED,
+   use_last_arch_timestamp  =>  TRUE);
+END;
+/
+ 
+WRH$_LATCH
+select max(snap_id), min(snap_id) from dba_hist_snapshot;
+ 
+execute dbms_workload_repository.drop_snapshot_range(91001,94500);

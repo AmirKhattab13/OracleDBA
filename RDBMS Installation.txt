@@ -1,0 +1,43 @@
+RDBMS ==> The software used to store, manage, query, and retrieve data stored in a relational database
+
+How to install?
+
+1. # yum update -y
+
+2. download preinstall package as root
+# curl -o oracle-database-preinstall-19c-1.0-1.el7.x86_64.rpm https://yum.oracle.com/repo/OracleLinux/OL7/latest/x86_64/getPackage/oracle-database-preinstall-19c-1.0-1.el7.x86_64.rpm
+
+3. # yum -y localinstall oracle-database-preinstall-19c-1.0-1.el7.x86_64.rpm
+==> after installation, there is a user named oracle created and his primary group is oinstall 
+
+4. change user oracle passwd to oracle
+
+5. as root mkdir
+# mkdir -p /u01/oracle
+
+6. change the ownership
+# chown -R oracle:oinstall /u01/
+
+7. verify the user
+# id -a oracle
+
+8. Config Selinux to permissive and firewall
+# vim /etc/selinux/config
+SELINUX=permissive
+:wq
+# firewall-cmd --add-ports=1521/tcp --permanent
+
+9. upload the software to /u01/oracle as oracle user and oinstall group
+# su - oracle
+
+10. # unzip -q LINUX.X64_193000_db_home.zip
+
+11. after completion, run the script but remember to ssh as oracle
+# ./runInstaller
+==> before running the script we need an application <X server>. it is an application that manages one or more graphics displays and one or more input devices and it is built in MobaXterm
+
+--------------------------------------------------------------------------------------------------------------------
+
+Check the listener status:
+# lsnrctl status		//it will be no listener, so you need to start it
+# lsnrctl start		

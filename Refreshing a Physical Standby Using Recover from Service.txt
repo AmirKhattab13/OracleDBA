@@ -1,0 +1,335 @@
+I simulated an unrecoverable gap in this environment by turning off log transport on the primary, then switching log files enough to cycle through the redo logs, then deleting the generated archive logs. After turning on log transport, it will clearly be unable to resolve the gap.
+
+  DGMGRL> show configuration  
+    
+  Configuration - my_dg_config  
+    
+    Protection Mode: MaxPerformance  
+    Members:  
+    xtprim - Primary database  
+      Error: ORA-16724: cannot resolve gap for one or more members  
+    
+     xtstby - Physical standby database  
+       Warning: ORA-16809: multiple warnings detected for the member  
+   
+ Fast-Start Failover: DISABLED  
+   
+ Configuration Status:  
+ ERROR   (status updated 6 seconds ago)  
+Steps:
+
+1. Standby should be in mount mode
+
+      SQL> select NAME, DB_UNIQUE_NAME, OPEN_MODE, DATABASE_ROLE from V$DATABASE;  
+        
+      NAME      DB_UNIQUE_NAME    OPEN_MODE     DATABASE_ROLE  
+      --------- ----------------  ------------- ----------------  
+      XTPRIM    XTSTBY            MOUNTED       PHYSICAL STANDBY 
+2. Stop the managed recovery process (MRP) on the physical standby using broker (DGMGRL)
+
+      DGMGRL> edit database XTSTBY set state=APPLY-OFF;  
+      Succeeded.  
+3. Identify the datafiles on the physical standby database that are out of sync.
+
+XTPRIM
+
+      SQL> select HXFIL, FHSCN from X$KCVFH;  
+        
+           HXFIL FHSCN  
+      ---------- --------------------  
+               1 2269109  
+               3 2269109  
+               4 2269109  
+               5 1435690  
+               6 1435690  
+            7 2269109  
+            9 1572106  
+           10 1572106  
+           11 1572106
+XTSTBY
+
+  SQL> select HXFIL, FHSCN from X$KCVFH;  
+    
+       HXFIL FHSCN  
+  ---------- --------------------  
+           1 2268370  
+           3 2268370  
+           4 2268370  
+           5 1435690  
+           6 1435690  
+          7 2268370  
+          9 1572106  
+         10 1572106  
+         11 1572106  
+4. Take note of the current SCN of the physical standby database. This is required to determine, in a later step, if datafiles were added to the primary database.
+
+  SQL> select CURRENT_SCN from V$DATABASE;  
+    
+  CURRENT_SCN  
+  -----------  
+      2268369  
+5. Roll forward the physical standby database using the RECOVER FROM SERVICE command..
+
+  [oracle@asmnode2 ~]$ rman target /  
+    
+  Recovery Manager: Release 12.2.0.1.0 - Production on Mon Jun 22 10:51:12 2020  
+    
+  Copyright (c) 1982, 2017, Oracle and/or its affiliates.  All rights reserved.  
+    
+  connected to target database: XTPRIM (DBID=3617192712, not open)
+  RMAN> recover database from service XTPRIM noredo using compressed backupset;  
+    
+  Starting recover at 22-JUN-20  
+  Starting implicit crosscheck backup at 22-JUN-20  
+  using target database control file instead of recovery catalog  
+  allocated channel: ORA_DISK_1  
+  channel ORA_DISK_1: SID=29 device type=DISK  
+  Crosschecked 2 objects  
+  Finished implicit crosscheck backup at 22-JUN-20  
+   
+ Starting implicit crosscheck copy at 22-JUN-20  
+ using channel ORA_DISK_1  
+ Finished implicit crosscheck copy at 22-JUN-20  
+   
+ searching for all files in the recovery area  
+ cataloging files...  
+ no files cataloged  
+   
+ using channel ORA_DISK_1  
+ skipping datafile 5; already restored to SCN 1435690  
+ skipping datafile 6; already restored to SCN 1435690  
+ skipping datafile 9; already restored to SCN 1572106  
+ skipping datafile 10; already restored to SCN 1572106  
+ skipping datafile 11; already restored to SCN 1572106  
+ channel ORA_DISK_1: starting incremental datafile backup set restore  
+ channel ORA_DISK_1: using compressed network backup set from service XTPRIM  
+ destination for restore of datafile 00001: +DATA/XTSTBY/DATAFILE/system.260.1043528437  
+ channel ORA_DISK_1: restore complete, elapsed time: 00:00:07  
+ channel ORA_DISK_1: starting incremental datafile backup set restore  
+ channel ORA_DISK_1: using compressed network backup set from service XTPRIM  
+ destination for restore of datafile 00003: +DATA/XTSTBY/DATAFILE/sysaux.261.1043528451  
+ channel ORA_DISK_1: restore complete, elapsed time: 00:00:08  
+ channel ORA_DISK_1: starting incremental datafile backup set restore  
+ channel ORA_DISK_1: using compressed network backup set from service XTPRIM  
+ destination for restore of datafile 00004: +DATA/XTSTBY/DATAFILE/undotbs1.262.1043528459  
+ channel ORA_DISK_1: restore complete, elapsed time: 00:00:03  
+ channel ORA_DISK_1: starting incremental datafile backup set restore  
+ channel ORA_DISK_1: using compressed network backup set from service XTPRIM  
+ destination for restore of datafile 00007: +DATA/XTSTBY/DATAFILE/users.265.1043528467  
+ channel ORA_DISK_1: restore complete, elapsed time: 00:00:03  
+   
+ Finished recover at 22-JUN-20 
+6. Compare both primary and standby’s datafile SCN’s.
+
+XTPRIM
+
+      SQL> select HXFIL, FHSCN from X$KCVFH;  
+        
+           HXFIL FHSCN  
+      ---------- --------------------  
+               1 2277525  
+               3 2277539  
+               4 2277553  
+               5 1435690  
+               6 1435690  
+            7 2277561  
+            9 1572106  
+           10 1572106  
+           11 1572106  
+XTSTBY
+
+      RMAN> select HXFIL, FHSCN from X$KCVFH;  
+        
+           HXFIL FHSCN  
+      ---------- --------------------  
+               1 2277525  
+               3 2277539  
+               4 2277553  
+               5 1435690  
+               6 1435690  
+            7 2277561  
+            9 1572106  
+           10 1572106  
+           11 1572106  
+We should now see that the datafiles are in sync.
+
+7. Complete the synchronization by refreshing the physical standby’s control file from the primary.
+
+  RMAN> shutdown immediate  
+  RMAN> startup nomount  
+  RMAN> restore standby controlfile from service XTPRIM;  
+    
+  Starting restore at 22-JUN-20  
+  allocated channel: ORA_DISK_1  
+  channel ORA_DISK_1: SID=260 device type=DISK  
+    
+  channel ORA_DISK_1: starting datafile backup set restore  
+ channel ORA_DISK_1: using network backup set from service XTPRIM  
+  channel ORA_DISK_1: restoring control file  
+ channel ORA_DISK_1: restore complete, elapsed time: 00:00:04  
+ output file name=+DATA/XTSTBY/CONTROLFILE/current.259.1043528429  
+ output file name=+FRA/XTSTBY/CONTROLFILE/current.258.1043528429  
+ Finished restore at 22-JUN-20
+Mount database
+
+  RMAN> alter database mount 
+8. Catalog the datafile location. Since this environment is using Oracle Manage Files (OMF), the file structure and datafiles names will be different. You will get a warning message: RMAN-06139: warning: control file is not current for REPORT SCHEMA. during report schema.
+
+  RMAN> report schema;  
+    
+  Starting implicit crosscheck backup at 22-JUN-20  
+  released channel: ORA_DISK_1  
+  allocated channel: ORA_DISK_1  
+  channel ORA_DISK_1: SID=260 device type=DISK  
+  Crosschecked 10 objects  
+  Finished implicit crosscheck backup at 22-JUN-20  
+    
+ Starting implicit crosscheck copy at 22-JUN-20  
+ using channel ORA_DISK_1  
+ Finished implicit crosscheck copy at 22-JUN-20  
+   
+ searching for all files in the recovery area  
+ cataloging files...  
+ cataloging done  
+   
+ List of Cataloged Files  
+ =======================  
+ File Name: +FRA/XTSTBY/ARCHIVELOG/2020_06_22/thread_1_seq_30.284.1043740837  
+ File Name: +FRA/XTSTBY/ARCHIVELOG/2020_06_22/thread_1_seq_31.285.1043747041  
+ File Name: +FRA/XTSTBY/ARCHIVELOG/2020_06_22/thread_1_seq_38.286.1043749751  
+ File Name: +FRA/XTSTBY/ARCHIVELOG/2020_06_22/thread_1_seq_39.287.1043749869  
+ File Name: +FRA/XTSTBY/ARCHIVELOG/2020_06_21/thread_1_seq_25.279.1043626555  
+ File Name: +FRA/XTSTBY/ARCHIVELOG/2020_06_21/thread_1_seq_26.280.1043657483  
+ File Name: +FRA/XTSTBY/ARCHIVELOG/2020_06_21/thread_1_seq_27.281.1043657511  
+ File Name: +FRA/XTSTBY/ARCHIVELOG/2020_06_21/thread_1_seq_28.282.1043680031  
+ File Name: +FRA/XTSTBY/ARCHIVELOG/2020_06_21/thread_1_seq_29.283.1043701101  
+ File Name: +FRA/XTSTBY/ARCHIVELOG/2020_06_20/thread_1_seq_20.273.1043573589  
+ File Name: +FRA/XTSTBY/ARCHIVELOG/2020_06_20/thread_1_seq_21.274.1043573589  
+ File Name: +FRA/XTSTBY/ARCHIVELOG/2020_06_20/thread_1_seq_19.275.1043573591  
+ File Name: +FRA/XTSTBY/ARCHIVELOG/2020_06_20/thread_1_seq_22.276.1043573603  
+ File Name: +FRA/XTSTBY/ARCHIVELOG/2020_06_20/thread_1_seq_23.277.1043588677  
+ File Name: +FRA/XTSTBY/ARCHIVELOG/2020_06_20/thread_1_seq_24.278.1043604915  
+ File Name: +FRA/XTSTBY/ARCHIVELOG/2020_06_19/thread_1_seq_12.259.1043528483  
+ File Name: +FRA/XTSTBY/ARCHIVELOG/2020_06_19/thread_1_seq_13.260.1043528485  
+ File Name: +FRA/XTSTBY/ARCHIVELOG/2020_06_19/thread_1_seq_14.268.1043529443  
+ File Name: +FRA/XTSTBY/ARCHIVELOG/2020_06_19/thread_1_seq_15.269.1043529617  
+ File Name: +FRA/XTSTBY/ARCHIVELOG/2020_06_19/thread_1_seq_16.270.1043529689  
+ File Name: +FRA/XTSTBY/ARCHIVELOG/2020_06_19/thread_1_seq_17.271.1043529691  
+ File Name: +FRA/XTSTBY/ARCHIVELOG/2020_06_19/thread_1_seq_18.272.1043529691  
+   
+ RMAN-06139: warning: control file is not current for REPORT SCHEMA  
+ Report of database schema for database with db_unique_name XTSTBY  
+   
+ List of Permanent Datafiles  
+ ===========================  
+ File Size(MB) Tablespace           RB segs Datafile Name  
+ ---- -------- -------------------- ------- ------------------------  
+ 1    0        SYSTEM               ***     +DATA/XTPRIM/DATAFILE/system.257.1043513685  
+ 3    0        SYSAUX               ***     +DATA/XTPRIM/DATAFILE/sysaux.258.1043513729  
+ 4    0        UNDOTBS1             ***     +DATA/XTPRIM/DATAFILE/undotbs1.259.1043513755  
+ 5    0        PDB$SEED:SYSTEM      ***     +DATA/XTPRIM/4700A987085B3DFAE05387E5E50A8C7B/DATAFILE/system.267.1043513859  
+ 6    0        PDB$SEED:SYSAUX      ***     +DATA/XTPRIM/4700A987085B3DFAE05387E5E50A8C7B/DATAFILE/sysaux.266.1043513859  
+ 7    0        USERS                ***     +DATA/XTPRIM/DATAFILE/users.260.1043513757  
+ 9    0        PDB1:SYSTEM          ***     +DATA/XTPRIM/A877553C8E534E4FE0530FBEA8C06F41/DATAFILE/system.270.1043514675  
+ 10   0        PDB1:SYSAUX          ***     +DATA/XTPRIM/A877553C8E534E4FE0530FBEA8C06F41/DATAFILE/sysaux.271.1043514675  
+ 11   0        PDB1:MARVIN          ***     +DATA/XTPRIM/A877553C8E534E4FE0530FBEA8C06F41/DATAFILE/marvin.273.1043514911  
+   
+ List of Temporary Files  
+ =======================  
+ File Size(MB) Tablespace           Maxsize(MB) Tempfile Name  
+ ---- -------- -------------------- ----------- --------------------  
+ 1    20       TEMP                 32767       +DATA/XTPRIM/TEMPFILE/temp.265.1043513851  
+ 2    64       PDB$SEED:TEMP        32767       +DATA/XTPRIM/A877267091982C90E0530FBEA8C0E855/TEMPFILE/temp.269.1043513889  
+ 3    64       PDB1:TEMP            32767       +DATA/XTPRIM/A877553C8E534E4FE0530FBEA8C06F41/TEMPFILE/temp.272.1043514677 
+We need to update the datafile location and name using catalog.
+
+  RMAN> catalog start with '+DATA/XTSTBY/';  
+    
+  searching for all files that match the pattern +DATA/XTSTBY/  
+    
+  List of Files Unknown to the Database  
+  =====================================  
+  File Name: +DATA/XTSTBY/A877553C8E534E4FE0530FBEA8C06F41/DATAFILE/system.266.1043528469  
+  File Name: +DATA/XTSTBY/A877553C8E534E4FE0530FBEA8C06F41/DATAFILE/sysaux.267.1043528471  
+  File Name: +DATA/XTSTBY/A877553C8E534E4FE0530FBEA8C06F41/DATAFILE/marvin.268.1043528479  
+ File Name: +DATA/XTSTBY/A877267091982C90E0530FBEA8C0E855/DATAFILE/system.263.1043528461  
+ File Name: +DATA/XTSTBY/A877267091982C90E0530FBEA8C0E855/DATAFILE/sysaux.264.1043528463  
+ File Name: +DATA/XTSTBY/DATAFILE/system.260.1043528437  
+ File Name: +DATA/XTSTBY/DATAFILE/sysaux.261.1043528451  
+ File Name: +DATA/XTSTBY/DATAFILE/undotbs1.262.1043528459  
+ File Name: +DATA/XTSTBY/DATAFILE/users.265.1043528467  
+   
+   
+ Do you really want to catalog the above files (enter YES or NO)? YES  
+ cataloging files...  
+ cataloging done  
+   
+ List of Cataloged Files  
+ =======================  
+ File Name: +DATA/XTSTBY/A877553C8E534E4FE0530FBEA8C06F41/DATAFILE/system.266.1043528469  
+ File Name: +DATA/XTSTBY/A877553C8E534E4FE0530FBEA8C06F41/DATAFILE/sysaux.267.1043528471  
+ File Name: +DATA/XTSTBY/A877553C8E534E4FE0530FBEA8C06F41/DATAFILE/marvin.268.1043528479  
+ File Name: +DATA/XTSTBY/A877267091982C90E0530FBEA8C0E855/DATAFILE/system.263.1043528461  
+ File Name: +DATA/XTSTBY/A877267091982C90E0530FBEA8C0E855/DATAFILE/sysaux.264.1043528463  
+ File Name: +DATA/XTSTBY/DATAFILE/system.260.1043528437  
+ File Name: +DATA/XTSTBY/DATAFILE/sysaux.261.1043528451  
+ File Name: +DATA/XTSTBY/DATAFILE/undotbs1.262.1043528459  
+ File Name: +DATA/XTSTBY/DATAFILE/users.265.1043528467  
+   
+ List of Files Which Were Not Cataloged  
+ =======================================  
+ File Name: +DATA/XTSTBY/CONTROLFILE/current.257.1043528427  
+   RMAN-07517: Reason: The file header is corrupted  
+ File Name: +DATA/XTSTBY/CONTROLFILE/current.258.1043528427  
+   RMAN-07517: Reason: The file header is corrupted
+The error can be ignored since these are the old control files that we can remove later.
+
+9. Switch to the cataloged datafile copy
+
+  RMAN> switch database to copy;  
+    
+  datafile 1 switched to datafile copy "+DATA/XTSTBY/DATAFILE/system.260.1043528437"  
+  datafile 3 switched to datafile copy "+DATA/XTSTBY/DATAFILE/sysaux.261.1043528451"  
+  datafile 4 switched to datafile copy "+DATA/XTSTBY/DATAFILE/undotbs1.262.1043528459"  
+  datafile 5 switched to datafile copy "+DATA/XTSTBY/A877267091982C90E0530FBEA8C0E855/DATAFILE/system.263.1043528461"  
+  datafile 6 switched to datafile copy "+DATA/XTSTBY/A877267091982C90E0530FBEA8C0E855/DATAFILE/sysaux.264.1043528463"  
+  datafile 7 switched to datafile copy "+DATA/XTSTBY/DATAFILE/users.265.1043528467"  
+  datafile 9 switched to datafile copy "+DATA/XTSTBY/A877553C8E534E4FE0530FBEA8C06F41/DATAFILE/system.266.1043528469"  
+ datafile 10 switched to datafile copy "+DATA/XTSTBY/A877553C8E534E4FE0530FBEA8C06F41/DATAFILE/sysaux.267.1043528471"  
+ datafile 11 switched to datafile copy "+DATA/XTSTBY/A877553C8E534E4FE0530FBEA8C06F41/DATAFILE/marvin.268.1043528479"
+10. Use the current SCN returned in step 4 to determine if new data files were added to the primary database since the standby database was last refreshed. If yes, these datafiles need to be restored on the standby from the primary database.
+
+  RMAN> select file# from V$DATAFILE where CREATION_CHANGE# >= 2268369; 
+   
+  no rows selected  
+11. Update the names of the online redo logs and standby redo logs in the standby control file using the following methods:
+
+  RMAN> select GROUP# from V$LOG;  
+    
+      GROUP#  
+  ----------  
+           1  
+           3  
+           2  
+    
+  RMAN> select GROUP# from V$LOGFILE where TYPE='STANDBY' group by GROUP#;  
+   
+     GROUP#  
+ ----------  
+         10  
+         11  
+         12  
+         13  
+   
+ SQL> ALTER DATABASE CLEAR LOGFILE GROUP 1;  
+ SQL> ALTER DATABASE CLEAR LOGFILE GROUP 2;  
+ SQL> ALTER DATABASE CLEAR LOGFILE GROUP 3;  
+ SQL> ALTER DATABASE CLEAR LOGFILE GROUP 10;  
+ SQL> ALTER DATABASE CLEAR LOGFILE GROUP 11;  
+ SQL> ALTER DATABASE CLEAR LOGFILE GROUP 12;  
+ SQL> ALTER DATABASE CLEAR LOGFILE GROUP 13;
+12. Using broker (DGMGRL), start the managed recovery process (MRP).
+
+      DGMGRL> edit database XTSTBY set state=APPLY-ON;  
+      Succeeded.
+Physical standby should now be in sync with the primary and logs are back to being applied.

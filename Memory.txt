@@ -1,0 +1,34 @@
+What is Oracle database
+
+1. Database Instance
+2. Storage <files>
+
+Database Instance:
+1. Memory
+2. Processes			//Running program
+
+Memory:
+1. SGA ==> System Global Area 	//Shared, a group of tools
+2. PGA ==> Application Global Area 	//Private
+
+SGA:
+1. Shared Pool ==> Store hard parsing for sql statements, data dictionary cache "Meta Data", library cache " SQL statement"
+and optimizer determine the best execution using execution plans, every plan has hash value. 
+
+Time for data to be in memory is determined by MRU and LRU <FIFO Queue>
+Most Recent Used, Last Recent Used
+If you use a query frequently it will be MRU, at the beginning of queue and vice versa.
+
+2. Streams Pool ==> Oracle streaming <data replication between 2 seperate databases>
+
+3. Large Pool ==> Backup and recovery operations <large memory>
+
+4. Java Pool ==> Session access database jave code
+
+5. Database Buffer Cache ==> Fetched data from database, MRU, LRU
+
+6. Redo Log Buffer ==> DML, transactions	//Any changes
+
+PGA: small size for every process <private>
+
+--------------------------------------------------------------------------------------------------------------------

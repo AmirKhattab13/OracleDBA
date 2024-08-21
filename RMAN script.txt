@@ -1,0 +1,14 @@
+# rman target / LOG /path/file.log	//logs of script will be in this file
+# rman target / | tee /path/file.log		//logs in file and screen
+
+Ex.
+     connect target / 
+     connect catalog <username>/<passwd>@<tnsname>
+     show all;
+     backup database plus archivelog;
+     exit
+
+give the x perm to the file and run it as:
+# rman @script_name
+
+--------------------------------------------------------------------------------------------------------------------

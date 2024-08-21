@@ -1,0 +1,68 @@
+OLR - Oracle Local Registery
+
+OLR is a registry similar to OCR located on each node in a cluster, but contains information 
+specific to each node. and it is not shared between nodes in other word, every node has its own OLR.
+
+---------------------------------------------------------------------------------------------------
+Backup OLR:
+
+The OLR location pointer file is '/etc/oracle/olr.loc' or '/var/opt/oracle/olr.loc' depending on 
+platform. The default location after installing Oracle Clusterware is:
+
+GI Cluster: <GI_HOME>/cdata/<hostname.olr>
+GI Standalone (Oracle Restart): <GI_HOME>/cdata/localhost/<hostname.olr>
+
+OLR will be backed up during GI configuration(installation or upgrade). In contrast to OCR, OLR 
+will NOT be automatically backed up again after GI is configured, only manual backups can be taken. 
+If further backup is required, OLR needs to be backed up manually. To take a backup of the OLR use the following command.
+
+# <GI_HOME>/bin/ocrconfig -local -manualbackup
+
+To List the backups currently available:
+# <GI_HOME>/bin/ocrconfig -local -showbackup
+# ll -ltr  /opt/app/oracle/grid/11.2.0.1/cdata/<node1>
+
+---------------------------------------------------------------------------------------------------
+To restore:
+
+Be sure GI stack is completely down and ohasd.bin is not up and running, use the following command 
+to confirm:
+# ps -ef| grep ohasd.bin
+
+This should return no process, if ohasd.bin is still up and running, stop it on local node:
+# <GI_HOME>/bin/crsctl stop crs -f  <========= for GI Cluster
+
+OR 
+
+# <GI_HOME>/bin/crsctl stop has  <========= for GI Standalone
+
+Once it's down, restore with the following command:
+# <GI_HOME>/bin/ocrconfig -local -restore <olr-backup>
+
+If the command fails, create a dummy OLR, set correct ownership and permission and retry the 
+restoration command:
+# cd <OLR location>
+# touch <hostname>.olr
+# chmod 600 <hostname>.olr
+# chown <grid>:<oinstall> <hostname>.olr
+
+Once it's restored, GI can be brought up:
+# <GI_HOME>/bin/crsctl start crs   <========= for GI Cluster
+
+OR 
+
+$ <GI_HOME>/bin/crsctl start has  <========= for GI Standalone, this must be done as grid user
+
+if patches are applied after the OLR is backed up, and later the backup is restored, the patch 
+level will be different and GI won't start with error:
+To fix the above problem, run as root user:
+
+<GI_HOME>/crs/install/rootcrs.sh -prepatch
+<GI_HOME>/crs/install/rootcrs.sh -postpatch
+
+---------------------------------------------------------------------------------------------------
+OCRBACKUP: +DATA:/MDPX9PRD/OCRBACKUP/
+
+Manual backup the OCR:
+# ocrconfig -manualbackup
+

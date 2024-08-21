@@ -1,0 +1,72 @@
+The following is used in the scenario:
+
+2 instances Oracle 19c RAC primary database 
+Single instance Oracle 19c RAC Standby database 
+
+Look at the current status of the both databases:
+
+— Primary
+
+SQL> select status,instance_name,database_role from v$database,v$instance;
+STATUS       INSTANCE_NAME    DATABASE_ROLE
+------------ ---------------- ----------------
+OPEN         PRD1           PRIMARY
+ 
+
+— Standby
+
+SQL> select status,instance_name,database_role from v$database,v$instance;
+STATUS       INSTANCE_NAME    DATABASE_ROLE
+------------ ---------------- ----------------
+OPEN         DR1           PHYSICAL STANDBY
+
+Before getting into the real action, validate the following to avoid any failures during the course of role transition:
+
+1# Ensure log_archive_dest_2 is configured on PRIMARY and STANDBY databases
+
+SQL> show parameter log_arhive_dest
+
+2# Media Recovery Process (MRP) is active on STANDBY and in sync with PRIMARY database
+
+SQL> select process,status,sequence# from v$managed_standby;
+
+3# Create STANDBY REDO logs on PRIMARY, if not exists
+
+SQL> alter database add standby LOGFILE thread n GROUP n ('+DATA/','+FRA/') SIZE nM;
+
+4# FAL_CLIENT & FAL_SERVER parameters set on both databases
+
+SQL> show parameter fal
+
+5# Verify TEMP tablespaces on STANDBY, add them if required, as TEMPFFILES created after STANDBY creation won’t be propagated to STANDBY site.
+
+
+
+------------------------------------------------------------------------------------------------------------------------------------------
+SQL> alter database switchover to <DB> verify;					//Verification
+
+------------------------------------------------------------------------------------------------------------------------------------------
+SQL> alter database switchover to <DB>;						//Switchover
+
+At this point-in-time, the new PRIMARY database is in MOUNT state, so you need to OPEN the database.
+
+SQL> alter database open;
+
+And startup the STANDBY database and enable MRP: (below is the active standby database command)
+
+SQL> startup
+SQL> recover managed standby database using current logfile disconnect from session;
+
+Post Switchover, run through the following:
+
+SQL> alter system switch logfile;
+SQL> select dest_id,error,status from v$archive_dest where dest_id=n;
+SQL> select max(sequence#),thread# from v$log_history group by thread#;
+SQL> select max(sequence#)  from v$archived_log where applied='YES' and dest_id=n;
+
+On Standby database
+
+SQL> select thread#,sequence#,process,status from gv$managed_standby;
+-- in 12.2, use gv$dataguard_status instead of gv$managed_standby view
+SQL> select max(sequence#),thread# from v$archived_log group by thread#;
+------------------------------------------------------------------------------------------------------------------------------------------

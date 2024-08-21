@@ -1,0 +1,47 @@
+Processes Architecture
+
+User Process ==> On user device
+Database Processes ==> Server / Background
+Daemon/Application processes ==> Network listener / Grid infra daemons
+
+Background ==> Oracle engine initiation, to handle database
+Server ==> Initiate connection with Oracle server
+
+--------------------------------------------------------------------------------------------------------------------
+
+SMON ==> every database has just 1 process, monitor system. 
+# ps -ef | grep	//if there is no SMON, so database is not runinng
+- Instance recovery on startup		- Clean temporary segments that are not used
+- Failed transaction Recovery
+
+PMON ==> Process Monitor, database has just 1 process, it must be running
+- Server process recovery			- Clean database buffer cache
+- Release resources
+
+DBWn ==> Database Writer, one or more
+- Write data from db buffer cache on data files <HD>
+
+LGWR ==> Log Writer
+- Write data from redo log buffer on redo log files <HD>
+  - every 3 sec
+  - commit from user
+  - 1/3 of buffer is filled
+Redo log files ==> min 2 files, copy of changes <for recovery>
+  - low SCN
+  - high SCN
+  - log sequence <switch number>
+
+ARCn ==> Archiver 
+- Copy redo log files to archive log files when one redo log file is filled 
+
+CKPTn ==> CheckPoint
+- Write high SCN on header of data files and control files <checkpoint>
+  - after redo log files switching
+  - alter system switch log file
+  - alter system checkpoint
+  - using parameters
+SCN: System Change Number, associated to any transaction for identifying changes. It is written in redo log file
+- When high SCN in header of data file and control file < high SCN in redo log file
+database was not shutdown succesfully
+
+-------------------------------------------------------------------------------------------------------------------- 

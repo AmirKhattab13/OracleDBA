@@ -1,0 +1,30 @@
+srvctl modify database -db db_unique_name [-dbname db_name] 
+     [-instance instance_name] [-oraclehome oracle_home] [-user user_name] 
+     [-server "server_list"] [-timeout timeout] [-domain db_domain] 
+     [-spfile spfile] [-pwfile password_file_path]
+     [-role {PRIMARY|PHYSICAL_STANDBY|LOGICAL_STANDBY|SNAPSHOT_STANDBY}]
+     [-startoption start_options] [-stopoption stop_options] 
+     [-startconcurrency start_concurrency] [-stopconcurrency stop_concurrency]
+     [-policy {AUTOMATIC | MANUAL | NORESTART | USERONLY}]
+     [-serverpool "server_pool_name"] [-node node_list]
+     [-pqpool pq_server_pool] [{-diskgroup "diskgroup_list" | -nodiskgroup}]
+     [-acfspath "acfs_path_list"] [-css_critical {yes | no}] 
+     [-cpucount cpu_count [-overridepools overridepool_list]]  
+     [-memorytarget memory_target] [-maxmemory max_memory] 
+     [-defaultnetnum network_number] [-disabledreason {DECOMMISSIONED}] 
+     [-force] [-eval] [-verbose] 
+
+srvctl add database -db db_unique_name [-eval] 
+     -oraclehome oracle_home [-node node_name] [-domain domain_name] 
+     [-spfile spfile] [-pwfile password_file_path]
+     [-dbtype  {RACONENODE | RAC | SINGLE} [-server "server_list"] 
+     [-instance instance_name] [-timeout timeout]]
+     [-role {PRIMARY | PHYSICAL_STANDBY | LOGICAL_STANDBY | SNAPSHOT_STANDBY"]
+     [-startoption start_options] [-stopoption stop_options] [-dbname db_name]  
+     [-acfspath "acfs_path_list"] [-policy {AUTOMATIC | MANUAL | NORESTART}]
+     [-serverpool "server_pool_list" [-pqpool "pq_pool_list"]]
+     [-diskgroup "disk_group_list"] [-verbose]
+
+srvctl add instance -d db_unique_name -i instance_name -n node_name
+
+srvctl remove database -d db_unique_name

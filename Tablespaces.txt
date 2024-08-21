@@ -1,0 +1,80 @@
+db_create_file_dest ==> default location of data files and temporary files
+db_create_online_log_dest ==> default location of redo log and control files
+db_recovery_online_log_dest ==> default location of backups and archive logs
+
+--------------------------------------------------------------------------------------------------------------------
+
+Space management in tablespaces ==> 2 methods
+
+1. Dictionary managed tablespace
+    - by using data dictionary tables <metadata about all tablespaces>, whenever an extent is       allocated or unallocated
+
+2. Locally managed tablespace
+    - by using Bitmap, keep track of the free or used blocks in the datafile
+    each bit in Bitmap ==> block or group of blocks
+    - when the extents are allocated or freed, db server changes the Bitmap values
+
+--------------------------------------------------------------------------------------------------------------------
+
+Create tablespace
+
+SQL> create tablespace <name> logging | nologging
+         datafile '/path/to/datafile/' size <M>
+         autoextend on | off next <size> maxsize <size>;
+
+- tablespace must be created with datafile
+- logging, enable or disable writing on redo log
+- autoextend, extend the tablespace when it is filled 
+- next, the extend size for tablespace
+- it will extend till maxsize
+
+SQL> create temporary tablespace <name> 
+         tempfile '/path/to/datafile/' size <M>
+         autoextend on | off next <size> maxsize <size>;
+
+SQL> create undo tablespace <name> 
+         datafile '/path/to/datafile/' size <M>;
+
+
+SQL> alter tablespace <name> rename to <newName>;
+
+SQL> alter tablespace <name> add datafile 'path/to/datafile/' size <M>;
+	//extend tablespace size
+
+SQL> alter tablespace <name> drop datafile 'path/to/datafile/';
+	//clear data at first
+
+SQL> alter tablespace <name> rename datafile 'path/to/datafile/' to 'newPath/to/datafile/'; 
+	//the data file must be renamed or moved in the OS at first
+
+SQL> alter tablespace <name> online | offline;
+
+SQL> alter tablespace <name> read only | read write;
+
+SQL> alter database datafile 'path/to/datafile/' resize <size>;
+	//resize datafile not the tablespace
+
+SQL> alter database datafile 'path/to/datafile/' autoextend on | off maxsize unlimited | <number>
+
+--------------------------------------------------------------------------------------------------------------------
+From Toad:
+
+BO ==> user_data_tbs	'trc_log'
+SQL> TRUNCATE TABLE MAIN.TRC_LOG
+
+FE ==> bpcndx, currntrans
++datafile 100MB 'extend 300MB'		+DATA/
+
+
+
+run {
+        set newname for datafile '/exp_dir/oradata/BO_DATA/userdata12.dbf' to
+                '/oradata/bo/BO/datafile/userdata12.dbf';
+        
+        switch datafile '/exp_dir/oradata/BO_DATA/userdata12.dbf';
+        
+}
+
+SQL> alter database datafile <> online | offline;
+
+restore datafile '/exp_dir/oradata/users01.dbf';
