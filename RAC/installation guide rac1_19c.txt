@@ -1,0 +1,518 @@
+ mkdir /mnt/src/
+   mount -t nfs 192.168.1.28:/mnt/oracle/software /mnt/src/
+   vi /etc/fstab
+   mount -a
+   df -h
+    vi /etc/chrony.conf
+   systemctl status chronyd.service
+   systemctl enable --now  chronyd.service
+    systemctl status chronyd.service
+
+
+# to sync
+systemctl stop chronyd.service
+systemctl disable chronyd.service
+systemctl start chronyd.service
+systemctl enable chronyd.service
+chronyc reselect
+chronyc sources
+chronyc tracking
+
+
+ systemctl start sshd.service
+ systemctl enable sshd.service
+
+cd /u01/app/19.0.0/grid/cv/rpm
+ rpm -Uvh cvuqdisk*
+
+dnf install -y oracle-database-preinstall-19c
+yum update -y
+groupadd -g 54321 oinstall
+groupadd -g 54322 dba
+groupadd -g 54323 oper
+groupadd asmadmin
+groupadd asmdba
+groupadd asmoper
+useradd -u 54323 -g oinstall -G asmadmin,asmdba grid
+passwd oracle
+passwd grid
+usermod -a -G asmdba oracle
+
+
+#If you have the Linux firewall enabled, you will need to disable or configure it
+systemctl stop firewalld
+systemctl disable firewalld
+systemctl status firewalld
+
+vi /etc/hosts
+127.0.0.1   localhost localhost.localdomain 
+
+# public
+193.168.10.20   Node1-rac1-19c.ictmisr.net  Node1-rac1-19c
+193.168.10.21   Node2-rac1-19c.ictmisr.net  Node2-rac1-19c
+
+# private
+193.168.20.20  Node1-rac1-19c-priv.ictmisr.net Node1-rac1-19c-priv
+193.168.20.21  Node2-rac1-19c-priv.ictmisr.net Node2-rac1-19c-priv
+
+#  SCAN (in production this should be configured in DNS)
+193.168.10.22 rac1-scan.ictmisr.net rac1-scan
+193.168.10.23 rac1-scan.ictmisr.net rac1-scan
+193.168.10.24 rac1-scan.ictmisr.net rac1-scan
+
+# Virtual
+193.168.10.25 Node1-rac1-19c-vip.ictmisr.net Node1-rac1-19c-vip
+193.168.10.26 Node2-rac1-19c-vip.ictmisr.net Node2-rac1-19c-vip
+
+ping Node1-rac1-19c
+ping Node1-rac1-19c.ictmisr.net
+ping Node1-rac1-19c-priv.ictmisr.net 
+ping Node1-rac1-19c-priv
+
+ping Node2-rac1-19c
+ping Node2-rac1-19c.ictmisr.net
+ping Node2-rac1-19c-priv.ictmisr.net
+ping Node2-rac1-19c-priv
+
+mkdir -p /u01/app/oracle/product/19.0.0/db_1
+chown -R oracle:oinstall /u01
+chmod -R 775 /u01
+mkdir -p /u01/app/grid
+mkdir -p /u01/app/19.0.0/grid
+chown -R grid:oinstall /u01/app/grid
+chown -R grid:oinstall /u01/app/19.0.0/grid
+chmod -R 775 /u01
+
+systemctl status chronyd.service
+
+ls /dev/sd*
+lsblk
+
+
+#Use the fdisk utility to create partitions in the new disks /dev/sdb , /dev/sdc and /dev/sdd , /dev/sde , /dev/sdf
+fdisk /dev/sdb
+n p 1 enter enter w
+fdisk /dev/sdc
+n p 1 enter enter w
+fdisk /dev/sdd
+n p 1 enter enter w
+fdisk /dev/sde
+n p 1 enter enter w
+fdisk /dev/sdf
+n p 1 enter enter w
+ls /dev/sd*
+
+
+
+#Configure your UDEV rules by user root in sh-rac1,sh-rac2
+#Add the following to the "/etc/scsi_id.config" file to configure SCSI devices as trusted. Create the file if it doesn't already exist.
+cd /etc
+vi scsi_id.config
+options=-g
+
+#The SCSI ID of my disks are displayed below.
+/usr/lib/udev/scsi_id -g -u -d /dev/sdb
+36000c29db61013f8c56a035b9691b656
+/usr/lib/udev/scsi_id -g -u -d /dev/sdc
+36000c299e98a84561052ba82204dd9a3
+/usr/lib/udev/scsi_id -g -u -d /dev/sdd
+36000c29f86031efd0672080d805cefa4
+/usr/lib/udev/scsi_id -g -u -d /dev/sde
+36000c29dea43b77f75c70004c08693ec
+/usr/lib/udev/scsi_id -g -u -d /dev/sdf
+36000c29e4f4734e2aacae2c92ee0cac9
+
+#Using these values, edit the "/etc/udev/rules.d/99-oracle-asmdevices.rules" file adding the following 3 entries. All parameters for a single entry must be on the same line
+vi /etc/udev/rules.d/99-oracle-asmdevices.rules
+KERNEL=="sd?1", SUBSYSTEM=="block", PROGRAM=="/usr/lib/udev/scsi_id -g -u -d /dev/$parent", RESULT=="36000c29db61013f8c56a035b9691b656", SYMLINK+="asm-disk1", OWNER="grid", GROUP="oinstall", MODE="0660"
+KERNEL=="sd?1", SUBSYSTEM=="block", PROGRAM=="/usr/lib/udev/scsi_id -g -u -d /dev/$parent", RESULT=="36000c299e98a84561052ba82204dd9a3", SYMLINK+="asm-disk2", OWNER="grid", GROUP="oinstall", MODE="0660"
+KERNEL=="sd?1", SUBSYSTEM=="block", PROGRAM=="/usr/lib/udev/scsi_id -g -u -d /dev/$parent", RESULT=="36000c29f86031efd0672080d805cefa4", SYMLINK+="asm-disk3", OWNER="grid", GROUP="oinstall", MODE="0660"
+KERNEL=="sd?1", SUBSYSTEM=="block", PROGRAM=="/usr/lib/udev/scsi_id -g -u -d /dev/$parent", RESULT=="36000c29dea43b77f75c70004c08693ec", SYMLINK+="asm-disk4", OWNER="grid", GROUP="oinstall", MODE="0660"
+KERNEL=="sd?1", SUBSYSTEM=="block", PROGRAM=="/usr/lib/udev/scsi_id -g -u -d /dev/$parent", RESULT=="36000c29e4f4734e2aacae2c92ee0cac9", SYMLINK+="asm-disk5", OWNER="grid", GROUP="oinstall", MODE="0660"
+
+cat /etc/udev/rules.d/99-oracle-asmdevices.rules
+
+#Load updated block device partition tables.
+/sbin/partprobe /dev/sdb1
+/sbin/partprobe /dev/sdc1
+/sbin/partprobe /dev/sdd1
+/sbin/partprobe /dev/sde1
+/sbin/partprobe /dev/sdf1
+
+#Test the rules are working as expected
+udevadm test /block/sdb/sdb1
+udevadm test /block/sdc/sdc1
+udevadm test /block/sdd/sdd1
+udevadm test /block/sde/sde1
+udevadm test /block/sdf/sdf1
+
+
+#Reload the UDEV rules
+/sbin/udevadm control --reload-rules
+/sbin/udevadm trigger
+
+#The disks should now be visible and have the correct ownership using the following command
+ls -al /dev/asm-disk*
+systemctl restart systemd-udevd
+
+
+#Set the OS environment variables in the Oracle software user owner profiles
+# login to sh-rac1 and sh-rac2 as oracle user
+#in rac1 by oracle user
+mv ~/.bash_profile ~/.bash_profile_bk
+vi ~/.bash_profile
+
+# .bash_profile
+if [ -f ~/.bashrc ]; then
+. ~/.bashrc
+fi
+ORACLE_SID=orcl1; export ORACLE_SID
+ORACLE_BASE=/u01/app/oracle; export ORACLE_BASE
+ORACLE_HOME=$ORACLE_BASE/product/19.0.0/db_1; export ORACLE_HOME
+ORACLE_TERM=xterm; export ORACLE_TERM
+NLS_DATE_FORMAT="DD-MON-YYYY HH24:MI:SS"; export NLS_DATE_FORMAT
+TNS_ADMIN=$ORACLE_HOME/network/admin; export TNS_ADMIN
+PATH=.:${PATH}:$ORACLE_HOME/bin
+PATH=${PATH}:/usr/bin:/bin:/usr/local/bin
+export PATH
+LD_LIBRARY_PATH=$ORACLE_HOME/lib
+LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:$ORACLE_HOME/oracm/lib
+LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/lib:/usr/lib:/usr/local/lib
+export LD_LIBRARY_PATH
+THREADS_FLAG=native; export THREADS_FLAG
+export TEMP=/tmp
+export TMPDIR=/tmp
+export EDITOR=vi
+umask 022
+
+#in rac2 by oracle user
+mv ~/.bash_profile ~/.bash_profile_bk
+vi ~/.bash_profile
+
+# .bash_profile
+if [ -f ~/.bashrc ]; then
+. ~/.bashrc
+fi
+ORACLE_SID=orcl2; export ORACLE_SID
+ORACLE_BASE=/u01/app/oracle; export ORACLE_BASE
+ORACLE_HOME=$ORACLE_BASE/product/19.0.0/db_1; export ORACLE_HOME
+ORACLE_TERM=xterm; export ORACLE_TERM
+NLS_DATE_FORMAT="DD-MON-YYYY HH24:MI:SS"; export NLS_DATE_FORMAT
+TNS_ADMIN=$ORACLE_HOME/network/admin; export TNS_ADMIN
+PATH=.:${PATH}:$ORACLE_HOME/bin
+PATH=${PATH}:/usr/bin:/bin:/usr/local/bin
+export PATH
+LD_LIBRARY_PATH=$ORACLE_HOME/lib
+LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:$ORACLE_HOME/oracm/lib
+LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/lib:/usr/lib:/usr/local/lib
+export LD_LIBRARY_PATH
+THREADS_FLAG=native; export THREADS_FLAG
+export TEMP=/tmp
+export TMPDIR=/tmp
+export EDITOR=vi
+umask 022
+
+
+
+#In sh-rac1 and sh-rac2, set the OS environment variables in the grid user profile
+#in rac2 by grid user
+mv ~/.bash_profile ~/.bash_profile_bk
+vi ~/.bash_profile
+
+# .bash_profile
+# OS User: grid
+if [ -f ~/.bashrc ]; then
+. ~/.bashrc
+fi
+ORACLE_SID=+ASM1; export ORACLE_SID
+ORACLE_BASE=/u01/app/grid; export ORACLE_BASE
+# it must not be under the ORACLE_BASE
+ORACLE_HOME=/u01/app/19.0.0/grid; export ORACLE_HOME
+ORACLE_TERM=xterm; export ORACLE_TERM
+TNS_ADMIN=$ORACLE_HOME/network/admin; export TNS_ADMIN
+PATH=.:${PATH}:$ORACLE_HOME/bin
+PATH=${PATH}:/usr/bin:/bin:/usr/local/bin
+export PATH
+export TEMP=/tmp
+export TMPDIR=/tmp
+umask 022
+
+
+#in rac2 by grid user 
+
+mv ~/.bash_profile ~/.bash_profile_bk
+vi ~/.bash_profile
+
+# .bash_profile
+# OS User: grid
+if [ -f ~/.bashrc ]; then
+. ~/.bashrc
+fi
+ORACLE_SID=+ASM2; export ORACLE_SID
+ORACLE_BASE=/u01/app/grid; export ORACLE_BASE
+# it must not be under the ORACLE_BASE
+ORACLE_HOME=/u01/app/19.0.0/grid; export ORACLE_HOME
+ORACLE_TERM=xterm; export ORACLE_TERM
+TNS_ADMIN=$ORACLE_HOME/network/admin; export TNS_ADMIN
+PATH=.:${PATH}:$ORACLE_HOME/bin
+PATH=${PATH}:/usr/bin:/bin:/usr/local/bin
+export PATH
+export TEMP=/tmp
+export TMPDIR=/tmp
+umask 022
+---------------------
+
+
+#Set the resource limits for the Oracle software installation owners 
+#In sh-rac1 and sh-rac2, switch user to root and set the resource limits for the software installation owner users. It is set for oracle user. You need to set it the same for grid user
+su - root
+mv /etc/security/limits.d/oracle-database-preinstall-19c.conf /etc/security/limits.d/oracle-database-preinstall-19c.conf.bak
+vi /etc/security/limits.d/oracle-database-preinstall-19c.conf
+
+
+# oracle-database-preinstall-19c setting for nofile soft limit is 1024
+oracle   soft   nofile    1024
+grid     soft   nofile    1024
+# oracle-database-preinstall-19c setting for nofile hard limit is 65536
+oracle   hard   nofile    65536
+grid     hard   nofile    65536
+# oracle-database-preinstall-19c setting for nproc soft limit is 16384
+# refer orabug15971421 for more info.
+oracle   soft   nproc    16384
+grid     soft   nproc    16384
+# oracle-database-preinstall-19c setting for nproc hard limit is 16384
+oracle   hard   nproc    16384
+grid     hard   nproc    16384
+# oracle-database-preinstall-19c setting for stack soft limit is 10240KB
+oracle   soft   stack    10240
+grid     soft   stack    10240
+# oracle-database-preinstall-19c setting for stack hard limit is 32768KB
+oracle   hard   stack    32768
+grid     hard   stack    32768
+# oracle-database-preinstall-19c setting for memlock hard limit is maximum of 128GB on x86_64 or 3GB on x86 OR 90 % of RAM
+oracle   hard   memlock    134217728
+grid     hard   memlock    134217728
+# oracle-database-preinstall-19c setting for memlock soft limit is maximum of 128GB on x86_64 or 3GB on x86 OR 90% of RAM
+oracle   soft   memlock    134217728
+grid     soft   memlock    134217728
+# oracle-database-preinstall-19c setting for data soft limit is 'unlimited'
+oracle   soft   data    unlimited
+grid     soft   data    unlimited
+# oracle-database-preinstall-19c setting for data hard limit is 'unlimited'
+oracle   hard   data    unlimited
+grid     hard   data    unlimited
+
+$GRID_HOME/runcluvfy.sh stage -pre crsinst -n Node1-rac1-19c,Node2-rac1-19c -fixup -verbose
+
+#Install Grid Infrastructure Software by grid user in Node1-rac1-19c
+source .bash_profile
+cd /u01/app/19.0.0/grid
+unzip /home/grid/sources/LINUX.X64_19.3_gi.zip
+export CV_ASSUME_DISTID=OEL7.6
+./gridsetup.sh
+configure oracle grid infrastructure for a new cluster
+
+$GI_HOME/bin/cluvfy stage -post crsinst -n all
+
+# check the status of the running clusterware resources. The state of all the resources should be ONLINE.
+crsctl status resource -t
+---------------------
+
+#Ensure that all the cluster services are up and running in all the cluster nodes.
+crsctl check cluster -all
+---------------------
+
+#Mount the ASM Disk Groups
+asmca
+Click on Create button
+In the Disk Group Name field enter DATA, for Redundancy select "External", and mark DISK2, 
+then click on OK button. You should see after a few seconds a diskgroup creation success 
+message.
+
+Similarly, create FRA diskgroup.
+
+cd /u01/app/oracle/product/19.0.0/db_1
+unzip /mnt/src/database/LINUX.X64_193000_db_home.zip
+export CV_ASSUME_DISTID=OEL7.6
+./runInstaller
+setup software only
+oracle real application clusters database installation
+Make sure both nodes are selected.
+Press on SSH Connectivity
+enter oracle password 
+click Setup button. 
+After the SSH connectivity setup is finished, 
+click on Test button to test it.
+click on Next button.
+Make sure English is selected
+click on Next button.
+select Enterprise Edition option
+Oracle Base /u01/app/oracle
+Software Location /u01/app/oracle/product/12.1.0.2/db_1
+Note: those values taken from the OS variables
+Click on Next button
+select dba group for all the options except OSOPER keep it blank
+select fix&check again
+select Ignore All option 
+select on Next button
+click on Install button
+Execute the root script when prompted on both nodes.
+Execute the script in the second node only after it finishes execution in the first node.
+click on Close button
+
+#Create the Oracle RAC Database by oracle user
+dbca
+select Create Database option
+select Advanced Mode option
+Make sure the Database Type is Oracle Real Application Clusters (RAC) database
+Change the Configuration Type to Admin Managed
+Make sure that the General Purpose or Transaction Processing option is selected.
+select all 
+next
+
+ export GRID_HOME=/u01/app/19.0.0/grid/
+$GRID_HOME/bin/cluvfy stage -post crsinst -n all
+cluvfy comp clocksync
+cluvfy comp scan
+srvctl config scan
+
+
+vi $TNS_ADMIN/tnsnames.ora
+orcl1 =
+  (DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = Node1-rac1-19c.ictmisr.net)(PORT = 1521))
+    (CONNECT_DATA =
+      (SERVER = DEDICATED)
+      (SERVICE_NAME = orcl.ictmisr.net)
+    )
+  )
+
+orcl2 =
+  (DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = Node2-rac1-19c.ictmisr.net)(PORT = 1521))
+    (CONNECT_DATA =
+      (SERVER = DEDICATED)
+      (SERVICE_NAME = orcl.ictmisr.net)
+    )
+  )
+
+nslookup rac1-scan
+Server:         193.168.10.1
+Address:        193.168.10.1#53
+
+Name:   rac1-scan
+Address: 193.168.10.22
+Name:   rac1-scan
+Address: 193.168.10.23
+Name:   rac1-scan
+Address: 193.168.10.24
+
+
+----------------------------------
+rac2
+
+#The SCSI ID of my disks are displayed below.
+/usr/lib/udev/scsi_id -g -u -d /dev/sdb
+36000c291930e3cb8aeabe4d89679e204
+/usr/lib/udev/scsi_id -g -u -d /dev/sdc
+36000c29997460d7a3ae2f0c585f4a7ae
+/usr/lib/udev/scsi_id -g -u -d /dev/sdd
+36000c2963ca504ebfda64e67a5bec5ef
+/usr/lib/udev/scsi_id -g -u -d /dev/sde
+36000c2996e09234de81ad6af3c66d7dc
+/usr/lib/udev/scsi_id -g -u -d /dev/sdf
+36000c298738f77658487a7beec550a2f
+
+#Using these values, edit the "/etc/udev/rules.d/99-oracle-asmdevices.rules" file adding the following 3 entries. All parameters for a single entry must be on the same line
+vi /etc/udev/rules.d/99-oracle-asmdevices.rules
+KERNEL=="sd?1", SUBSYSTEM=="block", PROGRAM=="/usr/lib/udev/scsi_id -g -u -d /dev/$parent", RESULT=="36000c291930e3cb8aeabe4d89679e204", SYMLINK+="asm-disk1", OWNER="grid", GROUP="asmadmin", MODE="0660"
+KERNEL=="sd?1", SUBSYSTEM=="block", PROGRAM=="/usr/lib/udev/scsi_id -g -u -d /dev/$parent", RESULT=="36000c29997460d7a3ae2f0c585f4a7ae", SYMLINK+="asm-disk2", OWNER="grid", GROUP="asmadmin", MODE="0660"
+KERNEL=="sd?1", SUBSYSTEM=="block", PROGRAM=="/usr/lib/udev/scsi_id -g -u -d /dev/$parent", RESULT=="36000c2963ca504ebfda64e67a5bec5ef", SYMLINK+="asm-disk3", OWNER="grid", GROUP="asmadmin", MODE="0660"
+KERNEL=="sd?1", SUBSYSTEM=="block", PROGRAM=="/usr/lib/udev/scsi_id -g -u -d /dev/$parent", RESULT=="36000c2996e09234de81ad6af3c66d7dc", SYMLINK+="asm-disk4", OWNER="grid", GROUP="asmadmin", MODE="0660"
+KERNEL=="sd?1", SUBSYSTEM=="block", PROGRAM=="/usr/lib/udev/scsi_id -g -u -d /dev/$parent", RESULT=="36000c298738f77658487a7beec550a2f", SYMLINK+="asm-disk5", OWNER="grid", GROUP="asmadmin", MODE="0660"
+
+
+vi /etc/hosts
+127.0.0.1   localhost localhost.localdomain 
+
+# public
+193.168.10.27   Node1-rac2-19c.ictmisr.net  Node1-rac2-19c
+193.168.10.28   Node2-rac2-19c.ictmisr.net  Node2-rac2-19c
+
+# private
+193.168.20.27  Node1-rac2-19c-priv.ictmisr.net Node1-rac2-19c-priv
+193.168.20.28  Node2-rac2-19c-priv.ictmisr.net Node2-rac2-19c-priv
+
+#  SCAN (in production this should be configured in DNS)
+193.168.10.29 rac2-scan.ictmisr.net rac2-scan
+193.168.10.30 rac2-scan.ictmisr.net rac2-scan
+193.168.10.31 rac2-scan.ictmisr.net rac2-scan
+
+# Virtual
+193.168.10.32 Node1-rac2-19c-vip.ictmisr.net Node1-rac2-19c-vip
+193.168.10.33 Node2-rac2-19c-vip.ictmisr.net Node2-rac2-19c-vip
+
+
+#Set the OS environment variables in the Oracle software user owner profiles
+# login to sh-rac1 and sh-rac2 as oracle user
+#in rac1 by oracle user
+mv ~/.bash_profile ~/.bash_profile_bk
+vi ~/.bash_profile
+
+# .bash_profile
+if [ -f ~/.bashrc ]; then
+. ~/.bashrc
+fi
+ORACLE_SID=db1; export ORACLE_SID
+ORACLE_BASE=/u01/app/oracle; export ORACLE_BASE
+ORACLE_HOME=$ORACLE_BASE/product/19.0.0/db_1; export ORACLE_HOME
+ORACLE_TERM=xterm; export ORACLE_TERM
+NLS_DATE_FORMAT="DD-MON-YYYY HH24:MI:SS"; export NLS_DATE_FORMAT
+TNS_ADMIN=$ORACLE_HOME/network/admin; export TNS_ADMIN
+PATH=.:${PATH}:$ORACLE_HOME/bin
+PATH=${PATH}:/usr/bin:/bin:/usr/local/bin
+export PATH
+LD_LIBRARY_PATH=$ORACLE_HOME/lib
+LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:$ORACLE_HOME/oracm/lib
+LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/lib:/usr/lib:/usr/local/lib
+export LD_LIBRARY_PATH
+THREADS_FLAG=native; export THREADS_FLAG
+export TEMP=/tmp
+export TMPDIR=/tmp
+export EDITOR=vi
+umask 022
+
+#in rac2 by oracle user
+mv ~/.bash_profile ~/.bash_profile_bk
+vi ~/.bash_profile
+
+# .bash_profile
+if [ -f ~/.bashrc ]; then
+. ~/.bashrc
+fi
+ORACLE_SID=db2; export ORACLE_SID
+ORACLE_BASE=/u01/app/oracle; export ORACLE_BASE
+ORACLE_HOME=$ORACLE_BASE/product/19.0.0/db_1; export ORACLE_HOME
+ORACLE_TERM=xterm; export ORACLE_TERM
+NLS_DATE_FORMAT="DD-MON-YYYY HH24:MI:SS"; export NLS_DATE_FORMAT
+TNS_ADMIN=$ORACLE_HOME/network/admin; export TNS_ADMIN
+PATH=.:${PATH}:$ORACLE_HOME/bin
+PATH=${PATH}:/usr/bin:/bin:/usr/local/bin
+export PATH
+LD_LIBRARY_PATH=$ORACLE_HOME/lib
+LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:$ORACLE_HOME/oracm/lib
+LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/lib:/usr/lib:/usr/local/lib
+export LD_LIBRARY_PATH
+THREADS_FLAG=native; export THREADS_FLAG
+export TEMP=/tmp
+export TMPDIR=/tmp
+export EDITOR=vi
+umask 022
+
+$GRID_HOME/runcluvfy.sh stage -pre crsinst -n Node1-rac2-19c,Node2-rac2-19c -fixup -verbose
+
+cd /home/grid
+mkdir sources
+cd sources
+unzip /mnt/src/database/patches/G
+./gridSetup -applyRU /home/grid/sources/34518661

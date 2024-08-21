@@ -1,0 +1,517 @@
+                                      Oracle Database 12c Release 1 (12.1) RAC On Oracle Linux 7
+
+                               DBname:rac
+instance:rac1                                             instance:rac2
+hostname:sh-rac1                                          hostname:sh-rac2
+priv.hostname:sh-rac1-priv                                priv.hostname:sh-rac2-priv
+scan hostname:sh-scan                                     scan hostname:sh-scan
+
+
+
+1)
+#Make sure that all the required libraries are installed
+/usr/bin/oracle-rdbms-server-12cR1-preinstall-verify
+# if the command above reported any missing library, issue the following command:
+yum install oracle-rdbms-server-12cR1-preinstall
+----------------------
+2)
+#Unzip the grid and database software on the host machine
+#move source from /mnt/src /media/staging
+cd /media/staging/GI
+unzip db_12.1.0.2.0_Linux-x86-64_1of2.zip
+unzip db_12.1.0.2.0_Linux-x86-64_2of2.zip
+cd /media/staging/database
+unzip db_12.1.0.2.0_Linux-x86-64_1of2.zip
+unzip db_12.1.0.2.0_Linux-x86-64_2of2.zip
+---------------------
+3)
+#If you have the Linux firewall enabled, you will need to disable or configure it
+systemctl stop firewalld
+systemctl disable firewalld
+---------------------
+4)
+#Disable secure linux by editing the “/etc/selinux/config” file, making sure the SELINUX flag is set as follows
+vi /etc/selinux/config
+SELINUX=disabled
+reboot
+/usr/sbin/getenforce
+---------------------
+5)
+#Modify the hosts file as follow in sh-rac1 , sh-rac2
+vi /etc/hosts
+127.0.0.1   localhost localhost.localdomain 
+
+# public
+193.168.10.50	sh-rac1.ictmisr.net sh-rac1
+193.168.10.51   sh-rac2.ictmisr.net sh-rac2
+
+# private
+193.168.20.50  sh-rac1-priv.ictmisr.net sh-rac1-priv
+193.168.20.51  sh-rac2-priv.ictmisr.net sh-rac2-priv
+
+#  SCAN (in production this should be configured in DNS)
+193.168.10.54 sh-scan.ictmisr.net sh-scan
+193.168.10.55 sh-scan.ictmisr.net sh-scan
+193.168.10.56 sh-scan.ictmisr.net sh-scan
+
+# Virtual
+193.168.10.52 sh-rac1-vip.ictmisr.net sh-rac1-vip
+193.168.10.53 sh-rac2-vip.ictmisr.net sh-rac2-vip
+---------------------
+6)
+#Login to every machine as root and make sure that they can ping each other
+ping sh-rac1
+ping sh-rac1.ictmisr.net
+ping sh-rac1-priv
+ping sh-rac1-priv.ictmisr.net
+
+ping sh-rac2
+ping sh-rac2.ictmisr.net
+ping sh-rac2-priv
+ping sh-rac2-priv.ictmisr.net
+---------------------
+7)
+#create Oracle software owner users and groups
+#Create the Oracle Grid Infrastructure home owner user (grid)
+groupadd asmadmin
+groupadd asmdba
+groupadd asmoper
+useradd -u 54323 -g oinstall -G asmadmin,asmdba grid
+---------------------
+8)
+#Reset the oracle and grid user passwords
+passwd oracle
+passwd grid
+---------------------
+9)
+#Add oracle user to the asmdba group
+usermod -a -G asmdba oracle
+---------------------
+10)
+#Create the directory in which the Oracle software will be installed
+mkdir -p /u01/app/oracle/product/12.0.1.2/db_1
+chown -R oracle:oinstall /u01
+chmod -R 775 /u01
+mkdir -p /u01/app/grid
+mkdir -p /u01/app/12.1.0.2/grid
+chown -R grid:oinstall /u01/app/grid
+chown -R grid:oinstall /u01/app/12.1.0.2/grid
+chmod -R 775 /u01
+---------------------
+11)
+#check if ntp synchronised to NTP server
+ntpstat
+---------------------
+12)
+#List the disks as seen by sh-rac1 . You should see the shareable disks that have been added to the 
+machine (sdb, sdc, and sdd).
+ls /dev/sd*
+lsblk
+---------------------
+13)
+#Use the fdisk utility to create partitions in the new disks /dev/sdb , /dev/sdc and /dev/sdd
+fdisk /dev/sdb
+n p 1 enter enter w
+fdisk /dev/sdc
+n p 1 enter enter w
+fdisk /dev/sdd
+n p 1 enter enter w
+ls /dev/sd*
+---------------------
+14)
+#Configure your UDEV rules by user root in sh-rac1,sh-rac2
+#Add the following to the "/etc/scsi_id.config" file to configure SCSI devices as trusted. Create the file if it doesn't already exist.
+cd /etc
+vi scsi_id.config
+options=-g
+
+#The SCSI ID of my disks are displayed below.
+/usr/lib/udev/scsi_id -g -u -d /dev/sdb
+36000c29fc6895cbe98aa4b3f90a2500b
+/usr/lib/udev/scsi_id -g -u -d /dev/sdc
+36000c293d3ae311d7c3a4e7b010b2ec2
+/usr/lib/udev/scsi_id -g -u -d /dev/sdd
+36000c29c22538c6d6064482f54fe32c9
+
+
+#Using these values, edit the "/etc/udev/rules.d/99-oracle-asmdevices.rules" file adding the following 3 entries. All parameters for a single entry must be on the same line
+vi /etc/udev/rules.d/99-oracle-asmdevices.rules
+KERNEL=="sd?1", SUBSYSTEM=="block", PROGRAM=="/usr/lib/udev/scsi_id -g -u -d /dev/$parent", RESULT=="36000c29fc6895cbe98aa4b3f90a2500b", SYMLINK+="asm-disk1", OWNER="grid", GROUP="oinstall", MODE="0660"
+KERNEL=="sd?1", SUBSYSTEM=="block", PROGRAM=="/usr/lib/udev/scsi_id -g -u -d /dev/$parent", RESULT=="36000c293d3ae311d7c3a4e7b010b2ec2", SYMLINK+="asm-disk2", OWNER="grid", GROUP="oinstall", MODE="0660"
+KERNEL=="sd?1", SUBSYSTEM=="block", PROGRAM=="/usr/lib/udev/scsi_id -g -u -d /dev/$parent", RESULT=="36000c29c22538c6d6064482f54fe32c9", SYMLINK+="asm-disk3", OWNER="grid", GROUP="oinstall", MODE="0660"
+
+#Load updated block device partition tables.
+/sbin/partprobe /dev/sdb1
+/sbin/partprobe /dev/sdc1
+/sbin/partprobe /dev/sdd1
+
+#Test the rules are working as expected
+udevadm test /block/sdb/sdb1
+udevadm test /block/sdc/sdc1
+udevadm test /block/sdd/sdd1
+
+#Reload the UDEV rules
+/sbin/udevadm control --reload-rules
+/sbin/udevadm trigger
+
+#The disks should now be visible and have the correct ownership using the following command
+ls -al /dev/asm-disk*
+systemctl restart systemd-udevd
+---------------------
+15)
+#Set the OS environment variables in the Oracle software user owner profiles
+# login to sh-rac1 and sh-rac2 as oracle user
+#in rac1 by oracle user
+mv ~/.bash_profile ~/.bash_profile_bk
+vi ~/.bash_profile
+
+# .bash_profile
+if [ -f ~/.bashrc ]; then
+. ~/.bashrc
+fi
+ORACLE_SID=node1_bk; export ORACLE_SID
+ORACLE_BASE=/u01/app/oracle; export ORACLE_BASE
+ORACLE_HOME=$ORACLE_BASE/product/12.2.0.1/db_1; export ORACLE_HOME
+ORACLE_TERM=xterm; export ORACLE_TERM
+NLS_DATE_FORMAT="DD-MON-YYYY HH24:MI:SS"; export NLS_DATE_FORMAT
+TNS_ADMIN=$ORACLE_HOME/network/admin; export TNS_ADMIN
+PATH=.:${PATH}:$ORACLE_HOME/bin
+PATH=${PATH}:/usr/bin:/bin:/usr/local/bin
+export PATH
+LD_LIBRARY_PATH=$ORACLE_HOME/lib
+LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:$ORACLE_HOME/oracm/lib
+LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/lib:/usr/lib:/usr/local/lib
+export LD_LIBRARY_PATH
+THREADS_FLAG=native; export THREADS_FLAG
+export TEMP=/tmp
+export TMPDIR=/tmp
+export EDITOR=vi
+umask 022
+
+
+#in rac2 by oracle user
+mv ~/.bash_profile ~/.bash_profile_bk
+vi ~/.bash_profile
+
+# .bash_profile
+if [ -f ~/.bashrc ]; then
+. ~/.bashrc
+fi
+ORACLE_SID=node2_bk; export ORACLE_SID
+ORACLE_BASE=/u01/app/oracle; export ORACLE_BASE
+ORACLE_HOME=$ORACLE_BASE/product/12.2.0.1/db_1; export ORACLE_HOME
+ORACLE_TERM=xterm; export ORACLE_TERM
+NLS_DATE_FORMAT="DD-MON-YYYY HH24:MI:SS"; export NLS_DATE_FORMAT
+TNS_ADMIN=$ORACLE_HOME/network/admin; export TNS_ADMIN
+PATH=.:${PATH}:$ORACLE_HOME/bin
+PATH=${PATH}:/usr/bin:/bin:/usr/local/bin
+export PATH
+LD_LIBRARY_PATH=$ORACLE_HOME/lib
+LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:$ORACLE_HOME/oracm/lib
+LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/lib:/usr/lib:/usr/local/lib
+export LD_LIBRARY_PATH
+THREADS_FLAG=native; export THREADS_FLAG
+export TEMP=/tmp
+export TMPDIR=/tmp
+export EDITOR=vi
+umask 022
+---------------------
+16)
+#In sh-rac1 and sh-rac2, set the OS environment variables in the grid user profile
+#in rac2 by grid user
+mv ~/.bash_profile ~/.bash_profile_bk
+vi ~/.bash_profile
+
+# .bash_profile
+# OS User: grid
+if [ -f ~/.bashrc ]; then
+. ~/.bashrc
+fi
+ORACLE_SID=+ASM1; export ORACLE_SID
+ORACLE_BASE=/u01/app/grid; export ORACLE_BASE
+# it must not be under the ORACLE_BASE
+ORACLE_HOME=/u01/app/12.2.0.1/grid; export ORACLE_HOME
+ORACLE_TERM=xterm; export ORACLE_TERM
+TNS_ADMIN=$ORACLE_HOME/network/admin; export TNS_ADMIN
+PATH=.:${PATH}:$ORACLE_HOME/bin
+PATH=${PATH}:/usr/bin:/bin:/usr/local/bin
+export PATH
+export TEMP=/tmp
+export TMPDIR=/tmp
+umask 022
+
+
+#in rac2 by grid user 
+
+mv ~/.bash_profile ~/.bash_profile_bk
+vi ~/.bash_profile
+
+# .bash_profile
+# OS User: grid
+if [ -f ~/.bashrc ]; then
+. ~/.bashrc
+fi
+ORACLE_SID=+ASM2; export ORACLE_SID
+ORACLE_BASE=/u01/app/grid; export ORACLE_BASE
+# it must not be under the ORACLE_BASE
+ORACLE_HOME=/u01/app/12.2.0.1/grid; export ORACLE_HOME
+ORACLE_TERM=xterm; export ORACLE_TERM
+TNS_ADMIN=$ORACLE_HOME/network/admin; export TNS_ADMIN
+PATH=.:${PATH}:$ORACLE_HOME/bin
+PATH=${PATH}:/usr/bin:/bin:/usr/local/bin
+export PATH
+export TEMP=/tmp
+export TMPDIR=/tmp
+umask 022
+---------------------
+17)
+#Set the resource limits for the Oracle software installation owners 
+#In sh-rac1 and sh-rac2, switch user to root and set the resource limits for the software installation owner users. It is set for oracle user. You need to set it the same for grid user
+su - root
+mv /etc/security/limits.d/oracle-rdbms-server-12cR1-preinstall.conf /etc/security/limits.d/oracle-rdbms-server-12cR1-preinstall.conf.bak
+vi /etc/security/limits.d/oracle-rdbms-server-12cR1-preinstall.conf
+
+# oracle-rdbms-server-12cR2-preinstall setting for nofile soft limit is 1024
+oracle soft nofile 1024
+grid soft nofile 1024
+# oracle-rdbms-server-12cR2-preinstall setting for nofile hard limit is 65536
+oracle hard nofile 65536
+grid hard nofile 65536
+# oracle-rdbms-server-12cR2-preinstall setting for nproc soft limit is 16384
+# refer orabug15971421 for more info.
+oracle soft nproc 16384
+grid soft nproc 16384
+# oracle-rdbms-server-12cR2-preinstall setting for nproc hard limit is 16384
+oracle hard nproc 16384
+grid hard nproc 16384
+# oracle-rdbms-server-12cR2-preinstall setting for stack soft limit is 10240KB
+oracle soft stack 10240
+grid soft stack 10240
+# oracle-rdbms-server-12cR2-preinstall setting for stack hard limit is 32768KB
+oracle hard stack 32768
+grid hard stack 32768
+# oracle-rdbms-server-11gR2-preinstall setting for memlock hard limit is maximum 
+of {128GB (x86_64) / 3GB (x86) or 90 % of RAM}
+oracle hard memlock 134217728
+grid hard memlock 134217728
+# oracle-rdbms-server-11gR2-preinstall setting for memlock soft limit is maximum 
+of {128GB (x86_64) / 3GB (x86) or 90% of RAM}
+oracle soft memlock 134217728
+grid soft memlock 134217728
+---------------------
+
+18)
+#Install Grid Infrastructure Software by grid user in sh-rac1
+#set display
+su - root
+DISPLAY=:3; export DISPLAY
+xhost +
+su - grid
+source .bash_profile
+cd /media/staging/grid/
+DISPLAY=:3; export DISPLAY
+./runInstaller
+Install and Configure Oracle Grid Infrastructure for a Cluster
+Configure a Standard Cluster
+Advanced Installation
+English
+Cluster Name: rac
+SCAN Name: sh-scan
+SCAN Port: 1521
+unmark Configure GNS
+click on Add button
+Public Hostname: sh-rac2.ictmisr.net
+Virtual Hostname: sh-rac2-vip.ictmisr.net
+click on OK button
+click on SSH Connectivity button
+enter the OS Password (grid)
+click on Setup button
+click on Test button
+Click on Next button
+eth0 : select Public
+eth1 : select Private
+eth2 : select Do Not Use
+Use Standard ASM for Storage
+click on Change Discovery Path button
+enter Disk Discovery Path: /dev/asm-disk*
+click on OK button
+Disk Group Name: CRS
+Redundancy: External
+Allocation Unit Size: 1MB
+Mark DISK1
+click on Next button
+select "Use same password for these accounts" 
+Specify Password: sys
+Confirm Password: sys
+select "Do not use Intelligent Platform Management Interface (IPMI)"
+click on Next button
+OSASM Group asmadmin
+OSDBA for ASM Group asmdba
+OSOPER for ASM Group blank
+Oracle Base /u01/app/grid
+Software Location /u01/app/12.1.0.2/grid
+Note: those values taken from the OS variables
+Click on Next button
+Inventory Directory /u01/app/oraInventory
+unMark "Automatically run configuration scripts"
+select fix&check again
+select Ignore All option 
+select on Next button
+click on Install button
+
+#run scripts by root in 2 nodes 
+/u01/app/oraInventory/orainstRoot.sh
+/u01/app/12.1.0.2/grid/root.sh
+---------------------
+19)
+# check the status of the running clusterware resources. The state of all the resources should be ONLINE.
+crsctl status resource -t
+---------------------
+20)
+#Ensure that all the cluster services are up and running in all the cluster nodes.
+crsctl check cluster -all
+---------------------
+21)
+#Mount the ASM Disk Groups
+asmca
+Click on Create button
+In the Disk Group Name field enter DATA, for Redundancy select "External", and mark DISK2, 
+then click on OK button. You should see after a few seconds a diskgroup creation success 
+message.
+
+Similarly, create FRA diskgroup.
+---------------------
+22)
+#Create the sqlnet.ora file and add the following code in it.
+su - oracle
+mkdir -p $ORACLE_HOME/network/admin
+vi $ORACLE_HOME/network/admin/sqlnet.ora
+DIAG_ADR_ENABLED=ON
+NAMES.DIRECTORY_PATH= (TNSNAMES, EZCONNECT)
+---------------------
+23)
+#Install Oracle Database Software by oracle user
+cd /media/staging/database
+./runInstaller
+
+Uncheck the "I wish to receive security updates..." 
+press Next button then Yes button
+select "Install database software only" option
+select "Oracle Real Application Clusters database installation"
+Make sure both nodes are selected.
+Press on SSH Connectivity
+enter oracle password 
+click Setup button. 
+After the SSH connectivity setup is finished, 
+click on Test button to test it.
+click on Next button.
+Make sure English is selected
+click on Next button.
+select Enterprise Edition option
+Oracle Base /u01/app/oracle
+Software Location /u01/app/oracle/product/12.1.0.2/db_1
+Note: those values taken from the OS variables
+Click on Next button
+select dba group for all the options except OSOPER keep it blank
+select fix&check again
+select Ignore All option 
+select on Next button
+click on Install button
+Execute the root script when prompted on both nodes.
+Execute the script in the second node only after it finishes execution in the first node.
+click on Close button
+---------------------
+24)
+#Create the Oracle RAC Database by oracle user
+dbca
+select Create Database option
+select Advanced Mode option
+Make sure the Database Type is Oracle Real Application Clusters (RAC) database
+Change the Configuration Type to Admin Managed
+Make sure that the General Purpose or Transaction Processing option is selected.
+Global Database Name:rac.ictmisr.net
+SID Prefix: rac
+Make sure that the "Create As Container Database" checkbox is not marked.
+Move the node sh-rac2 from the Available list to the Selected list
+Unmark the "Run Cluster Verification Utility (CVU) Checks Periodically" checkbox
+Mark the "Configure Enterprise Manager (EM) Database Express" checkbox
+set the password for the users
+Database files Storage Type: ASM
+Use Common Location for All Database Files: +DATA
+Mark the "Use Oracle-Managed Files" checkbox
+Recovery files Storage Type: ASM
+Mark the Specify Fast Recovery Area
+Fast Recovery Area: +FRA
+Fas Recovery Size: 12 GB
+Make sure that the Enable Archiving checkbox is Unmarked
+Mark the Sample Schemas checkbox
+Rise the Memory Slider to nearly 50% then select the Custom 
+click on the Sizing tab
+Processes: 500
+click on Character Sets tab
+click on Next button
+Make sure "Create Database" option is selected
+click on "Finish" button
+---------------------
+25)
+#Make sure that the SCAN hostname replies to ping command.
+ping -c 3 sh-scan
+---------------------
+26)
+# Issue the following commands and examine their output.
+srvctl status database -d rac
+srvctl config database -d rac
+---------------------
+27)
+#Identify the database instance names that are currently running on sh-rac1 from the OS command shell.
+ps -ef | grep -i pmon
+---------------------
+28)
+#Login as sysdba to the database and examine the contents of v$active_instances
+sqlplus / as sysdba
+col inst_name format a50
+SELECT INST_NUMBER , INST_NAME FROM V$ACTIVE_INSTANCES;
+---------------------
+29)
+#Make sure the tnsnames.ora file has been configured for connecting to rac database. This has automatically been done by the dbca utility.
+cat $TNS_ADMIN/tnsnames.ora
+
+orcl1 =
+  (DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = Veritas12cNode1.ictmisr.net)(PORT = 1521))
+    (CONNECT_DATA =
+      (SERVER = DEDICATED)
+      (SERVICE_NAME = orcl.ictmisr.net)
+    )
+  )
+
+orcl2 =
+  (DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = Veritas12cNode2.ictmisr.net)(PORT = 1521))
+    (CONNECT_DATA =
+      (SERVER = DEDICATED)
+      (SERVICE_NAME = orcl.ictmisr.net)
+    )
+  )
+
+orcl1 =
+  (DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = Veritas12cNode1Backup.ictmisr.net)(PORT = 1521))
+    (CONNECT_DATA =
+      (SERVER = DEDICATED)
+      (SERVICE_NAME = orcl.ictmisr.net)
+    )
+  )
+
+orcl2 =
+  (DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = Veritas12cNode2Backup.ictmisr.net)(PORT = 1521))
+    (CONNECT_DATA =
+      (SERVER = DEDICATED)
+      (SERVICE_NAME = orcl.ictmisr.net)
+    )
+  )
+
+srvctl status scan_listener
+
+

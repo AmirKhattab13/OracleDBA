@@ -1,0 +1,388 @@
+VM Configuration
+
+3 adapter, host-only - bridged, private		root: qwe@123	user: MDP@123
+
+host-only: vmnet1 192.168.17.0/24, static	//bridged: 192.168.10.0/24		
+Private: vmnet0 192.168.24.0/24, static
+nat: 192.168.88.0/24, DHCP
+
+-----------------------------------------------------------------------------
+Preinstall
+
+# yum update -y
+# yum install -y oracle-database-preinstall-19c.x86_64
+# yum install oracleasm-support
+# yum install bind* -y
+# sysctl -p
+
+-----------------------------------------------------------------------------
+Managing users and groups
+
+Configure /etc/hosts and add public, private, virtual, scan
+
+add asm groups and add user oracle to them
+# groupadd -g 54327 asmdba
+# groupadd -g 54328 asmoper
+# groupadd -g 54329 asmadmin
+# useradd grid
+# passwd grid
+# usermod -G asmadmin,asmoper,asmdba grid
+# passwd oracle
+
+Create the directories in which the Oracle software will be installed.
+mkdir -p /u01/app/19c/grid				//grid home
+mkdir -p /u01/app/oracle/product/19c/db_home		//db home
+chown -R oracle:oinstall /u01				
+chmod -R 775 /u01/
+
+-----------------------------------------------------------------------------
+Configure Bash Profile of Users.
+
+Oracle
+
+==> login as oracle
+# vi .bash_profile
+
+##Oracle Settings
+export TMP=/tmp
+export TMPDIR=$TMP
+export ORACLE_BASE=/u01/app/oracle
+export GRID_HOME=/u01/app/19c/grid
+export DB_HOME=$ORACLE_BASE/product/19c/db_home
+export ORACLE_HOME=$DB_HOME
+export ORACLE_SID=oradbwr
+export ORACLE_TERM=xterm
+export BASE_PATH=/usr/sbin:$PATH
+export PATH=$ORACLE_HOME/bin:$BASE_PATH
+export LD_LIBRARY_PATH=$ORACLE_HOME/lib:/lib:/usr/lib
+export CLASSPATH=$ORACLE_HOME/JRE:$ORACLE_HOME/jlib:$ORACLE_HOME/rdbms/jlib
+
+alias grid='. /home/oracle/grid.env'
+alias db='. /home/oracle/db.env'
+
+Grid Home bash profile
+Create "/home/oracle/grid.env" 
+# vi /home/oracle/grid.env
+
+export ORACLE_SID=+ASM1
+export ORACLE_HOME=$GRID_HOME
+export PATH=$ORACLE_HOME/bin:$BASE_PATH
+export LD_LIBRARY_PATH=$ORACLE_HOME/lib:/lib:/usr/lib
+export CLASSPATH=$ORACLE_HOME/JRE:$ORACLE_HOME/jlib:$ORACLE_HOME/rdbms/jlib
+
+Oracle Home bash profile
+Create "/home/oracle/db.env" 
+# vi /home/oracle/db.env
+
+export ORACLE_SID=oradbwr
+export ORACLE_HOME=$DB_HOME
+export PATH=$ORACLE_HOME/bin:$BASE_PATH
+export LD_LIBRARY_PATH=$ORACLE_HOME/lib:/lib:/usr/lib
+export CLASSPATH=$ORACLE_HOME/JRE:$ORACLE_HOME/jlib:$ORACLE_HOME/rdbms/jlib
+
+-----------------------------------------------------------------------------
+Configure Firewall and NTP
+
+Firewall Stop and Disable, We can open firewall after installation
+systemctl stop firewalld.service
+systemctl disable firewalld.service
+
+Chrony NTP Configuration
+systemctl enable chronyd.service
+systemctl restart chronyd.service
+chronyc -a 'burst 4/4'
+chronyc -a makestep
+
+-----------------------------------------------------------------------------
+DNS nameserver configuration:-
+1. Check Bind packages
+# rpm -qa | grep bind
+
+After Checking required packages, now define zone files in master configuration 'named.conf' file.
+2. Then Edit the Configuration of name server
+
+# cp /etc/named.conf /etc/named.conf_bkp
+# vi /etc/named.conf
+
+options {
+listen-on port 53 { 127.0.0.1; 192.168.88.128; };
+
+allow-query { localhost; 192.168.88.0/24; };
+
+zone "localdomain.com" IN {
+type master;
+file localdomain.zone";
+allow-update { none; };
+};
+
+zone "88.168.192.in-addr.arpa." IN {
+type master;
+file "88.168.192.in-addr.arpa";
+allow-update { none; };
+};
+
+Save and Exit the named.conf using wq!
+
+3. Create the Forward and Reserve Zone files as mentioned in named.conf
+FORWARD ZONE :
+Make a Copy of sample file as below
+# cp /var/named/named.localhost /var/named/localdomain.zone
+
+Edit the file localdomain.zone
+# vi /var/named/localdomain.zone
+
+$TTL 86400
+@ IN SOA node1.mdp.local. root.mdp.local. (
+2014051001 ; serial
+3600 ; refresh
+1800 ; retry
+604800 ; expire
+86400 ; minimum
+)
+@ IN NS node1.localdomain.
+localhost IN A 127.0.0.1
+node1 IN A 192.168.17.130
+node2 IN A 192.168.17.129
+node1-priv IN A 192.168.24.128
+node2-priv IN A 192.168.24.129
+node1-vip IN A 192.168.88.128
+node2-vip IN A 192.168.88.129
+mdp-scan IN A 192.168.88.130
+mdp-scan IN A 192.168.88.131
+mdp-scan IN A 192.168.88.132
+
+4) RESERVE ZONE :
+Make a Copy of sample file as below
+# cp /var/named/named.loopback /var/named/88.168.192.in-addr.arpa
+
+Edit the file 88.168.192.in-addr.arpa
+# vi /var/named/88.168.192.in-addr.arpa
+
+$TTL 86400
+@ IN SOA node1.mdp.local. root.mdp.local. (
+2
+3H
+1H
+1W
+1H )
+@ IN NS node1.mdep.local.
+@ IN PTR mdp.local.
+node1 IN A 192.168.88.128
+mdp-scan IN A 192.168.88.130
+mdp-scan IN A 192.168.88.131
+mdp-scan IN A 192.168.88.132
+128 IN PTR node1.mdp.local.
+130 IN PTR mdp-scan.mdp.local.
+131 IN PTR mdp-scan.mdp.local.
+132 IN PTR mdp-scan.mdp.local.
+
+5. The files we created was in root group We need to change those files to named group
+Here we can see the files which have the root group
+
+Change the group to named using below Command
+# chgrp named /var/named/localdomain.zone
+# chgrp named /var/named/88.168.192.in-addr.arpa
+
+Then we need to check the Context of the files under
+# ls -lZd /etc/named.conf
+-rwxrwxr-x. root root unconfined_u:object_r:etc_t:s0 /etc/named.conf
+
+It want to be in the context of named_conf_t
+If its Different than this then we need to restore the context using
+
+# restorecon /etc/named.conf
+
+6. Start the DNS Service
+# systemctl start named.service
+
+7. Deploy iptables Rules to allow DNS service
+
+Add the iptables rules
+# iptables -A INPUT -i lo -j ACCEPT
+# iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+# iptables -A INPUT -p tcp -m state --state NEW -m tcp --dport 22 -j ACCEPT
+# iptables -A INPUT -p tcp -m state --state NEW -m tcp --dport 53 -j ACCEPT
+# iptables -A INPUT -p udp -m state --state NEW -m udp --dport 53 -j ACCEPT
+# iptables -A INPUT -j DROP
+
+8. Make the DNS server’s own IP address in the below file.
+# cat /etc/resolv.conf
+# Generated by NetworkManager
+search localdomain mdp.local
+nameserver 192.168.88.1
+options timeout:1
+options attempts:5
+
+9. Now Check for the Available Hosts in DNS
+# nslookup mdp-scan
+Server: 192.168.88.1
+Address: 192.168.88.1#53
+
+Name: mdp-scan.mdp.local
+Address: 192.168.88.130
+Name: mdp-scan.mdp.local
+Address: 192.168.88.131
+Name: mdp-scan.mdp.local
+Address: 192.168.88.132
+
+-----------------------------------------------------------------------------
+ASM Disk Group Preparation
+add disks for ASM storage
+2 disks, one of them for OCR: oracle cluster registry
+
+Change network configuration, hostname on the second node
+ping to check connectivity
+
+-----------------------------------------------------------------------------
+Grid Home Config
+
+Copy the oracle 19c grid software using shared folder
+/u01/app/19c/grid
+1. sftp ==> MobaXterm		2. scp [file] user@ip:/path/to/dir
+
+# unzip LINUX.X64_193000_db_home.zip
+
+-----------------------------------------------------------------------------
+Installing cvuqdisk.rpm
+
+note: CVU, Cluster Verification Utility: a utility distributed with Oracle 
+Grid Infrastructure assist in the installation and configuration of Oracle 
+Clusterware as well as Oracle Real Application Clusters (RAC).
+note: Oracle Clusterware is a portable cluster software that allows 
+clustering of independent servers so that they cooperate as a single system.
+
+From the grid home as the “root” user on all nodes:
+node1 ==> # cd cv/rpm	&&	# rpm -Uvh cvuqdisk*
+node2 ==> you can manage it from node1, # scp ./cvuqdisk* root@node2:/tmp
+# ssh root@node2	&&	# rpm -Uvh /tmp/cvuqdisk*
+
+-----------------------------------------------------------------------------
+Configure Oracle ASM, partitioning sdb, sdc
+# fdisk /dev/sdb ==> n, p, w
+# fdisk /dev/sdc ==> n, p, w
+
+-----------------------------------------------------------------------------
+Configure oracleasm utility
+
+determine kernel version
+# uname -rm
+# cat /etc/os-release
+
+https://www.oracle.com/linux/downloads/linux-asmlib-v8-downloads.html
+# scp oracleasmlib-2.0.17-1.el8.x86_64.rpm root@ip:\tmp
+# rpm -Uvh oracleasmlib-2.0.17-1.el8.x86_64.rpm
+
+https://public-yum.oracle.com/repo/OracleLinux/OL8/addons/x86_64/getPackage/oracleasm-support-2.1.12-1.el8.x86_64.rpm
+# scp oracleasm-support-2.1.12-1.el8.x86_64.rpm root@ip:\tmp
+# rpm -Uvh oracleasm-support-2.1.12-1.el8.x86_64.rpm
+
+# cd /u01/app/19c/grid/
+# oracleasm configure -i
+default user: oracle
+default group: oinstall
+start: y
+scan: y
+
+verifying
+# oracleasm configure
+
+Initialize the asmlib to load oracleasm module and mount oracleasm filesystem
+# oracleasm init
+
+Check oracleasmfs
+# df -ha
+
+Create disks
+# oracleasm createdisk DATA /dev/sdb1
+# oracleasm createdisk OCR /dev/sdc1
+
+# ll /dev/oracleasm/disks
+
+Scan, List disks
+# oracleasm scandisks
+# oracleasm listdisks
+
+node2
+
+determine kernel version
+# uname -rm
+# cat /etc/os-release
+
+https://www.oracle.com/linux/downloads/linux-asmlib-v8-downloads.html
+# scp oracleasmlib-2.0.17-1.el8.x86_64.rpm root@ip:\tmp
+# rpm -Uvh oracleasmlib-2.0.17-1.el8.x86_64.rpm
+
+https://public-yum.oracle.com/repo/OracleLinux/OL8/addons/x86_64/getPackage/oracleasm-support-2.1.12-1.el8.x86_64.rpm
+# scp oracleasm-support-2.1.12-1.el8.x86_64.rpm root@ip:\tmp
+# rpm -Uvh oracleasm-support-2.1.12-1.el8.x86_64.rpm
+
+# cd /u01/app/19c/grid/
+# oracleasm configure -i
+default user: oracle
+default group: oinstall
+start: y
+scan: y
+
+verifying
+# oracleasm configure
+
+Initialize the asmlib to load oracleasm module and mount oracleasm filesystem
+# oracleasm init
+
+Check oracleasmfs
+# df -ha
+
+Create disks
+# oracleasm createdisk DATA /dev/sdb1
+# oracleasm createdisk OCR /dev/sdc1
+
+# ll /dev/oracleasm/disks
+
+Scan, List disks
+# oracleasm scandisks
+# oracleasm listdisks
+
+-----------------------------------------------------------------------------
+Configure SSH Setup
+
+# cd /u01/app/19c/grid/deinstall
+# ./sshUserSetup.sh -user oracle -hosts "node1 node2" -noPromptPassphrase 
+-confirm -advanced
+
+-----------------------------------------------------------------------------
+Pre-check for RAC Setup
+
+# export CV_ASSUME_DISTID=OEL7.8
+# cd /u01/app/19c/grid
+# ./runcluvfy.sh stage -pre crsinst -n node1,node2 -verbose -orainv dba
+
+-----------------------------------------------------------------------------
+Display Config and Start Grid Installation
+
+ssh grid@node1
+
+Install and Configure Oracle 19c Grid Infrastructure for a Cluster
+
+# export CV_ASSUME_DISTID=OEL8.1
+# cd /u01/app/19c/grid/
+# ./gridSetup.sh
+
+- configure for a new cluster
+- configure standalone cluster
+- create local SCAN	MDP-cluster / MDP-scan
+- add nodes / test ssh connectivity
+- network interfaces
+- storage ASM
+- GIM repo - no
+- disk groups ==> Discovery path: /dev/oracleasm/disks*
+- create ASM disks
+	check the disk, check external.
+- ASM password
+- don't use IPMI
+- asmadmin, asmdba, asmdba
+- oracle base
+- inventory
+- scripts: /u01/app/oraInventory/orainstRoot.sh
+	   /u01/app/19c/grid/root.sh
+
+/tmp/GridSetupActions2023-10-15_11-13-40AM/CVU_19.0.0.0.0_grid/runfixup.sh
