@@ -63,7 +63,7 @@ RMAN> list backupset;
 Block change tracking
 
 SQL> alter database enable block change tracking using file '/path/file.f' reuse;
-		//file save changes happened on blocks, intialize with 10M, it's 		important to be exist to start DB
+		//file save changes happened on blocks, intialize with 10M, it's important to be exist to start DB
 SQL> select status from v$block_change_tracking;
 
 --------------------------------------------------------------------------------------------------------------------

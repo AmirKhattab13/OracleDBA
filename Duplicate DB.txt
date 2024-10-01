@@ -1,0 +1,80 @@
+SOURCE DATABASE (ORCL):
+
+Step1:-Copy the password file to target database 
+
+oracle:dbs] scp orapworcl oracle@clone:$ORACLE_HOME/dbs/orapwclone
+
+Step2:-Create pfile from SOURCE database for TARGET database
+
+SQL> show parameter spfile;
+SQL> create pfile from spfile;
+File created.
+
+Step3:-Copy the pfile to the target database
+
+[oracle@orcl:dbs] scp initorcl.ora oracle@clone:$ORACLE_HOME/dbs/initclone.ora
+
+TARGET DATABASE:
+
+Step 4:-Create required directories in the TARGET location
+
+Create adump,datafiles and logfiles location
+
+Step 5:-Edit the db_name and necessary directories name in pfile.
+
+Edit db_name to new database name
+Add the below the entries for datafiles and logfiles creation
+*.db_file_name_convert='/prath/to/files','/path/to/files'
+*.log_file_name_convert='/prath/to/files','/path/to/files'
+
+vi initclone.ora (PFILE Target Database Clone)
+
+*.audit_file_dest='/oradb/app/oracle/admin/clone/adump'
+*.control_files='/oradb/app/oracle/oradata/clone/control01.ctl','/oradb/app/oracle/oradata/clone/control02.ctl'
+*.db_name='clone'
+
+Step 6:-Set the Environment for CLONE database,
+
+create bash profile
+
+Step 7:-Open the CLONE database in NOMOUNT state using modified pfile,
+
+SQL>startup pfile nomount='$ORACLE_HOME/dbs/initclone.ora'
+ORACLE instance started.
+
+Step 8:-Configure the listener & tnsnames on both server
+
+vi $ORACLE_HOME/network/admin/tnsname.ora
+
+CLONE =
+(DESCRIPTION =
+(ADDRESS = (PROTOCOL = TCP)(HOST = clone.localdomain.com)(PORT = 1521))
+(CONNECT_DATA =
+(out = DEDICATED)
+(SERVICE_NAME = clone.localdomain.com)
+)
+)
+
+RMAN Active Duplication:
+
+NOFILENAMECHECK: If you want the duplicate filenames to be the same as the target filenames, and if the databases are in different hosts, 
+then you must specify NOFILENAMECHECK
+
+db_file_name_convert: This parameter specifies from where to where the datafiles should be cloned.
+
+log_file_name_convert:This parameter specifies from where to where the redo logfiles should be cloned
+
+Connect as auxiliary database to create a new database in TARGET location
+
+[oracle@clone:admin clone] rman target sys/oracle@orcl auxiliary sys/oracle
+
+Recovery Manager: Release 12.2.0.1.0 – Production on Fri May 25 23:17:41 2018
+Copyright (c) 1982, 2017, Oracle and/or its affiliates. All rights reserved.
+connected to target database: ORCL (DBID=1504791090)
+connected to auxiliary database: CLONE (not mounted)
+
+RMAN> duplicate database to 'clone' from active database NOFILENAMECHECK;
+
+Step 9:-Verify the status of TARGET database status,
+
+SQL> select name,open_mode from v$database;

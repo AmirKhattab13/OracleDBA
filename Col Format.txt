@@ -1,0 +1,3 @@
+column c1 heading "" Format a15
+column c2 heading "" Format a30		// |, is a new line
+column c3 heading    Format a20

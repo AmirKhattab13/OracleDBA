@@ -1,0 +1,25 @@
+[oracle@rac1 ~]$ cat /etc/oraInst.loc
+inventory_loc=/u01/app/oraInventory
+inst_group=dba
+[oracle@rac1 app]$ cd /u01/app/
+[oracle@rac1 app]$ ls -ltr
+total 8
+drwxr-xr-x. 10 oracle dba 4096 Nov  7 11:33 oracle
+drwxrwx---.  6 oracle dba 4096 Nov  7 20:16 oraInventory
+[oracle@rac1 app]$
+
+tar -pcvf /u02/oracle/backup/binary/Backup_OraInv.tar oraInventory
+
+OR
+
+tar -pczvf /u02/oracle/backup/binary/Backup_OraInv.tar oraInventory | gzip > /u02/oracle/backup/binary/Backup_OraInv.tar.gz
+
+------------------------------------------------------------------------------------------------------------------------------------------
+Restore Oracle INVENTORY
+
+[oracle@rac1 app]$ cd /u01/app/
+[oracle@rac1 app]$
+
+mv oraInventory oraInventory_bkp
+
+tar -pxvf /u02/oracle/backup/binary/Backup_OraInv.tar

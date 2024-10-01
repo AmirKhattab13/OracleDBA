@@ -1,0 +1,92 @@
+CMAN1=
+  (CONFIGURATION=
+    (ADDRESS=(PROTOCOL=tcp)(HOST=proxysvr)(PORT=1521))
+    (RULE_LIST=
+      (RULE=(SRC=192.0.2.32/24)(DST=sales-server)(SRV=*)(ACT=accept)
+        (ACTION_LIST=(AUT=on)(MCT=120)(MIT=30)))
+      (RULE=(SRC=192.0.2.32)(DST=proxysvr)(SRV=cmon)(ACT=accept)))
+    (PARAMETER_LIST=
+      (MAX_GATEWAY_PROCESSES=8)
+      (MIN_GATEWAY_PROCESSSES=3)))
+       
+
+SRC The source host name or IP address of the client. The IP address can be a subnet, such as 192.0.2.62/24.
+DST The destination host name or IP address of the database server. The IP address can be a subnet, such as 192.0.2.62/24.
+ACT To accept, reject, or drop incoming requests based on the preceding three parameters. that is, accept, reject, or drop.
+ACTION_LIST parameter sets attributes for a connection if it is accepted, enabling you to override 
+default parameter settings on a connection-by-connection basis.
+
+
+To route clients to the database server through Oracle Connection Manager, configure the tnsnames.ora file with a connect descriptor 
+that specifies the protocol address of Oracle Connection Manager. This address enables clients to connect to the Oracle Connection Manager 
+computer. The connect descriptor looks similar to the following:
+sales=
+  (DESCRIPTION=
+    (ADDRESS=
+      (PROTOCOL=tcp)
+      (HOST=cman-pc)
+      (PORT=1521))
+    (CONNECT_DATA=
+      (SERVICE_NAME=example.com)))
+
+# netmgr
+create service name
+
+
+If the database that you want to register with Oracle Connection Manager is located on a remote node, then you must configure the cman.ora 
+parameter VALID_NODE_CHECKING_REGISTRATION to allow remote registration.
+
+-------------------------------------------------------------------------------------------------------------------------------------------
+Configuring Service Registration for Use with Oracle Connection Manager
+
+1. Resolve the Oracle Connection Manager alias to a service name entry in the tnsnames.ora file as follows:
+cman_listener_address =
+  (DESCRIPTION=
+    (ADDRESS_LIST=
+      (ADDRESS=(PROTOCL=tcp) (HOST=proxy_server_name)( PORT=1521))))
+
+2. Specify an alias for Oracle Connection Manager in the init.ora file as follows. This alias is the one 
+specified in the tnsnames.ora file in step 1.
+
+REMOTE_LISTENER=cman_listener_address
+
+The alias must be specified because this address is TCP, port 1521 but it is not the default local listening address of TCP, port 1521 of 
+the database server.	in the init.ora file:
+
+REMOTE_LISTENER=listener_cman
+
+3. Configure REGISTRATION_INVITED_NODES in cman.ora if the database resides on a remote node. For example:
+
+(registration_invited_nodes=sales.us.example.com,10.245.129.60)
+
+4. the Listener Registration (LREG) process can register database information with the Oracle Connection Manager listener. Use the 
+following command to register the change:
+
+SQL> ALTER SYSTEM REGISTER
+
+-------------------------------------------------------------------------------------------------------------------------------------------
+Enabling Session Multiplexing for Oracle Connection Manager
+
+set the DISPATCHERS parameter in the initialization parameter file (init.ora) with the attributes PROTOCOL and MULTIPLEX, 
+DISPATCHERS="(PROTOCOL=tcp)(MULTIPLEX=on)"
+
+Multiplex This parameter is used to enable session multiplexing, as follows:
+
+If 1, on, yes, true, or both is specified, then multiplexing is enabled for both incoming and outgoing network sessions.
+
+If in is specified, then multiplexing is enabled for incoming network sessions from the client.
+
+If out is specified, then multiplexing is enabled for outgoing network sessions.
+
+If 0, off, no, or false is specified, then multiplexing is disabled for both incoming and outgoing network sessions.
+
+-------------------------------------------------------------------------------------------------------------------------------------------
+Configuring Oracle Connection Manager in Traffic Director Mode
+
+Oracle Connection Manager in Traffic Director Mode is a proxy that is placed between the database clients and the database instances.
+
+You can set up Oracle Connection Manager in Traffic Director Mode using the TDM=YES setting in the cman.ora file.
+
+new parameters such as tdm and tdm_threading_model must be added in the cman.ora configuration file.
+
+

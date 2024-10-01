@@ -1,0 +1,39 @@
+Transparent Data Encryption (TDE)
+By default, TDE adds salt to plaintext before encrypting it. Adding salt makes it harder for 
+attackers to steal data through a brute force attack. However, if you plan to index the 
+encrypted column, then you must use the NO SALT parameter.
+
+Enable TDE for entire database.
+ALTER SYSTEM SET ENCRYPTION KEY AUTHENTICATED BY "your_password";
+ALTER SYSTEM SET ENCRYPTION WALLET OPEN IDENTIFIED BY "your_password" AUTOMATIC;
+
+--------------------------------------------------------------------------------------------
+To encrypt an existing unencrypted column, use the ALTER TABLE MODIFY statement, specifying 
+the unencrypted column with the ENCRYPT clause.
+
+If you want to index a column, then you must specify NO SALT. You can also bypass integrity 
+checks by using the NOMAC parameter.
+
+SQL> ALTER TABLE <employee> MODIFY (<first_name> ENCRYPT);
+
+The column is encrypted with the default AES192 algorithm.
+
+--------------------------------------------------------------------------------------------
+To disable column encryption, use the ALTER TABLE MODIFY command with the DECRYPT clause.
+
+SQL> ALTER TABLE <employee> MODIFY (<first_name> DECRYPT);
+
+--------------------------------------------------------------------------------------------
+To change the encryption key or algorithm for tables that contain encrypted columns, use the 
+ALTER TABLE SQL statement with the REKEY or REKEY USING clause.
+
+SQL> ALTER TABLE <employee> REKEY;
+SQL> ALTER TABLE <employee> REKEY USING '3DES168';
+
+--------------------------------------------------------------------------------------------
+If you want to use a non-default algorithm, then use the ENCRYPT USING clause, followed by 
+one of the following algorithms enclosed in single quotation marks:
+3DES168
+AES128
+AES192 (default)
+AES256
