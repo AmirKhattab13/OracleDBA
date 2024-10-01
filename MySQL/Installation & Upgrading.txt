@@ -1,0 +1,230 @@
+1. download the required version from Oracle support.
+
+2. Copy all the rpm packages to the server on one directory ex:MySQL.
+
+3. Show current version: #mysql -V
+
+4. List the installed package dependencies release: #rpm -qa | grep mysql		
+
+5. cd to MySQL directory and start isuue command: #rpm -U <package name>
+
+Note: upgrade the packages one by one. the package name has been listed in step 4.
+
+-----------------------------------------------------------------------------------------------------------------------------------------
+1. Download RPM Packages
+
+2. Untar RPM Packages
+
+[root@rac1 ~]# cd mysql
+[root@rac1 mysql]# ls -ltr
+total 1009792
+-rw-r--r--. 1 root root 895047680 Mar  6 14:49 mysql-8.0.23-1.el7.x86_64.rpm-bundle.tar
+[root@rac1 mysql]# pwd
+/root/mysql
+[root@rac1 mysql]#
+
+[root@rac1 mysql]# tar -xvf mysql-8.0.23-1.el7.x86_64.rpm-bundle.tar
+
+3. Install MySQL 8 Using RPM Packages
+
+In most cases, you need to install the below packages to get functional, standard MySQL installation. 
+
+mysql-community-server
+mysql-community-client 
+mysql-community-libs
+mysql-community-common 
+mysql-community-libs-compat 
+
+To perform such a standard, basic installation, go to the folder that contains all those packages (and, preferably, no other RPM packages with similar names), and issue the following commands:
+
+-- Common files for server and client libraries
+[root@rac1 mysql]# rpm -ivh mysql-community-common-8.0.23-1.el7.x86_64.rpm
+
+-- MySQL client applications plugins
+[root@rac1 mysql]# rpm -ivh mysql-community-client-plugins-8.0.23-1.el7.x86_64.rpm
+
+-- Shared libraries for MySQL database client applications
+[root@rac1 mysql]# rpm -ivh mysql-community-libs-8.0.23-1.el7.x86_64.rpm
+
+-- Shared compatibility libraries for previous MySQL installations
+[root@rac1 mysql]# rpm -ivh mysql-community-libs-compat-8.0.23-1.el7.x86_64.rpm
+
+-- MySQL client applications and tools
+[root@rac1 mysql]# rpm -ivh mysql-community-client-8.0.23-1.el7.x86_64.rpm
+
+[root@rac1 mysql]#rpm -ivh mysql-community-icu-data-files-8.0.23-1.el7.x86_64.rpm	//on version 9
+
+-- if /usr/bin/perl is missing for mysql-community-server-8.0.23-1.el7.x86_64.rpm
+	- create localrepo and install: #yum localisntall mysql-community-server-8.0.23-1.el7.x86_64.rpm
+
+-- Database server and related tools
+[root@rac1 mysql]# rpm -ivh mysql-community-server-8.0.23-1.el7.x86_64.rpm
+
+[root@rac1 mysql]# rpm -qa | grep mysql
+mysql-community-libs-compat-8.0.23-1.el7.x86_64
+mysql-community-server-8.0.23-1.el7.x86_64
+mysql-community-common-8.0.23-1.el7.x86_64
+mysql-community-client-8.0.23-1.el7.x86_64
+mysql-community-libs-8.0.23-1.el7.x86_64
+mysql-community-client-plugins-8.0.23-1.el7.x86_64
+
+4. Start MySQL service
+
+[root@rac1 mysql]# systemctl status mysqld
+● mysqld.service - MySQL Server
+   Loaded: loaded (/usr/lib/systemd/system/mysqld.service; enabled; vendor preset: disabled)
+   Active: inactive (dead)
+     Docs: man:mysqld(8)
+           http://dev.mysql.com/doc/refman/en/using-systemd.html
+
+[root@rac1 mysql]# systemctl start mysqld
+
+[root@rac1 mysql]# systemctl status mysqld
+● mysqld.service - MySQL Server
+   Loaded: loaded (/usr/lib/systemd/system/mysqld.service; enabled; vendor preset: disabled)
+   Active: active (running) since Sat 2021-03-06 15:25:12 +08; 8s ago
+     Docs: man:mysqld(8)
+           http://dev.mysql.com/doc/refman/en/using-systemd.html
+  Process: 12423 ExecStartPre=/usr/bin/mysqld_pre_systemd (code=exited, status=0/SUCCESS)
+ Main PID: 12506 (mysqld)
+   Status: "Server is operational"
+   CGroup: /system.slice/mysqld.service
+           └─12506 /usr/sbin/mysqld
+
+5. Get root temp password
+
+[root@rac1 mysql]# grep 'temporary password' /var/log/mysqld.log
+
+OR [root@rac1 mysql]# cat /var/log/mysqld.log | grep password
+
+2021-03-06T07:25:07.718556Z 6 [Note] [MY-010454] [Server] A temporary password is generated for root@localhost: &qixM=kt9wP+
+
+6. Login to MySQL using temporary password
+
+[root@rac1 mysql]# mysql -u root -p
+Enter password:
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 8
+Server version: 8.0.23
+
+Copyright (c) 2000, 2021, Oracle and/or its affiliates.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql> show databases;
+ERROR 1820 (HY000): You must reset your password using ALTER USER statement before executing this statement.
+
+7. Change the root@localhost password
+
+mysql> alter user root@localhost identified by 'Mysql@123';
+Query OK, 0 rows affected (0.01 sec)
+
+mysql> flush privileges;
+Query OK, 0 rows affected (0.01 sec)
+
+mysql> show databases;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| mysql              |
+| performance_schema |
+| sys                |
++--------------------+
+4 rows in set (0.01 sec)
+
+8. List MySQL config files
+
+[root@rac1 ~]# cat /etc/my.cnf
+# For advice on how to change settings please see
+# http://dev.mysql.com/doc/refman/8.0/en/server-configuration-defaults.html
+
+[mysqld]
+#
+# Remove leading # and set to the amount of RAM for the most important data
+# cache in MySQL. Start at 70% of total RAM for dedicated server, else 10%.
+# innodb_buffer_pool_size = 128M
+#
+# Remove the leading "# " to disable binary logging
+# Binary logging captures changes between backups and is enabled by
+# default. It's default setting is log_bin=binlog
+# disable_log_bin
+#
+# Remove leading # to set options mainly useful for reporting servers.
+# The server defaults are faster for transactions and fast SELECTs.
+# Adjust sizes as needed, experiment to find the optimal values.
+# join_buffer_size = 128M
+# sort_buffer_size = 2M
+# read_rnd_buffer_size = 2M
+#
+# Remove leading # to revert to previous value for default_authentication_plugin,
+# this will increase compatibility with older clients. For background, see:
+# https://dev.mysql.com/doc/refman/8.0/en/server-system-variables.html#sysvar_default_authentication_plugin
+# default-authentication-plugin=mysql_native_password
+
+datadir=/var/lib/mysql   
+socket=/var/lib/mysql/mysql.sock
+
+log-error=/var/log/mysqld.log         
+pid-file=/var/run/mysqld/mysqld.pid
+
+[root@rac1 ~]# cd /var/lib/mysql
+[root@rac1 mysql]# ls -ltr
+total 188880
+-rw-r-----. 1 mysql mysql 50331648 Mar  6 15:25 ib_logfile1
+-rw-r-----. 1 mysql mysql  8585216 Mar  6 15:25 #ib_16384_1.dblwr
+drwxr-x---. 2 mysql mysql     8192 Mar  6 15:25 performance_schema
+-rw-r-----. 1 mysql mysql       56 Mar  6 15:25 auto.cnf
+-rw-------. 1 mysql mysql     1676 Mar  6 15:25 ca-key.pem
+-rw-r--r--. 1 mysql mysql     1112 Mar  6 15:25 ca.pem
+-rw-------. 1 mysql mysql     1680 Mar  6 15:25 server-key.pem
+-rw-r--r--. 1 mysql mysql     1112 Mar  6 15:25 server-cert.pem
+-rw-------. 1 mysql mysql     1676 Mar  6 15:25 client-key.pem
+-rw-r--r--. 1 mysql mysql     1112 Mar  6 15:25 client-cert.pem
+-rw-r--r--. 1 mysql mysql      452 Mar  6 15:25 public_key.pem
+-rw-------. 1 mysql mysql     1676 Mar  6 15:25 private_key.pem
+drwxr-x---. 2 mysql mysql     4096 Mar  6 15:25 mysql
+drwxr-x---. 2 mysql mysql       28 Mar  6 15:25 sys
+-rw-r-----. 1 mysql mysql     5532 Mar  6 15:25 ib_buffer_pool
+drwxr-x---. 2 mysql mysql     4096 Mar  6 15:25 #innodb_temp
+-rw-r-----. 1 mysql mysql       16 Mar  6 15:25 binlog.index
+-rw-------. 1 mysql mysql        6 Mar  6 15:25 mysql.sock.lock
+srwxrwxrwx. 1 mysql mysql        0 Mar  6 15:25 mysql.sock
+-rw-r-----. 1 mysql mysql 12582912 Mar  6 15:25 ibtmp1
+-rw-r-----. 1 mysql mysql 16777216 Mar  6 15:27 undo_001
+-rw-r-----. 1 mysql mysql 25165824 Mar  6 15:34 mysql.ibd
+-rw-r-----. 1 mysql mysql 12582912 Mar  6 15:34 ibdata1
+-rw-r-----. 1 mysql mysql      643 Mar  6 15:35 binlog.000001
+-rw-r-----. 1 mysql mysql   196608 Mar  6 15:36 #ib_16384_0.dblwr
+-rw-r-----. 1 mysql mysql 16777216 Mar  6 15:36 undo_002
+-rw-r-----. 1 mysql mysql 50331648 Mar  6 15:36 ib_logfile0
+
+[root@rac1 mysql]# ls -ld */
+drwxr-x---. 2 mysql mysql 4096 Mar  6 15:25 #innodb_temp/
+drwxr-x---. 2 mysql mysql 4096 Mar  6 15:25 mysql/
+drwxr-x---. 2 mysql mysql 8192 Mar  6 15:25 performance_schema/
+drwxr-x---. 2 mysql mysql   28 Mar  6 15:25 sys/
+
+mysql directory:
+The mysql directory corresponds to the mysql system schema, which contains information required by the MySQL server as it runs. 
+This database contains data dictionary tables and system tables.
+
+performance_schema directory:
+The performance_schema directory corresponds to the Performance Schema, which provides information used to inspect the internal execution 
+of the server at runtime.
+
+sys directory:
+The sys directory corresponds to the sys schema, which provides a set of objects to help interpret Performance Schema information more 
+easily.
+
+#innodb_temp directory:
+InnoDB uses session temporary tablespaces and a global temporary tablespace.
+
+ndbinfo directory:
+The ndbinfo directory corresponds to the ndbinfo database that stores information specific to NDB Cluster 
+(present only for installations built to include NDB Cluster).
+

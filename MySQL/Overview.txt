@@ -1,0 +1,58 @@
+MySQL, the most popular Open Source SQL database management system, is developed, distributed, and supported by Oracle Corporation.
+
+-- How MySQL Stores data:
+ A MySQL server can store several databases
+ Databases are stored as directories 
+ Default is at /usr/local/mysql/var/
+ Tables are stored as files inside each database (directory) 
+ For each table, it has three files:
+  table.FRM file containing information about the table structure
+  table.MYD file containing the row data (actual data)
+  table.MYI containing any indexes created for the tables, as well as some statistics about the tables.
+
+5.1 Connecting to and Disconnecting from the Server
+$> mysql -h host -u user -p
+Enter password: ********
+
+-- If you are logging in on the same machine that MySQL is running on, you can omit the host, and simply use the following:
+$> mysql -u user -p
+
+-- After you have connected successfully, you can disconnect any time by typing QUIT (or \q) at the mysql> prompt:
+mysql> QUIT
+Bye
+On Unix, you can also disconnect by pressing Control+D.
+
+------------------------------------------------------------------------------------------------------------------------------------------
+5.2 Entering Queries
+-- Here is a simple query that asks the server to tell you its version number and the current date. 
+mysql> SELECT VERSION(), CURRENT_DATE;
++-----------+--------------+
+| VERSION() | CURRENT_DATE |
++-----------+--------------+
+| 8.4.0-tr  | 2024-01-25   |
++-----------+--------------+
+1 row in set (0.00 sec)
+
+-- Keywords may be entered in any lettercase. The following queries are equivalent:
+mysql> SELECT VERSION(), CURRENT_DATE;
+mysql> select version(), current_date;
+mysql> SeLeCt vErSiOn(), current_DATE;
+
+-- The queries shown thus far have been relatively short, single-line statements. You can even enter multiple statements on a single line. 
+Just end each one with a semicolon:
+
+mysql> SELECT VERSION(); SELECT NOW();
++-----------+
+| VERSION() |
++-----------+
+| 8.4.0-tr  |
++-----------+
+1 row in set (0.00 sec)
+
++---------------------+
+| NOW()               |
++---------------------+
+| 2024-01-25 18:33:04 |
++---------------------+
+1 row in set (0.00 sec)
+

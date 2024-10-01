@@ -1,0 +1,18 @@
+Step 1: Edit MySQL Config File
+You need to modify the MySQL configuration file to configure the remote MySQL server to listen for connections on an external IP address.
+
+1. Access mysqld.cnf File
+	#vi /etc/my.cnf
+
+2. Change bind-address IP
+	bind-address=<machine-address>
+
+3. Restart MySQL Service
+	#systemctl restart mysqld
+
+Step 2: Configure Firewall to Allow Remote MySQL Connection
+The default MySQL port number is 3306
+
+Open Port 3306 via Firewalld
+	#firewall-cmd --add-service=mysql --permanent
+	#firewall-cmd --reload

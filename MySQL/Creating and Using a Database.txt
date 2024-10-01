@@ -1,0 +1,97 @@
+5.3 Creating and Using a Database
+
+-- Use the SHOW statement to find out what databases currently exist on the server:
+
+mysql> SHOW DATABASES;
++----------+
+| Database |
++----------+
+| mysql    |
+| test     |
+| tmp      |
++----------+
+
+-- Create database:
+mysql> CREATE DATABASE test;
+
+-- Connect to it:
+mysql> USE test
+Database changed
+
+-- You can see at any time which database is currently selected using SELECT DATABASE():
+mysql> select DATABASE()
++------------+
+| DATABASE() |
++------------+
+| test       |
++------------+
+1 row in set (0.00 sec)
+
+-- Connect to it from shell:
+$> mysql -h host -u user -p test
+Enter password: ********
+
+------------------------------------------------------------------------------------------------------------------------------------------
+5.3.2 Creating a Table
+
+-- Creating the database is the easy part, but at this point it is empty, as SHOW TABLES tells you:
+
+mysql> SHOW TABLES;
+Empty set (0.00 sec)
+
+-- Use a CREATE TABLE statement to specify the layout of your table:
+
+mysql> CREATE TABLE pet (name VARCHAR(20), owner VARCHAR(20),
+       species VARCHAR(20), sex CHAR(1), birth DATE, death DATE);
+
+-- To verify that your table was created the way you expected, use a DESCRIBE statement:
+
+mysql> DESCRIBE pet;
++---------+-------------+------+-----+---------+-------+
+| Field   | Type        | Null | Key | Default | Extra |
++---------+-------------+------+-----+---------+-------+
+| name    | varchar(20) | YES  |     | NULL    |       |
+| owner   | varchar(20) | YES  |     | NULL    |       |
+| species | varchar(20) | YES  |     | NULL    |       |
+| sex     | char(1)     | YES  |     | NULL    |       |
+| birth   | date        | YES  |     | NULL    |       |
+| death   | date        | YES  |     | NULL    |       |
++---------+-------------+------+-----+---------+-------+
+
+-- Use a DROP TABLE statement to drop the table:
+
+mysql> DROP TABLE pet;
+
+-------------------------------------------------------------------------------------------------------------------------------------------
+5.3.3 Loading Data into a Table
+After creating your table, you need to populate it. The LOAD DATA and INSERT statements are useful for this.
+
+Because you are beginning with an empty table, an easy way to populate it is to create a text file containing a row for each of your animals, 
+then load the contents of the file into the table with a single statement.
+
+-- You could create a text file pet.txt containing one record per line, with values separated by tabs, and given in the order in which the 
+columns were listed in the CREATE TABLE statement. 
+For missing values, you can use NULL values. To represent these in your text file, use \N (backslash, capital-N). 
+
+Fluffy		Harold	cat	f	1993-02-04	
+Claws		Gwen	cat	m	1994-03-17	
+Buffy		Harold	dog	f	1989-05-13	
+Fang		Benny	dog	m	1990-08-27	
+Bowser		Diane	dog	m	1979-08-31	1995-07-29
+Chirpy		Gwen	bird	f	1998-09-11	
+Whistler	Gwen	bird	\N	1997-12-09	\N	
+Slim		Benny	snake	m	1996-04-29
+
+-- To load the text file pet.txt into the pet table, use this statement:
+
+mysql> LOAD DATA LOCAL INFILE '/path/pet.txt' INTO TABLE pet;
+
+-- If you created the file on Windows with an editor that uses \r\n as a line terminator, you should use this statement instead:
+
+mysql> LOAD DATA LOCAL INFILE '/path/pet.txt' INTO TABLE pet
+       LINES TERMINATED BY '\r\n';
+
+-- Add a new record:
+
+mysql> INSERT INTO pet
+       VALUES ('Puffball','Diane','hamster','f','1999-03-30',NULL);

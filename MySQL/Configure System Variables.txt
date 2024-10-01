@@ -1,0 +1,13 @@
+$> mysqld --verbose --help
+The command produces a list of all mysqld options and configurable system variables. Its output includes the default option and variable 
+values
+
+-- To see the current system variable values actually used by the server as it runs, connect to it and execute this statement:
+mysql> SHOW VARIABLES;
+
+-- To see some statistical and status indicators for a running server, execute this statement:
+mysql> SHOW STATUS;
+
+-- System variable and status information also is available using the mysqladmin command:
+$> mysqladmin variables
+$> mysqladmin extended-status

@@ -1,0 +1,12 @@
+-- Create User:
+
+Syntax
+mysql>use mysql;
+Reading table information for completion of table and column names
+You can turn off this feature to get a quicker startup with -A
+
+Database changed
+
+mysql> create user jiradbuser@localhost identified by "Jira@123";
+
+
