@@ -1,0 +1,139 @@
+SOURCE DATABASE (ORCL):
+
+Step1:-Copy the password file to target database 
+
+oracle:dbs] scp orapworcl oracle@clone:$ORACLE_HOME/dbs/orapwclone
+orapworcl 100% 3584 3.5KB/s 00:00
+
+Step2:-Create pfile from SOURCE database for TARGET database
+
+SQL> show parameter spfile;
+NAME     TYPE    VALUE
+———————————— ———————
+spfile    string /oradb/app/oracle/product/12.2.0.1/db_1/dbs/spfileorcl.ora
+
+SQL> create pfile from spfile;
+File created.
+
+Step3:-Copy the pfile to the target database
+
+[oracle@orcl:dbs] scp initorcl.ora oracle@clone:$ORACLE_HOME/dbs/initclone.ora
+initorcl.ora 100% 1095 1.1KB/s 00:00
+
+TARGET DATABASE:
+
+Step 4:-Create required directories in the TARGET location
+
+Create adump,datafiles and logfiles location
+
+mkdir -p /oradb/app/oracle/admin/clone/adump
+mkdir -p /oradb/app/oracle/oradata/clone/
+
+ 
+
+Step 5:-Edit the db_name and necessary directories name in pfile.
+
+Edit db_name to new database name
+Add the below the entries for datafiles and logfiles creation
+*.db_file_name_convert=’/oradb/app/oracle/oradata/orcl’,’/oradb/app/oracle/oradata/clone’
+*.log_file_name_convert=’/oradb/app/oracle/oradata/orcl’,’/oradb/app/oracle/oradata/clone’
+
+vi initclone.ora (PFILE Target Database Clone)
+
+*.audit_file_dest=’/oradb/app/oracle/admin/clone/adump’
+*.db_file_name_convert=’/oradb/app/oracle/oradata/orcl’,’/oradb/app/oracle/oradata/clone’
+
+*.log_file_name_convert=’/oradb/app/oracle/oradata/orcl’,’/oradb/app/oracle/oradata/clone’
+
+*.control_files=’/oradb/app/oracle/oradata/clone/control01.ctl’,’/oradb/app/oracle/oradata/clone/control02.ctl’
+
+*.db_name=’clone’
+
+Step 6:-Set the Environment for CLONE database,
+
+clone()
+{
+ORACLE_HOME=/oradb/app/oracle/product/12.2.0.1/db_1
+export ORACLE_HOME
+ORACLE_BASE=/oradb/app/oracle
+export ORACLE_BASE
+ORACLE_SID=clone
+export ORACLE_SID
+LD_LIBRARY_PATH=$ORACLE_HOME/lib:/usr/lib:.
+export LD_LIBRARY_PATH
+LIBPATH=$ORACLE_HOME/lib32:$ORACLE_HOME/lib:/usr/lib:/lib
+export LIBPATH
+TNS_ADMIN=${ORACLE_HOME}/network/admin
+export TNS_ADMIN
+PATH=$ORACLE_HOME/bin:$PATH:.
+export PATH
+}
+
+Step 7:-Open the CLONE database in NOMOUNT state using modified pfile,
+
+SQL>startup pfile nomount=’$ORACLE_HOME/dbs/initclone.ora’
+ORACLE instance started.
+
+Total System Global Area 1610612736 bytes
+Fixed Size 8621232 bytes
+Variable Size 1040188240 bytes
+Database Buffers 553648128 bytes
+Redo Buffers 8155136 bytes
+
+Step 8:-Configure the listener & tnsnames on both server
+
+cd $ORACLE_HOME/network/admin
+
+LISTENER ENTRY:
+
+LISTENER =
+(DESCRIPTION_LIST =
+(DESCRIPTION =
+(ADDRESS = (PROTOCOL = TCP)(HOST = orcl.localdomain.com)(PORT = 1521))
+(ADDRESS = (PROTOCOL = IPC)(KEY = EXTPROC1521))
+)
+)
+
+LISTENER =
+(DESCRIPTION =
+(ADDRESS = (PROTOCOL = TCP)(HOST = clone.localdomain.com)(PORT = 1521))
+)
+
+TNSNAMES ENTRY:
+
+ORCL =
+(DESCRIPTION =
+(ADDRESS = (PROTOCOL = TCP)(HOST = orcl.localdomain.com)(PORT = 1521))
+(CONNECT_DATA =
+(SERVER = DEDICATED)
+(SERVICE_NAME = orcl.localdomain.com)
+)
+)
+
+CLONE =
+(DESCRIPTION =
+(ADDRESS = (PROTOCOL = TCP)(HOST = clone.localdomain.com)(PORT = 1521))
+(CONNECT_DATA =
+(out = DEDICATED)
+(SERVICE_NAME = clone.localdomain.com)
+)
+)
+
+RMAN Active Duplication:
+
+NOFILENAMECHECK: If you want the duplicate filenames to be the same as the target filenames, and if the databases are in different hosts, then you must specify NOFILENAMECHECK
+
+db_file_name_convert: This parameter specifies from where to where the datafiles should be cloned.
+
+log_file_name_convert:This parameter specifies from where to where the redo logfiles should be cloned
+
+Connect as auxiliary database to create a new database in TARGET location
+
+[oracle@clone:admin clone] rman target sys/oracle@orcl auxiliary sys/oracle
+
+Recovery Manager: Release 12.2.0.1.0 – Production on Fri May 25 23:17:41 2018
+Copyright (c) 1982, 2017, Oracle and/or its affiliates. All rights reserved.
+connected to target database: ORCL (DBID=1504791090)
+connected to auxiliary database: CLONE (not mounted)
+
+RMAN> duplicate database to ‘clone’ from active database NOFILENAMECHECK;

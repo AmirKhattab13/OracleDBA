@@ -1,14 +1,6 @@
 1# Edit pfile, startup nomount pfile
 
-2# Run script:
-	# chmod 755 <script.>
-	# nohup rman @dup_acx9dr log=dup_acx9dr_from_DR.log &
-
-3# Check log:
-	# tail -100f dup_apix9dr_from_DR.log
-
-
-On listener file: $ORACLE_HOME/network/admin/tnsnames.ora
+2# On listener file: $ORACLE_HOME/network/admin/tnsnames.ora
 
 acx9prd =
   (DESCRIPTION =
@@ -39,3 +31,14 @@ SID_LIST_LISTENER =
       (ORACLE_HOME = /u01/app/oracle/product/19.0.0.0/dbhome)
       (SID_NAME = ACX9DR)
   )
+)
+
+3# Copy password file.
+
+4# Run script:
+	# chmod 755 <script.>
+	# nohup rman @dup_acx9dr log=dup_acx9dr_from_DR.log &
+
+5# Check log:
+	# tail -100f dup_apix9dr_from_DR.log
+
