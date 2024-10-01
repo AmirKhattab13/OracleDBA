@@ -1,0 +1,47 @@
+1. Check the ID of the KVM guest you need to restore root access:
+# virsh list
+
+2. Shutdown the KVM guest you wish to restore root access. 
+# virsh shutdown <id / domain_name> 
+ 
+3.  Backup the System.img of the kvm guest:
+# cd /<path-to-images>/GuestImages/<kvm guest>
+# cp /<path-to-images>/GuestImages/<kvm guest>/System.img /<path-to-images>/GuestImages/<kvm guest>/System.img.bak
+ 
+4. Scan the System.img using kpartx to get the partition available to be mounted. This will list the loop partition available to be mounted. 
+# kpartx -a /<path-to-images>/GuestImages/<kvm guest>/System.img
+ 
+5. If there is no other loop device available, the system.img would be loop0 and partition 1 (p1) would most likely to be the boot partition. Mount it to the kvm host 
+# mount -o loop -t xfs /dev/mapper/loop0p1 /mnt/imaging/sys
+ 
+6. You can now edit the boot partition of the kvm guest. Change directory to it and backup the grub.cfg
+# cd /mnt/imaging/sys/grub2/
+# cp /mnt/imaging/sys/grub2/grub.cfg /mnt/imaging/sys/grub2/grub.cfg.bak
+ 
+7. Edit grub.cfg and search for the line with "linux16" at the end of that line add the following: "rd.break enforcing=0" and save the file. 
+# grep linux16 /mnt/imaging/sys/grub2/grub.cfg
+linux16 /vmlinuz-4.14.35-1902.303.5.3.el7uek.x86_64 root=LABEL=DBSYS bootarea=dbsys bootfrom=BOOT boot=LABEL=BOOT fips=0 ro loglevel=7 panic=60 pci=noaer log_buf_len=1m nmi_watchdog=0 transparent_hugepage=never rd_NO_PLYMOUTH audit=1 console=tty1 console=ttyS0,115200n8 crashkernel=auto clocksource=tsc pci=nocrs ifnames_skip=100 biosdevname=0 net.ifnames=0 rd.break enforcing=0
+ 
+8. Exit the directory and unmount the loop partition.
+# umount /mnt/imaging/sys
+ 
+9. Make sure you remove the loop partition using kpartx.
+# kpartx -d /<path-to-images>/GuestImages/<kvm guest>/System.img
+ 
+10. Start kvm guest with console.
+virsh start <id / domain_name> --console
+ 
+11. It will boot you up to the "switch_root" prompt. mount the sysroot as rewrittable. 
+# mount -o remount,rw /sysroot
+ 
+12. Chroot to the sysroot.
+# chroot /sysroot
+ 
+13. Once chrooted you can now change the root password using passwd.
+# passwd root
+ 
+14.  After changing the password, you can now exit, Exit chroot and Exit the switch_root prompt by issuing the "exit(1p)" command
+# exit
+ 
+15. This will boot up the server to multi-user mode. Login the root account and change back the grub.cfg to its original file. 
+# cp /boot/grub2/grub.cfg.bak /boot/grub2/grub.cfg

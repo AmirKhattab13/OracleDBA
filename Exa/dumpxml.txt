@@ -1,0 +1,32 @@
+Old
+
+<serial type='file'>
+      <source path='/var/log/cellos/mcdrdbadm02vm01.mcf.local-console.log'/>
+      <target type='isa-serial' port='0'>
+        <model name='isa-serial'/>
+      </target>
+    </serial>
+    <console type='file'>
+      <source path='/var/log/cellos/mcdrdbadm02vm01.mcf.local-console.log'/>
+      <target type='serial' port='0'/>
+    </console>
+
+
+New
+
+<serial type='pty'>
+      <source path='/dev/pts/24'/>
+      <target type='isa-serial' port='0'>
+        <model name='isa-serial'/>
+      </target>
+      <alias name='serial0'/>
+    </serial>
+    <console type='pty' tty='/dev/pts/24'>
+      <source path='/dev/pts/24'/>
+      <target type='serial' port='0'/>
+      <alias name='serial0'/>
+    </console>
+
+ctrl + ]
+
+fuser -kuc /dev/VolGroup00/LogVol01
