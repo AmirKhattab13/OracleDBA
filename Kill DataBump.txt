@@ -1,0 +1,30 @@
+1. Check the job status from database login.
+
+select * from dba_datapump_jobs;
+
+OWNER_NAME JOB_NAME             OPERATION JOB_MODE STATE     DEGREE ATTACHED_SESSIONS
+---------- -------------------- --------- -------- --------  ------
+-----------------
+SYSTEM     SYS_EXPORT_SCHEMA_01 EXPORT    SCHEMA   EXECUTING  1    
+1
+2. Get the job name from the output.
+
+SYS_EXPORT_SCHEMA_01
+
+3. Attached the job with following parameter.
+
+expdp system/manager attach=SYS_EXPORT_FULL_01
+
+4. Check the status of the job.
+
+expdp status
+
+5. Stop or kill the job running.
+
+Export> KILL_JOB
+Are you sure you wish to stop this job ([yes]/no): yes
+$>
+
+6. Check the status from dba_datapump_jobs.
+
+select * from dba_datapump_jobs
